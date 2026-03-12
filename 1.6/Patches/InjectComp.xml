@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Patch>
+
+  <!-- Surface settlements -->
+  <Operation Class="PatchOperationAdd">
+    <xpath>/Defs/FactionColonies.WorldSettlementDef[@Name="WorldSettlementDef_Surface"]/comps</xpath>
+    <value>
+      <li Class="FactionColonies.SupplyChain.WorldObjectCompProperties_SupplyChain" />
+    </value>
+  </Operation>
+
+  <!-- Orbital settlements (Odyssey DLC, may not be present) -->
+  <Operation Class="PatchOperationAdd">
+    <success>Always</success>
+    <xpath>/Defs/FactionColonies.WorldSettlementDef[@Name="WorldSettlementDef_Orbital"]/comps</xpath>
+    <value>
+      <li Class="FactionColonies.SupplyChain.WorldObjectCompProperties_SupplyChain" />
+    </value>
+  </Operation>
+
+</Patch>

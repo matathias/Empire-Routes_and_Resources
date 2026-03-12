@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using UnityEngine;
 using Verse;
 
@@ -8,17 +9,79 @@ namespace FactionColonies.SupplyChain
         private static bool printDebug = false;
         public static bool PrintDebug => printDebug;
 
+        public static SupplyChainMode mode = SupplyChainMode.Simple;
+        public static float overflowPenaltyRate = 0.5f;
+        public static double baseCapPerSettlement = 50.0;
+        public static double routeDecayPerDay = 0.1;
+        public static double localCapBase = 50.0;
+
+        private static string capBuffer = null;
+        private static string routeDecayBuffer = null;
+        private static string localCapBuffer = null;
+
         public override void ExposeData()
         {
             base.ExposeData();
+            Scribe_Values.Look(ref mode, "mode", SupplyChainMode.Simple);
             Scribe_Values.Look(ref printDebug, "printDebug", false);
+            Scribe_Values.Look(ref overflowPenaltyRate, "overflowPenaltyRate", 0.5f);
+            Scribe_Values.Look(ref baseCapPerSettlement, "baseCapPerSettlement", 50.0);
+            Scribe_Values.Look(ref routeDecayPerDay, "routeDecayPerDay", 0.1);
+            Scribe_Values.Look(ref localCapBase, "localCapBase", 50.0);
         }
 
         public void DoWindowContents(Rect inRect)
         {
             Listing_Standard ls = new Listing_Standard();
             ls.Begin(inRect);
+
+            // Mode toggle
+            string modeLabel = mode == SupplyChainMode.Simple ? "Simple" : "Complex";
+            ls.Label("Supply chain mode: " + modeLabel);
+
+            string buttonLabel = mode == SupplyChainMode.Simple ? "Switch to Complex" : "Switch to Simple";
+            if (ls.ButtonText(buttonLabel))
+            {
+                SupplyChainMode newMode = mode == SupplyChainMode.Simple
+                    ? SupplyChainMode.Complex : SupplyChainMode.Simple;
+                mode = newMode;
+
+                // If a world is loaded, apply the switch immediately
+                if (Find.World != null)
+                {
+                    WorldComponent_SupplyChain wc = Find.World.GetComponent<WorldComponent_SupplyChain>();
+                    if (wc != null)
+                        wc.SwitchMode(newMode);
+                }
+            }
+            ls.Gap(12f);
+
             ls.CheckboxLabeled("Enable debug logging", ref printDebug);
+            ls.Gap(12f);
+
+            ls.Label("Overflow/Sell penalty rate: " + overflowPenaltyRate.ToString("P0")
+                + " (silver per unit = " + (FCSettings.silverPerResource * overflowPenaltyRate).ToString("F0") + ")");
+            overflowPenaltyRate = ls.Slider(overflowPenaltyRate, 0.1f, 1.0f);
+            ls.Gap(12f);
+
+            ls.Label("Base stockpile cap per settlement per resource: " + baseCapPerSettlement.ToString("F0"));
+            if (capBuffer == null)
+                capBuffer = baseCapPerSettlement.ToString("F0");
+            ls.TextFieldNumeric(ref baseCapPerSettlement, ref capBuffer, 10f, 500f);
+            ls.Gap(12f);
+
+            ls.Label("Route efficiency decay per travel day: " + routeDecayPerDay.ToString("F2")
+                + " (e.g. 5-day route = " + (1.0 / (1.0 + 5.0 * routeDecayPerDay) * 100).ToString("F0") + "% efficiency)");
+            if (routeDecayBuffer == null)
+                routeDecayBuffer = routeDecayPerDay.ToString("F2");
+            ls.TextFieldNumeric(ref routeDecayPerDay, ref routeDecayBuffer, 0.01f, 1f);
+            ls.Gap(12f);
+
+            ls.Label("Local stockpile cap per resource (Complex mode): " + localCapBase.ToString("F0"));
+            if (localCapBuffer == null)
+                localCapBuffer = localCapBase.ToString("F0");
+            ls.TextFieldNumeric(ref localCapBase, ref localCapBuffer, 10f, 500f);
+
             ls.End();
         }
     }
