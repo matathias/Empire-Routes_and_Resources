@@ -335,7 +335,10 @@ namespace FactionColonies.SupplyChain
                 }
             }
 
-            // 2. OVERFLOW
+            // 2. RESOLVE NEEDS (fair distribution from shared pool)
+            NeedResolver.ResolveSettlementNeedsFair(faction, pool, GetComp);
+
+            // 3. OVERFLOW
             foreach (KeyValuePair<ResourceTypeDef, double> kv in totalOverflow)
             {
                 if (kv.Value <= 0) continue;
@@ -347,7 +350,7 @@ namespace FactionColonies.SupplyChain
                     + " -> " + silver.ToString("F0") + " silver");
             }
 
-            // 3. SELL ORDERS
+            // 4. SELL ORDERS
             foreach (SellOrder order in globalSellOrders)
             {
                 float silver = order.Execute(pool);
@@ -440,7 +443,19 @@ namespace FactionColonies.SupplyChain
                     supplyRoutes.Remove(route);
             }
 
-            // 4. PER-SETTLEMENT OVERFLOW (anything over cap after route transfers)
+            // 4. RESOLVE NEEDS (per-settlement, from local pools)
+            foreach (WorldSettlementFC settlement in faction.settlements)
+            {
+                WorldObjectComp_SupplyChain needComp = GetComp(settlement);
+                if (needComp == null) continue;
+
+                IStockpilePool needPool = needComp.GetPool();
+                if (needPool == null) continue;
+
+                NeedResolver.ResolveSettlementNeeds(settlement, needPool, needComp);
+            }
+
+            // 5. PER-SETTLEMENT OVERFLOW (anything over cap after route transfers)
             foreach (WorldSettlementFC settlement in faction.settlements)
             {
                 WorldObjectComp_SupplyChain comp = GetComp(settlement);
@@ -470,7 +485,7 @@ namespace FactionColonies.SupplyChain
                 }
             }
 
-            // 5. PER-SETTLEMENT SELL ORDERS
+            // 6. PER-SETTLEMENT SELL ORDERS
             foreach (WorldSettlementFC settlement in faction.settlements)
             {
                 WorldObjectComp_SupplyChain comp = GetComp(settlement);

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+    <FactionColonies.SupplyChain.SettlementNeedDef>
+        <defName>Need_Food</defName>
+        <label>food</label>
+        <description>Workers need food to stay healthy and productive.</description>
+        <resource>RTD_Food</resource>
+        <baseAmount>0.5</baseAmount>
+        <scaling>PerWorker</scaling>
+        <penalties>
+            <li>
+                <stat>happinessLostBase</stat>
+                <maxValue>3.0</maxValue>
+            </li>
+            <li>
+                <stat>loyaltyLostBase</stat>
+                <maxValue>2.0</maxValue>
+            </li>
+        </penalties>
+    </FactionColonies.SupplyChain.SettlementNeedDef>
+
+</Defs>

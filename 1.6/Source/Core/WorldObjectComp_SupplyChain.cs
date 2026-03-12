@@ -15,7 +15,7 @@ namespace FactionColonies.SupplyChain
         }
     }
 
-    public class WorldObjectComp_SupplyChain : WorldObjectComp, ISettlementWindowOverview
+    public class WorldObjectComp_SupplyChain : WorldObjectComp, ISettlementWindowOverview, IStatModifierProvider
     {
         private const string ALLOC_KEY_PREFIX = "SupplyChain.";
 
@@ -26,6 +26,9 @@ namespace FactionColonies.SupplyChain
         private Dictionary<ResourceTypeDef, double> localCaps = new Dictionary<ResourceTypeDef, double>();
         private List<SellOrder> localSellOrders = new List<SellOrder>();
         private LocalStockpilePool localPool;
+
+        // Needs
+        private List<NeedState> needStates = new List<NeedState>();
 
         private WorldSettlementFC cachedSettlement;
         private Dictionary<ResourceTypeDef, string> sliderBuffers = new Dictionary<ResourceTypeDef, string>();
@@ -111,6 +114,121 @@ namespace FactionColonies.SupplyChain
                     continue;
                 localCaps[def] = SupplyChainSettings.localCapBase;
             }
+        }
+
+        // --- Needs ---
+
+        public List<NeedState> NeedStates
+        {
+            get { return needStates; }
+        }
+
+        public void SetNeedStates(List<NeedState> states)
+        {
+            needStates = states ?? new List<NeedState>();
+        }
+
+        private NeedState FindNeedState(string needId)
+        {
+            for (int i = 0; i < needStates.Count; i++)
+            {
+                if (needStates[i].needId == needId)
+                    return needStates[i];
+            }
+            return null;
+        }
+
+        // --- IStatModifierProvider ---
+
+        public double GetStatModifier(FCStatDef stat)
+        {
+            double total = 0.0;
+
+            // Base settlement needs
+            foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
+            {
+                if (needDef.penalties == null) continue;
+
+                NeedState state = FindNeedState(needDef.defName);
+                float unsatisfied = state != null ? (1f - state.Satisfaction) : 0f;
+                if (unsatisfied <= 0f) continue;
+
+                foreach (NeedPenalty penalty in needDef.penalties)
+                {
+                    if (penalty.stat == stat)
+                        total += penalty.maxValue * unsatisfied;
+                }
+            }
+
+            // Building needs
+            WorldSettlementFC ws = WorldSettlement;
+            if (ws != null && ws.BuildingsComp != null)
+            {
+                foreach (BuildingFC building in ws.BuildingsComp.Buildings)
+                {
+                    if (building.def == null || building.def == BuildingFCDefOf.Empty)
+                        continue;
+
+                    BuildingNeedExtension ext = building.def.GetModExtension<BuildingNeedExtension>();
+                    if (ext == null) continue;
+
+                    List<NeedPenalty> penalties = ext.penalties;
+                    if (penalties == null || penalties.Count == 0) continue;
+
+                    // Average satisfaction across all inputs for this building
+                    float avgUnsatisfied = 0f;
+                    int inputCount = 0;
+                    if (ext.inputs != null)
+                    {
+                        foreach (BuildingResourceInput input in ext.inputs)
+                        {
+                            if (input.resource == null) continue;
+                            string needId = "bldg." + building.def.defName + "." + input.resource.defName;
+                            NeedState state = FindNeedState(needId);
+                            avgUnsatisfied += state != null ? (1f - state.Satisfaction) : 0f;
+                            inputCount++;
+                        }
+                    }
+                    if (inputCount > 0)
+                        avgUnsatisfied /= inputCount;
+
+                    if (avgUnsatisfied <= 0f) continue;
+
+                    foreach (NeedPenalty penalty in penalties)
+                    {
+                        if (penalty.stat == stat)
+                            total += penalty.maxValue * avgUnsatisfied;
+                    }
+                }
+            }
+
+            return total;
+        }
+
+        public string GetStatModifierDesc(FCStatDef stat)
+        {
+            string desc = null;
+
+            foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
+            {
+                if (needDef.penalties == null) continue;
+
+                NeedState state = FindNeedState(needDef.defName);
+                float unsatisfied = state != null ? (1f - state.Satisfaction) : 0f;
+                if (unsatisfied <= 0f) continue;
+
+                foreach (NeedPenalty penalty in needDef.penalties)
+                {
+                    if (penalty.stat != stat) continue;
+                    double val = penalty.maxValue * unsatisfied;
+                    if (val <= 0) continue;
+
+                    string line = "Unmet " + needDef.label + " need: +" + val.ToString("F1");
+                    desc = desc == null ? line : desc + "\n" + line;
+                }
+            }
+
+            return desc;
         }
 
         // --- Allocation Management ---
@@ -214,6 +332,10 @@ namespace FactionColonies.SupplyChain
             Scribe_Collections.Look(ref localSellOrders, "localSellOrders", LookMode.Deep);
             if (localSellOrders == null)
                 localSellOrders = new List<SellOrder>();
+
+            Scribe_Collections.Look(ref needStates, "needStates", LookMode.Deep);
+            if (needStates == null)
+                needStates = new List<NeedState>();
         }
 
         // --- ISettlementWindowOverview ---
@@ -277,7 +399,8 @@ namespace FactionColonies.SupplyChain
                     resourceCount++;
             }
 
-            float totalHeight = resourceCount * rowHeight + 40f;
+            float totalHeight = resourceCount * rowHeight + 40f
+                + needStates.Count * 26f + 50f;
             Rect viewRect = new Rect(0f, 0f, inner.width - 16f, totalHeight);
             Rect scrollRect = new Rect(inner.x, y, inner.width, inner.height - (y - inner.y));
 
@@ -285,6 +408,10 @@ namespace FactionColonies.SupplyChain
             float curY = 0f;
 
             DrawAllocationSliders(viewRect, ref curY, rowHeight);
+            curY += 12f;
+
+            // Needs
+            DrawNeedsSection(viewRect, ref curY);
 
             // Footer
             Text.Font = GameFont.Tiny;
@@ -318,6 +445,7 @@ namespace FactionColonies.SupplyChain
             float totalHeight = resourceCount * rowHeight + 60f  // allocations
                 + resourceCount * (barHeight + 2f) + 60f          // local stockpile bars
                 + 200f                                             // routes section estimate
+                + needStates.Count * 26f + 50f                    // needs section
                 + localSellOrders.Count * 28f + 80f;              // sell orders
 
             Rect viewRect = new Rect(0f, 0f, inner.width - 16f, totalHeight);
@@ -371,6 +499,10 @@ namespace FactionColonies.SupplyChain
 
             // --- Routes ---
             DrawRoutesSummary(viewRect, ref curY);
+            curY += 16f;
+
+            // --- Needs ---
+            DrawNeedsSection(viewRect, ref curY);
             curY += 16f;
 
             // --- Local Sell Orders ---
@@ -475,6 +607,95 @@ namespace FactionColonies.SupplyChain
                 Text.Anchor = TextAnchor.UpperLeft;
                 curY += rowHeight;
             }
+        }
+
+        // --- Shared: Needs Display ---
+
+        private void DrawNeedsSection(Rect viewRect, ref float curY)
+        {
+            if (needStates.Count == 0) return;
+
+            Text.Font = GameFont.Medium;
+            Widgets.Label(new Rect(0f, curY, viewRect.width, 30f), "Settlement Needs");
+            Text.Font = GameFont.Small;
+            curY += 34f;
+
+            foreach (NeedState state in needStates)
+            {
+                if (state.resource == null) continue;
+
+                float satisfaction = state.Satisfaction;
+
+                // Icon
+                if (state.resource.Icon != null)
+                    GUI.DrawTexture(new Rect(0f, curY + 2f, 20f, 20f), state.resource.Icon);
+
+                // Label (use need def label for base needs, building id for building needs)
+                Text.Anchor = TextAnchor.MiddleLeft;
+                string label;
+                if (state.needId.StartsWith("bldg."))
+                    label = state.needId.Replace("bldg.", "").Replace(".", " - ");
+                else
+                {
+                    SettlementNeedDef needDef = DefDatabase<SettlementNeedDef>.GetNamedSilentFail(state.needId);
+                    label = needDef != null ? needDef.label.CapitalizeFirst() : state.needId;
+                }
+                Widgets.Label(new Rect(24f, curY, 80f, 24f), label);
+
+                // Satisfaction bar
+                Rect barRect = new Rect(108f, curY + 4f, 150f, 16f);
+                if (satisfaction > 0.8f)
+                    GUI.color = new Color(0.4f, 0.8f, 0.4f);
+                else if (satisfaction > 0.4f)
+                    GUI.color = new Color(0.9f, 0.8f, 0.2f);
+                else
+                    GUI.color = new Color(0.9f, 0.3f, 0.3f);
+
+                Widgets.FillableBar(barRect, satisfaction);
+                GUI.color = Color.white;
+
+                // Numeric
+                Widgets.Label(new Rect(264f, curY, 120f, 24f),
+                    (satisfaction * 100f).ToString("F0") + "% ("
+                    + state.fulfilled.ToString("F1") + " / " + state.demanded.ToString("F1") + ")");
+
+                // Penalty summary
+                if (satisfaction < 1f)
+                {
+                    Text.Font = GameFont.Tiny;
+                    GUI.color = new Color(1f, 0.5f, 0.5f);
+                    string penaltyText = GetPenaltySummary(state);
+                    if (penaltyText != null)
+                        Widgets.Label(new Rect(390f, curY, 200f, 24f), penaltyText);
+                    GUI.color = Color.white;
+                    Text.Font = GameFont.Small;
+                }
+
+                Text.Anchor = TextAnchor.UpperLeft;
+                curY += 26f;
+            }
+        }
+
+        private string GetPenaltySummary(NeedState state)
+        {
+            float unsatisfied = 1f - state.Satisfaction;
+            if (unsatisfied <= 0f) return null;
+
+            // Check base need penalties
+            SettlementNeedDef needDef = DefDatabase<SettlementNeedDef>.GetNamedSilentFail(state.needId);
+            if (needDef != null && needDef.penalties != null)
+            {
+                string result = null;
+                foreach (NeedPenalty penalty in needDef.penalties)
+                {
+                    double val = penalty.maxValue * unsatisfied;
+                    string part = "+" + val.ToString("F1") + " " + penalty.stat.label;
+                    result = result == null ? part : result + ", " + part;
+                }
+                return result;
+            }
+
+            return null;
         }
 
         // --- Complex Mode: Routes Summary ---
