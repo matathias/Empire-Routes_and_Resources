@@ -640,6 +640,8 @@ namespace FactionColonies.SupplyChain
             Rect inner = boundingBox.ContractedBy(10f);
             float curY = inner.y;
 
+            RecalculateCaps();
+
             // Header
             Text.Font = GameFont.Medium;
             Widgets.Label(new Rect(inner.x, curY, 300f, 30f), "SC_FactionStockpile".Translate());
