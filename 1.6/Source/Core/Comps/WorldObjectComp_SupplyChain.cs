@@ -289,7 +289,7 @@ namespace FactionColonies.SupplyChain
 
         /// <summary>
         /// Re-registers all saved allocations with the base mod's SetStockpileAllocation API.
-        /// Called by WorldComponent_SupplyChain.FinalizeInit() after load.
+        /// Called from PostExposeData(PostLoadInit) to restore transient state after load.
         /// </summary>
         public void ReRegisterAllocations()
         {
@@ -350,6 +350,9 @@ namespace FactionColonies.SupplyChain
             Scribe_Collections.Look(ref needStates, "needStates", LookMode.Deep);
             if (needStates == null)
                 needStates = new List<NeedState>();
+
+            if (Scribe.mode == LoadSaveMode.PostLoadInit && allocations.Count > 0)
+                ReRegisterAllocations();
         }
 
         // --- ISettlementWindowOverview ---

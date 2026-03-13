@@ -87,21 +87,6 @@ namespace FactionColonies.SupplyChain
 
             capsAndPoolsDirty = true;
 
-            // Re-register comp allocations after load
-            if (fromLoad)
-            {
-                FactionFC faction = FactionCache.FactionComp;
-                if (faction != null)
-                {
-                    foreach (WorldSettlementFC settlement in faction.settlements)
-                    {
-                        WorldObjectComp_SupplyChain comp = GetComp(settlement);
-                        if (comp != null)
-                            comp.ReRegisterAllocations();
-                    }
-                }
-            }
-
             // Reconcile with global settings (mode may have changed while this save was unloaded)
             if (mode != SupplyChainSettings.mode)
             {
