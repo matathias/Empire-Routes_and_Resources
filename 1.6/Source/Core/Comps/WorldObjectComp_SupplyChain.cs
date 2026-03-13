@@ -39,6 +39,19 @@ namespace FactionColonies.SupplyChain
         private string newLocalSellAmountBuffer = "";
         private float newLocalSellAmount;
 
+        // Sub-tab state (complex mode)
+        private int complexSubTab;
+        private Vector2 scrollPosOverview;
+        private Vector2 scrollPosProduction;
+        private Vector2 scrollPosRoutes;
+
+        // Route creation state
+        private WorldSettlementFC newRouteOther;
+        private ResourceTypeDef newRouteResource;
+        private string newRouteAmountBuffer = "";
+        private float newRouteAmount;
+        private bool newRouteIsOutgoing = true;
+
         public WorldSettlementFC WorldSettlement
         {
             get
@@ -367,6 +380,16 @@ namespace FactionColonies.SupplyChain
             newLocalSellResource = null;
             newLocalSellAmountBuffer = "";
             newLocalSellAmount = 0;
+
+            complexSubTab = 0;
+            scrollPosOverview = Vector2.zero;
+            scrollPosProduction = Vector2.zero;
+            scrollPosRoutes = Vector2.zero;
+            newRouteOther = null;
+            newRouteResource = null;
+            newRouteAmountBuffer = "";
+            newRouteAmount = 0;
+            newRouteIsOutgoing = true;
         }
 
         public void OnTabSwitch()
@@ -443,54 +466,98 @@ namespace FactionColonies.SupplyChain
             Widgets.EndScrollView();
         }
 
-        // --- Complex Mode Tab (allocations + local stockpile + routes + sell orders) ---
+        // --- Complex Mode Tab (sub-tabs: Overview, Production, Routes) ---
+
+        private static readonly Color AccentPositive = new Color(0.3f, 0.8f, 0.3f);
+        private static readonly Color AccentNegative = new Color(0.9f, 0.3f, 0.3f);
+        private static readonly Color AccentNeutral = new Color(0.5f, 0.5f, 0.5f);
+        private const float AccentW = 4f;
 
         private void DrawComplexModeTab(Rect boundingBox)
         {
-            Rect inner = boundingBox.ContractedBy(10f);
+            Rect inner = boundingBox.ContractedBy(5f);
 
-            // Calculate total height for scroll
-            int resourceCount = 0;
-            foreach (ResourceFC resource in uiSettlement.Resources)
+            // Sub-tab bar
+            float tabH = 24f;
+            float tabW = inner.width / 3f;
+            string[] tabLabels = new string[]
             {
-                if (!resource.def.isPoolResource)
-                    resourceCount++;
+                (string)"SC_SubOverview".Translate(),
+                (string)"SC_SubProduction".Translate(),
+                (string)"SC_SubRoutes".Translate()
+            };
+
+            Rect chosenRect = new Rect();
+            for (int i = 0; i < 3; i++)
+            {
+                Rect tabRect = new Rect(inner.x + tabW * i, inner.y, tabW, tabH);
+                if (UIUtil.ButtonFlat(tabRect, tabLabels[i], highlighted: complexSubTab == i))
+                    complexSubTab = i;
+                if (complexSubTab == i)
+                    chosenRect = tabRect;
             }
 
-            float rowHeight = 35f;
-            float barHeight = 28f;
-            // Allocations + local stockpile bars + routes + sell orders
-            float totalHeight = resourceCount * rowHeight + 60f  // allocations
-                + resourceCount * (barHeight + 2f) + 60f          // local stockpile bars
-                + 200f                                             // routes section estimate
-                + needStates.Count * 26f + 50f                    // needs section
-                + localSellOrders.Count * 28f + 80f;              // sell orders
+            // Tab underline decoration
+            Color origColor = GUI.color;
+            GUI.color = Color.gray;
+            Widgets.DrawLineHorizontal(inner.x, chosenRect.yMax, chosenRect.x - inner.x);
+            Widgets.DrawLineVertical(chosenRect.x, chosenRect.y, chosenRect.height);
+            Widgets.DrawLineHorizontal(chosenRect.x, chosenRect.y, chosenRect.width);
+            Widgets.DrawLineVertical(chosenRect.xMax, chosenRect.y, chosenRect.height);
+            Widgets.DrawLineHorizontal(chosenRect.xMax, chosenRect.yMax, inner.xMax - chosenRect.xMax);
+            GUI.color = origColor;
 
-            Rect viewRect = new Rect(0f, 0f, inner.width - 16f, totalHeight);
-            Rect scrollRect = new Rect(inner.x, inner.y, inner.width, inner.height);
+            // Content area below tabs
+            float contentY = inner.y + tabH;
+            Rect contentRect = new Rect(inner.x, contentY, inner.width, inner.yMax - contentY);
 
-            Widgets.BeginScrollView(scrollRect, ref scrollPos, viewRect);
-            float curY = 0f;
+            if (complexSubTab == 0)
+                DrawComplexOverview(contentRect);
+            else if (complexSubTab == 1)
+                DrawComplexProduction(contentRect);
+            else
+                DrawComplexRoutes(contentRect);
+        }
 
-            // --- Allocation sliders ---
-            Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0f, curY, viewRect.width, 30f), "SC_ProductionAllocations".Translate());
-            Text.Font = GameFont.Small;
-            curY += 36f;
+        // --- Complex Sub-Tab 0: Overview (stockpile + needs) ---
 
-            DrawAllocationSliders(viewRect, ref curY, rowHeight);
-            curY += 16f;
+        private void DrawComplexOverview(Rect rect)
+        {
+            const float barHeight = 28f;
+            const float sectionPad = 8f;
 
-            // --- Local Stockpile Bars ---
-            Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0f, curY, viewRect.width, 30f), "SC_LocalStockpile".Translate());
-            Text.Font = GameFont.Small;
-            curY += 36f;
-
-            float barWidth = 300f;
             WorldComponent_SupplyChain flowWc = SupplyChainCache.Comp;
             WorldSettlementFC flowSettlement = WorldSettlement;
 
+            // Count resources for height calculation
+            int resourceCount = 0;
+            foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+            {
+                if (def.isPoolResource) continue;
+                double cap = localPool != null ? localPool.GetCap(def) : 0;
+                if (cap > 0) resourceCount++;
+            }
+
+            float stockpileH = 36f + resourceCount * (barHeight + 2f) + sectionPad;
+            float needsH = needStates.Count > 0 ? 36f + needStates.Count * 26f + sectionPad : 0f;
+            float totalHeight = stockpileH + needsH + 16f;
+            float scrollMargin = totalHeight > rect.height ? 16f : 0f;
+
+            Rect viewRect = new Rect(0f, 0f, rect.width - scrollMargin, totalHeight);
+            Widgets.BeginScrollView(rect, ref scrollPosOverview, viewRect);
+            float curY = 4f;
+
+            // --- Local Stockpile section ---
+            float stockpileSectionStart = curY;
+            Text.Font = GameFont.Medium;
+            Widgets.Label(new Rect(AccentW + 6f, curY, viewRect.width, 30f), "SC_LocalStockpile".Translate());
+            Text.Font = GameFont.Small;
+            curY += 34f;
+
+            float barWidth = viewRect.width - 150f - 160f - AccentW - 6f;
+            if (barWidth < 100f) barWidth = 100f;
+
+            int idx = 0;
             foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
             {
                 if (def.isPoolResource) continue;
@@ -501,44 +568,93 @@ namespace FactionColonies.SupplyChain
 
                 float fillPct = cap > 0 ? (float)(amount / cap) : 0f;
 
-                if (def.Icon != null)
-                    GUI.DrawTexture(new Rect(0f, curY + 2f, 24f, 24f), def.Icon);
+                Rect rowRect = new Rect(0f, curY, viewRect.width, barHeight);
+                if (idx % 2 == 0) Widgets.DrawHighlight(rowRect);
 
-                // Flow indicator
+                // Flow calculation
                 WorldComponent_SupplyChain.FlowBreakdown flow = default(WorldComponent_SupplyChain.FlowBreakdown);
                 if (flowWc != null && flowSettlement != null)
                     flow = flowWc.CalculateFlow(flowSettlement, this, def);
-                UIUtilSC.DrawFlowIndicator(26f, curY + 6f, flow.Net);
+
+                // Left accent bar (colored by flow)
+                Color accentColor = flow.Net > 0.01 ? AccentPositive : flow.Net < -0.01 ? AccentNegative : AccentNeutral;
+                Widgets.DrawBoxSolid(new Rect(0f, curY, AccentW, barHeight), accentColor);
+
+                float contentX = AccentW + 4f;
+
+                if (def.Icon != null)
+                    GUI.DrawTexture(new Rect(contentX, curY + 2f, 24f, 24f), def.Icon);
+
+                UIUtilSC.DrawFlowIndicator(contentX + 26f, curY + 6f, flow.Net);
 
                 Text.Anchor = TextAnchor.MiddleLeft;
-                Widgets.Label(new Rect(42f, curY, 100f, barHeight), def.label.CapitalizeFirst());
+                Widgets.Label(new Rect(contentX + 42f, curY, 100f, barHeight), def.label.CapitalizeFirst());
 
-                Rect barRect = new Rect(150f, curY + 4f, barWidth, barHeight - 8f);
+                Rect barRect = new Rect(contentX + 148f, curY + 4f, barWidth, barHeight - 8f);
                 Widgets.FillableBar(barRect, fillPct);
 
-                Widgets.Label(new Rect(150f + barWidth + 8f, curY, 150f, barHeight),
+                Widgets.Label(new Rect(barRect.xMax + 8f, curY, 150f, barHeight),
                     "SC_StockpileAmount".Translate(amount.ToString("F1"), cap.ToString("F0")));
 
-                Rect rowTipRect = new Rect(0f, curY, viewRect.width, barHeight);
-                UIUtil.TipRegionByText(rowTipRect, UIUtilSC.BuildFlowTooltip(def, amount, cap, flow));
-
+                UIUtil.TipRegionByText(rowRect, UIUtilSC.BuildFlowTooltip(def, amount, cap, flow));
                 Text.Anchor = TextAnchor.UpperLeft;
 
                 curY += barHeight + 2f;
+                idx++;
             }
-            curY += 16f;
 
-            // --- Routes ---
-            DrawRoutesSummary(viewRect, ref curY);
-            curY += 16f;
+            // Draw section box around stockpile
+            Widgets.DrawBox(new Rect(0f, stockpileSectionStart, viewRect.width, curY - stockpileSectionStart + 2f));
+            curY += sectionPad;
 
-            // --- Needs ---
-            DrawNeedsSection(viewRect, ref curY);
-            curY += 16f;
+            // --- Settlement Needs section ---
+            if (needStates.Count > 0)
+            {
+                float needsSectionStart = curY;
+                DrawNeedsSectionPolished(viewRect, ref curY);
+                Widgets.DrawBox(new Rect(0f, needsSectionStart, viewRect.width, curY - needsSectionStart + 2f));
+            }
 
-            // --- Local Sell Orders ---
+            Widgets.EndScrollView();
+        }
+
+        // --- Complex Sub-Tab 1: Production (sliders + sell orders) ---
+
+        private void DrawComplexProduction(Rect rect)
+        {
+            const float rowHeight = 35f;
+            const float sectionPad = 8f;
+
+            int resourceCount = 0;
+            foreach (ResourceFC resource in uiSettlement.Resources)
+            {
+                if (!resource.def.isPoolResource) resourceCount++;
+            }
+
+            float allocH = 36f + resourceCount * rowHeight + sectionPad;
+            float sellH = 36f + localSellOrders.Count * 28f + 32f + sectionPad;
+            float totalHeight = allocH + sellH + 16f;
+            float scrollMargin = totalHeight > rect.height ? 16f : 0f;
+
+            Rect viewRect = new Rect(0f, 0f, rect.width - scrollMargin, totalHeight);
+            Widgets.BeginScrollView(rect, ref scrollPosProduction, viewRect);
+            float curY = 4f;
+
+            // --- Allocation sliders section ---
+            float allocStart = curY;
             Text.Font = GameFont.Medium;
-            Rect localSellHeaderRect = new Rect(0f, curY, viewRect.width, 30f);
+            Widgets.Label(new Rect(AccentW + 6f, curY, viewRect.width, 30f), "SC_ProductionAllocations".Translate());
+            Text.Font = GameFont.Small;
+            curY += 34f;
+
+            DrawAllocationSliders(viewRect, ref curY, rowHeight);
+            Widgets.DrawBox(new Rect(0f, allocStart, viewRect.width, curY - allocStart + 2f));
+            curY += sectionPad;
+
+            // --- Sell Orders section ---
+            float sellStart = curY;
+            Text.Font = GameFont.Medium;
+            Rect localSellHeaderRect = new Rect(AccentW + 6f, curY, viewRect.width, 30f);
             Widgets.Label(localSellHeaderRect, "SC_LocalSellOrders".Translate());
             UIUtil.TipRegionByText(localSellHeaderRect, (string)"SC_SellOrdersTooltip".Translate(
                 SupplyChainSettings.overflowPenaltyRate.ToString("P0")));
@@ -546,27 +662,33 @@ namespace FactionColonies.SupplyChain
             curY += 34f;
 
             List<SellOrder> toRemove = null;
+            int sellIdx = 0;
             foreach (SellOrder order in localSellOrders)
             {
                 if (order.resource == null) continue;
 
+                Rect sellRow = new Rect(0f, curY, viewRect.width, 26f);
+                if (sellIdx % 2 == 0) Widgets.DrawHighlight(sellRow);
+                Widgets.DrawBoxSolid(new Rect(0f, curY, AccentW, 26f), AccentUtil.Income);
+
+                float cx = AccentW + 4f;
                 Text.Anchor = TextAnchor.MiddleLeft;
                 if (order.resource.Icon != null)
-                    GUI.DrawTexture(new Rect(0f, curY + 2f, 20f, 20f), order.resource.Icon);
+                    GUI.DrawTexture(new Rect(cx, curY + 3f, 20f, 20f), order.resource.Icon);
 
-                Widgets.Label(new Rect(24f, curY, 120f, 26f),
+                Widgets.Label(new Rect(cx + 24f, curY, 120f, 26f),
                     order.resource.label.CapitalizeFirst());
-                Widgets.Label(new Rect(150f, curY, 130f, 26f),
+                Widgets.Label(new Rect(cx + 148f, curY, 130f, 26f),
                     "SC_UnitsPerPeriod".Translate(order.amountPerPeriod.ToString("F1")));
 
                 float expectedSilver = (float)(order.amountPerPeriod * FCSettings.silverPerResource
                     * SupplyChainSettings.overflowPenaltyRate);
                 GUI.color = new Color(0.7f, 1f, 0.7f);
-                Widgets.Label(new Rect(290f, curY, 100f, 26f),
+                Widgets.Label(new Rect(cx + 284f, curY, 100f, 26f),
                     "SC_ExpectedSilver".Translate(expectedSilver.ToString("F0")));
                 GUI.color = Color.white;
 
-                if (Widgets.ButtonText(new Rect(400f, curY, 60f, 24f), "SC_Remove".Translate()))
+                if (Widgets.ButtonText(new Rect(cx + 390f, curY, 60f, 24f), "SC_Remove".Translate()))
                 {
                     if (toRemove == null) toRemove = new List<SellOrder>();
                     toRemove.Add(order);
@@ -574,6 +696,7 @@ namespace FactionColonies.SupplyChain
 
                 Text.Anchor = TextAnchor.UpperLeft;
                 curY += 28f;
+                sellIdx++;
             }
             if (toRemove != null)
             {
@@ -581,11 +704,246 @@ namespace FactionColonies.SupplyChain
                     localSellOrders.Remove(order);
             }
 
-            // Add new local sell order
             curY += 4f;
             DrawAddLocalSellOrderRow(viewRect, ref curY);
 
+            Widgets.DrawBox(new Rect(0f, sellStart, viewRect.width, curY - sellStart + 2f));
+
             Widgets.EndScrollView();
+        }
+
+        // --- Complex Sub-Tab 2: Routes ---
+
+        private void DrawComplexRoutes(Rect rect)
+        {
+            WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
+            if (wc == null) return;
+
+            WorldSettlementFC ws = WorldSettlement;
+            if (ws == null) return;
+
+            // Count routes for height estimate
+            int routeCount = 0;
+            foreach (SupplyRoute route in wc.SupplyRoutes)
+            {
+                if (!route.IsValid()) continue;
+                if (newRouteIsOutgoing && route.source == ws) routeCount++;
+                else if (!newRouteIsOutgoing && route.destination == ws) routeCount++;
+            }
+
+            float totalHeight = 30f + 36f + routeCount * 30f + 60f + 30f;
+            float scrollMargin = totalHeight > rect.height ? 16f : 0f;
+
+            Rect viewRect = new Rect(0f, 0f, rect.width - scrollMargin, totalHeight);
+            Widgets.BeginScrollView(rect, ref scrollPosRoutes, viewRect);
+            float curY = 4f;
+
+            // --- Direction toggle ---
+            float toggleW = viewRect.width / 2f;
+            if (UIUtil.ButtonFlat(new Rect(0f, curY, toggleW, 24f),
+                (string)"SC_DirectionFrom".Translate(), highlighted: newRouteIsOutgoing))
+                newRouteIsOutgoing = true;
+            if (UIUtil.ButtonFlat(new Rect(toggleW, curY, toggleW, 24f),
+                (string)"SC_DirectionTo".Translate(), highlighted: !newRouteIsOutgoing))
+                newRouteIsOutgoing = false;
+            curY += 28f;
+
+            // --- Route list section ---
+            float routeSectionStart = curY;
+            Text.Font = GameFont.Medium;
+            string routeHeader = newRouteIsOutgoing
+                ? (string)"SC_RoutesOutgoing".Translate()
+                : (string)"SC_RoutesIncoming".Translate();
+            Widgets.Label(new Rect(AccentW + 6f, curY, viewRect.width, 30f), routeHeader);
+            Text.Font = GameFont.Small;
+            curY += 32f;
+
+            SupplyRoute routeToRemove = null;
+            int routeIdx = 0;
+            foreach (SupplyRoute route in wc.SupplyRoutes)
+            {
+                if (!route.IsValid()) continue;
+                bool isOutgoing = route.source == ws;
+                bool isIncoming = route.destination == ws;
+                if (newRouteIsOutgoing && !isOutgoing) continue;
+                if (!newRouteIsOutgoing && !isIncoming) continue;
+
+                route.RecacheIfDirty();
+
+                Rect rowRect = new Rect(0f, curY, viewRect.width, 28f);
+                if (routeIdx % 2 == 0) Widgets.DrawHighlight(rowRect);
+
+                // Accent bar colored by resource
+                Color resColor = route.resource != null ? route.resource.color : Color.gray;
+                Widgets.DrawBoxSolid(new Rect(0f, curY, AccentW, 28f), resColor);
+
+                float cx = AccentW + 4f;
+                Text.Anchor = TextAnchor.MiddleLeft;
+
+                // Direction label
+                if (isOutgoing)
+                {
+                    GUI.color = new Color(1f, 0.85f, 0.6f);
+                    Widgets.Label(new Rect(cx, curY, 30f, 26f), "SC_RouteOut".Translate());
+                }
+                else
+                {
+                    GUI.color = new Color(0.6f, 0.85f, 1f);
+                    Widgets.Label(new Rect(cx, curY, 30f, 26f), "SC_RouteIn".Translate());
+                }
+                GUI.color = Color.white;
+
+                // Resource icon + name
+                if (route.resource != null && route.resource.Icon != null)
+                    GUI.DrawTexture(new Rect(cx + 34f, curY + 4f, 20f, 20f), route.resource.Icon);
+
+                string resName = route.resource != null ? route.resource.label.CapitalizeFirst() : "?";
+                Widgets.Label(new Rect(cx + 58f, curY, 90f, 26f), resName);
+
+                // Other settlement + amount
+                string otherName = isOutgoing ? route.destination.Name : route.source.Name;
+                string detail = isOutgoing
+                    ? (string)"SC_RouteOutDetail".Translate(otherName, route.amountPerPeriod.ToString("F1"))
+                    : (string)"SC_RouteInDetail".Translate(otherName, route.amountPerPeriod.ToString("F1"));
+                Widgets.Label(new Rect(cx + 152f, curY, 170f, 26f), detail);
+
+                // Efficiency
+                GUI.color = new Color(0.7f, 1f, 0.7f);
+                Widgets.Label(new Rect(cx + 326f, curY, 70f, 26f),
+                    "SC_EffLabel".Translate((route.CachedEfficiency * 100).ToString("F0")));
+                GUI.color = Color.white;
+
+                // Remove button
+                if (Widgets.ButtonText(new Rect(viewRect.width - 60f, curY + 1f, 56f, 24f), "SC_Remove".Translate()))
+                    routeToRemove = route;
+
+                Text.Anchor = TextAnchor.UpperLeft;
+                curY += 30f;
+                routeIdx++;
+            }
+
+            if (routeToRemove != null)
+                wc.SupplyRoutes.Remove(routeToRemove);
+
+            if (routeIdx == 0)
+            {
+                Text.Font = GameFont.Tiny;
+                GUI.color = Color.gray;
+                Widgets.Label(new Rect(AccentW + 6f, curY, viewRect.width, 24f),
+                    "SC_NoRoutesDirection".Translate());
+                GUI.color = Color.white;
+                Text.Font = GameFont.Small;
+                curY += 26f;
+            }
+
+            Widgets.DrawBox(new Rect(0f, routeSectionStart, viewRect.width, curY - routeSectionStart + 2f));
+            curY += 12f;
+
+            // --- Add Route form ---
+            DrawAddRouteForm(viewRect, ref curY, wc);
+
+            Widgets.EndScrollView();
+        }
+
+        // --- Complex Mode: Add Route (settlement-contextual) ---
+
+        private void DrawAddRouteForm(Rect viewRect, ref float curY, WorldComponent_SupplyChain wc)
+        {
+            FactionFC faction = FactionCache.FactionComp;
+            if (faction == null) return;
+
+            WorldSettlementFC ws = WorldSettlement;
+
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(new Rect(0f, curY, 70f, 26f), "SC_NewRoute".Translate());
+
+            float bx = 74f;
+
+            // Resource picker
+            string resLabel = newRouteResource != null
+                ? newRouteResource.label.CapitalizeFirst()
+                : (string)"SC_ResourcePicker".Translate();
+            if (Widgets.ButtonText(new Rect(bx, curY, 110f, 24f), resLabel))
+            {
+                List<FloatMenuOption> options = new List<FloatMenuOption>();
+                foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+                {
+                    if (def.isPoolResource) continue;
+                    ResourceTypeDef captured = def;
+                    options.Add(new FloatMenuOption(def.label.CapitalizeFirst(), delegate { newRouteResource = captured; }));
+                }
+                Find.WindowStack.Add(new FloatMenu(options));
+            }
+            bx += 114f;
+
+            // Other settlement picker
+            float pickerW = viewRect.width - bx - 74f - 54f - 8f;
+            if (pickerW < 120f) pickerW = 120f;
+
+            string otherLabel = newRouteOther != null
+                ? newRouteOther.Name
+                : (string)"SC_PickSettlement".Translate();
+            if (Widgets.ButtonText(new Rect(bx, curY, pickerW, 24f), otherLabel))
+            {
+                List<FloatMenuOption> options = new List<FloatMenuOption>();
+                foreach (WorldSettlementFC s in faction.settlements)
+                {
+                    if (s == ws) continue;
+                    WorldSettlementFC captured = s;
+                    string label = s.Name;
+                    if (newRouteResource != null)
+                    {
+                        if (newRouteIsOutgoing)
+                        {
+                            // Show need info for destination
+                            foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
+                            {
+                                if (needDef.resource == newRouteResource)
+                                {
+                                    double demand = needDef.CalculateDemand(captured);
+                                    label += " (need: " + demand.ToString("F1") + ")";
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // Show production info for source
+                            ResourceFC res = s.GetResource(newRouteResource);
+                            if (res != null)
+                                label += " (prod: " + res.rawTotalProduction.ToString("F1") + ")";
+                        }
+                    }
+                    options.Add(new FloatMenuOption(label, delegate { newRouteOther = captured; }));
+                }
+                Find.WindowStack.Add(new FloatMenu(options));
+            }
+            bx += pickerW + 4f;
+
+            // Amount
+            Widgets.TextFieldNumeric(new Rect(bx, curY, 70f, 24f),
+                ref newRouteAmount, ref newRouteAmountBuffer, 0f, 9999f);
+            bx += 74f;
+
+            // Add button
+            if (Widgets.ButtonText(new Rect(bx, curY, 50f, 24f), "SC_Add".Translate()))
+            {
+                if (newRouteOther != null && newRouteResource != null && newRouteAmount > 0)
+                {
+                    WorldSettlementFC src = newRouteIsOutgoing ? ws : newRouteOther;
+                    WorldSettlementFC dest = newRouteIsOutgoing ? newRouteOther : ws;
+                    SupplyRoute route = new SupplyRoute(src, dest, newRouteResource, newRouteAmount);
+                    wc.SupplyRoutes.Add(route);
+
+                    newRouteOther = null;
+                    newRouteResource = null;
+                    newRouteAmount = 0;
+                    newRouteAmountBuffer = "";
+                }
+            }
+
+            Text.Anchor = TextAnchor.UpperLeft;
+            curY += 28f;
         }
 
         // --- Shared: Allocation Sliders ---
@@ -709,6 +1067,80 @@ namespace FactionColonies.SupplyChain
 
                 Text.Anchor = TextAnchor.UpperLeft;
                 curY += 26f;
+            }
+        }
+
+        private void DrawNeedsSectionPolished(Rect viewRect, ref float curY)
+        {
+            if (needStates.Count == 0) return;
+
+            Text.Font = GameFont.Medium;
+            Widgets.Label(new Rect(AccentW + 6f, curY, viewRect.width, 30f), "SC_SettlementNeeds".Translate());
+            Text.Font = GameFont.Small;
+            curY += 34f;
+
+            int idx = 0;
+            foreach (NeedState state in needStates)
+            {
+                if (state.resource == null) continue;
+
+                float satisfaction = state.Satisfaction;
+
+                Rect rowRect = new Rect(0f, curY, viewRect.width, 24f);
+                if (idx % 2 == 0) Widgets.DrawHighlight(rowRect);
+
+                // Left accent bar colored by satisfaction
+                Color needAccent = satisfaction > 0.8f ? AccentPositive
+                    : satisfaction > 0.4f ? new Color(0.9f, 0.8f, 0.2f)
+                    : AccentNegative;
+                Widgets.DrawBoxSolid(new Rect(0f, curY, AccentW, 24f), needAccent);
+
+                float cx = AccentW + 4f;
+
+                if (state.resource.Icon != null)
+                    GUI.DrawTexture(new Rect(cx, curY + 2f, 20f, 20f), state.resource.Icon);
+
+                Text.Anchor = TextAnchor.MiddleLeft;
+                string label;
+                if (state.needId.StartsWith("bldg."))
+                    label = state.needId.Replace("bldg.", "").Replace(".", " - ");
+                else
+                {
+                    SettlementNeedDef needDef = DefDatabase<SettlementNeedDef>.GetNamedSilentFail(state.needId);
+                    label = needDef != null ? needDef.label.CapitalizeFirst() : state.needId;
+                }
+                Widgets.Label(new Rect(cx + 24f, curY, 80f, 24f), label);
+
+                Rect barRect = new Rect(cx + 108f, curY + 4f, 150f, 16f);
+                if (satisfaction > 0.8f)
+                    GUI.color = new Color(0.4f, 0.8f, 0.4f);
+                else if (satisfaction > 0.4f)
+                    GUI.color = new Color(0.9f, 0.8f, 0.2f);
+                else
+                    GUI.color = new Color(0.9f, 0.3f, 0.3f);
+                Widgets.FillableBar(barRect, satisfaction);
+                GUI.color = Color.white;
+
+                Widgets.Label(new Rect(cx + 264f, curY, 110f, 24f),
+                    "SC_SatisfactionDisplay".Translate(
+                        (satisfaction * 100f).ToString("F0"),
+                        state.fulfilled.ToString("F1"),
+                        state.demanded.ToString("F1")));
+
+                if (satisfaction < 1f)
+                {
+                    Text.Font = GameFont.Tiny;
+                    GUI.color = new Color(1f, 0.5f, 0.5f);
+                    string penaltyText = GetPenaltySummary(state);
+                    if (penaltyText != null)
+                        Widgets.Label(new Rect(cx + 380f, curY, 250f, 24f), penaltyText);
+                    GUI.color = Color.white;
+                    Text.Font = GameFont.Small;
+                }
+
+                Text.Anchor = TextAnchor.UpperLeft;
+                curY += 26f;
+                idx++;
             }
         }
 
