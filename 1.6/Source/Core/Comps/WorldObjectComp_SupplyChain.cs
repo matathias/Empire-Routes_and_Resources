@@ -548,13 +548,14 @@ namespace FactionColonies.SupplyChain
             float curY = 4f;
 
             // --- Local Stockpile section ---
-            float stockpileSectionStart = curY;
             Text.Font = GameFont.Medium;
             Widgets.Label(new Rect(AccentW + 6f, curY, viewRect.width, 30f), "SC_LocalStockpile".Translate());
             Text.Font = GameFont.Small;
             curY += 34f;
 
-            float barWidth = viewRect.width - 150f - 160f - AccentW - 6f;
+            const float arrowSize = 16f;
+            float contentX = AccentW + 4f;
+            float barWidth = viewRect.width - contentX - 28f - 100f - arrowSize - 8f - 150f - 4f;
             if (barWidth < 100f) barWidth = 100f;
 
             int idx = 0;
@@ -569,31 +570,46 @@ namespace FactionColonies.SupplyChain
                 float fillPct = cap > 0 ? (float)(amount / cap) : 0f;
 
                 Rect rowRect = new Rect(0f, curY, viewRect.width, barHeight);
-                if (idx % 2 == 0) Widgets.DrawHighlight(rowRect);
 
                 // Flow calculation
                 WorldComponent_SupplyChain.FlowBreakdown flow = default(WorldComponent_SupplyChain.FlowBreakdown);
                 if (flowWc != null && flowSettlement != null)
                     flow = flowWc.CalculateFlow(flowSettlement, this, def);
 
+                // Row highlight: alternating gray + flow-based red/green
+                if (idx % 2 == 0) Widgets.DrawHighlight(rowRect);
+                UIUtilSC.DrawFlowHighlight(rowRect, flow.Net);
+
                 // Left accent bar (colored by flow)
                 Color accentColor = flow.Net > 0.01 ? AccentPositive : flow.Net < -0.01 ? AccentNegative : AccentNeutral;
                 Widgets.DrawBoxSolid(new Rect(0f, curY, AccentW, barHeight), accentColor);
 
-                float contentX = AccentW + 4f;
-
                 if (def.Icon != null)
                     GUI.DrawTexture(new Rect(contentX, curY + 2f, 24f, 24f), def.Icon);
 
-                UIUtilSC.DrawFlowIndicator(contentX + 26f, curY + 6f, flow.Net);
-
                 Text.Anchor = TextAnchor.MiddleLeft;
-                Widgets.Label(new Rect(contentX + 42f, curY, 100f, barHeight), def.label.CapitalizeFirst());
+                Widgets.Label(new Rect(contentX + 28f, curY, 100f, barHeight), def.label.CapitalizeFirst());
 
-                Rect barRect = new Rect(contentX + 148f, curY + 4f, barWidth, barHeight - 8f);
+                float barX = contentX + 130f;
+                Rect barRect = new Rect(barX, curY + 4f, barWidth, barHeight - 8f);
                 Widgets.FillableBar(barRect, fillPct);
 
-                Widgets.Label(new Rect(barRect.xMax + 8f, curY, 150f, barHeight),
+                // Arrow indicator (between bar and amount text)
+                float arrowX = barRect.xMax + 2f;
+                if (flow.Net > 0.01)
+                {
+                    GUI.color = AccentUtil.Income;
+                    GUI.DrawTexture(new Rect(arrowX, curY + (barHeight - arrowSize) / 2f, arrowSize, arrowSize), TexUI.ArrowTexRight);
+                    GUI.color = Color.white;
+                }
+                else if (flow.Net < -0.01)
+                {
+                    GUI.color = AccentUtil.Expense;
+                    GUI.DrawTexture(new Rect(arrowX, curY + (barHeight - arrowSize) / 2f, arrowSize, arrowSize), TexUI.ArrowTexLeft);
+                    GUI.color = Color.white;
+                }
+
+                Widgets.Label(new Rect(arrowX + arrowSize + 4f, curY, 150f, barHeight),
                     "SC_StockpileAmount".Translate(amount.ToString("F1"), cap.ToString("F0")));
 
                 UIUtil.TipRegionByText(rowRect, UIUtilSC.BuildFlowTooltip(def, amount, cap, flow));
@@ -603,16 +619,12 @@ namespace FactionColonies.SupplyChain
                 idx++;
             }
 
-            // Draw section box around stockpile
-            Widgets.DrawBox(new Rect(0f, stockpileSectionStart, viewRect.width, curY - stockpileSectionStart + 2f));
-            curY += sectionPad;
-
-            // --- Settlement Needs section ---
+            // Separator between stockpile and needs
             if (needStates.Count > 0)
             {
-                float needsSectionStart = curY;
+                curY += sectionPad;
+
                 DrawNeedsSectionPolished(viewRect, ref curY);
-                Widgets.DrawBox(new Rect(0f, needsSectionStart, viewRect.width, curY - needsSectionStart + 2f));
             }
 
             Widgets.EndScrollView();
@@ -641,19 +653,17 @@ namespace FactionColonies.SupplyChain
             float curY = 4f;
 
             // --- Allocation sliders section ---
-            float allocStart = curY;
             Text.Font = GameFont.Medium;
             Widgets.Label(new Rect(AccentW + 6f, curY, viewRect.width, 30f), "SC_ProductionAllocations".Translate());
             Text.Font = GameFont.Small;
             curY += 34f;
 
             DrawAllocationSliders(viewRect, ref curY, rowHeight);
-            Widgets.DrawBox(new Rect(0f, allocStart, viewRect.width, curY - allocStart + 2f));
             curY += sectionPad;
 
             // --- Sell Orders section ---
-            float sellStart = curY;
             Text.Font = GameFont.Medium;
+            Text.Anchor = TextAnchor.MiddleCenter;
             Rect localSellHeaderRect = new Rect(AccentW + 6f, curY, viewRect.width, 30f);
             Widgets.Label(localSellHeaderRect, "SC_LocalSellOrders".Translate());
             UIUtil.TipRegionByText(localSellHeaderRect, (string)"SC_SellOrdersTooltip".Translate(
@@ -707,8 +717,6 @@ namespace FactionColonies.SupplyChain
             curY += 4f;
             DrawAddLocalSellOrderRow(viewRect, ref curY);
 
-            Widgets.DrawBox(new Rect(0f, sellStart, viewRect.width, curY - sellStart + 2f));
-
             Widgets.EndScrollView();
         }
 
@@ -722,6 +730,24 @@ namespace FactionColonies.SupplyChain
             WorldSettlementFC ws = WorldSettlement;
             if (ws == null) return;
 
+            float fixedHeaderH = 56f; // toggle (24) + gap (4) + add form (28)
+
+            // --- Direction toggle (fixed above scroll) ---
+            float toggleW = rect.width / 2f;
+            if (UIUtil.ButtonFlat(new Rect(rect.x, rect.y+2f, toggleW, 24f),
+                (string)"SC_DirectionFrom".Translate(), highlighted: newRouteIsOutgoing))
+                newRouteIsOutgoing = true;
+            if (UIUtil.ButtonFlat(new Rect(rect.x + toggleW, rect.y+2f, toggleW, 24f),
+                (string)"SC_DirectionTo".Translate(), highlighted: !newRouteIsOutgoing))
+                newRouteIsOutgoing = false;
+
+            // --- Add Route form (fixed above scroll) ---
+            float addCurY = rect.y + 30f;
+            DrawAddRouteFormFixed(rect.x, ref addCurY, rect.width, wc);
+
+            // --- Scrollable route list ---
+            Rect scrollRect = new Rect(rect.x, rect.y + fixedHeaderH, rect.width, rect.height - fixedHeaderH);
+
             // Count routes for height estimate
             int routeCount = 0;
             foreach (SupplyRoute route in wc.SupplyRoutes)
@@ -731,33 +757,14 @@ namespace FactionColonies.SupplyChain
                 else if (!newRouteIsOutgoing && route.destination == ws) routeCount++;
             }
 
-            float totalHeight = 30f + 36f + routeCount * 30f + 60f + 30f;
-            float scrollMargin = totalHeight > rect.height ? 16f : 0f;
+            float totalHeight = 36f + routeCount * 30f + 30f;
+            float scrollMargin = totalHeight > scrollRect.height ? 16f : 0f;
 
-            Rect viewRect = new Rect(0f, 0f, rect.width - scrollMargin, totalHeight);
-            Widgets.BeginScrollView(rect, ref scrollPosRoutes, viewRect);
+            Rect viewRect = new Rect(0f, 0f, scrollRect.width - scrollMargin, totalHeight);
+            Widgets.BeginScrollView(scrollRect, ref scrollPosRoutes, viewRect);
             float curY = 4f;
 
-            // --- Direction toggle ---
-            float toggleW = viewRect.width / 2f;
-            if (UIUtil.ButtonFlat(new Rect(0f, curY, toggleW, 24f),
-                (string)"SC_DirectionFrom".Translate(), highlighted: newRouteIsOutgoing))
-                newRouteIsOutgoing = true;
-            if (UIUtil.ButtonFlat(new Rect(toggleW, curY, toggleW, 24f),
-                (string)"SC_DirectionTo".Translate(), highlighted: !newRouteIsOutgoing))
-                newRouteIsOutgoing = false;
-            curY += 28f;
-
-            // --- Route list section ---
-            float routeSectionStart = curY;
-            Text.Font = GameFont.Medium;
-            string routeHeader = newRouteIsOutgoing
-                ? (string)"SC_RoutesOutgoing".Translate()
-                : (string)"SC_RoutesIncoming".Translate();
-            Widgets.Label(new Rect(AccentW + 6f, curY, viewRect.width, 30f), routeHeader);
-            Text.Font = GameFont.Small;
-            curY += 32f;
-
+            float dualAccentStart = (AccentW * 2) + 6f;
             SupplyRoute routeToRemove = null;
             int routeIdx = 0;
             foreach (SupplyRoute route in wc.SupplyRoutes)
@@ -773,11 +780,14 @@ namespace FactionColonies.SupplyChain
                 Rect rowRect = new Rect(0f, curY, viewRect.width, 28f);
                 if (routeIdx % 2 == 0) Widgets.DrawHighlight(rowRect);
 
-                // Accent bar colored by resource
-                Color resColor = route.resource != null ? route.resource.color : Color.gray;
-                Widgets.DrawBoxSolid(new Rect(0f, curY, AccentW, 28f), resColor);
+                // Dual accent bars: resource color + efficiency color
+                float eff = (float)route.CachedEfficiency;
+                Color routeAccent = route.resource != null ? route.resource.color : Color.gray;
+                Color effAccent = AccentUtil.GetStatColor(eff * 100f, false);
+                Widgets.DrawBoxSolid(new Rect(0f, curY, AccentW, 28f), routeAccent);
+                Widgets.DrawBoxSolid(new Rect(AccentW + 2f, curY, AccentW, 28f), effAccent);
 
-                float cx = AccentW + 4f;
+                float cx = dualAccentStart;
                 Text.Anchor = TextAnchor.MiddleLeft;
 
                 // Direction label
@@ -800,17 +810,18 @@ namespace FactionColonies.SupplyChain
                 string resName = route.resource != null ? route.resource.label.CapitalizeFirst() : "?";
                 Widgets.Label(new Rect(cx + 58f, curY, 90f, 26f), resName);
 
-                // Other settlement + amount
+                Rect efficiencyRect = new Rect(viewRect.width - 130f, curY, 66f, 26f);
+                Rect otherLabel = new Rect(cx + 152f, curY, efficiencyRect.x - (cx + 152f) - 3f, 26f);
+                // Other settlement + amount (wider column)
                 string otherName = isOutgoing ? route.destination.Name : route.source.Name;
                 string detail = isOutgoing
                     ? (string)"SC_RouteOutDetail".Translate(otherName, route.amountPerPeriod.ToString("F1"))
                     : (string)"SC_RouteInDetail".Translate(otherName, route.amountPerPeriod.ToString("F1"));
-                Widgets.Label(new Rect(cx + 152f, curY, 170f, 26f), detail);
+                Widgets.Label(otherLabel, detail);
 
-                // Efficiency
-                GUI.color = new Color(0.7f, 1f, 0.7f);
-                Widgets.Label(new Rect(cx + 326f, curY, 70f, 26f),
-                    "SC_EffLabel".Translate((route.CachedEfficiency * 100).ToString("F0")));
+                // Efficiency (right-aligned, color matches accent)
+                GUI.color = effAccent;
+                Widgets.Label(efficiencyRect, "SC_EffLabel".Translate((eff * 100).ToString("F0")));
                 GUI.color = Color.white;
 
                 // Remove button
@@ -835,12 +846,6 @@ namespace FactionColonies.SupplyChain
                 Text.Font = GameFont.Small;
                 curY += 26f;
             }
-
-            Widgets.DrawBox(new Rect(0f, routeSectionStart, viewRect.width, curY - routeSectionStart + 2f));
-            curY += 12f;
-
-            // --- Add Route form ---
-            DrawAddRouteForm(viewRect, ref curY, wc);
 
             Widgets.EndScrollView();
         }
@@ -946,10 +951,111 @@ namespace FactionColonies.SupplyChain
             curY += 28f;
         }
 
+        /// <summary>
+        /// Draws the add-route form at absolute screen coordinates (outside a scroll view).
+        /// </summary>
+        private void DrawAddRouteFormFixed(float x, ref float curY, float width, WorldComponent_SupplyChain wc)
+        {
+            FactionFC faction = FactionCache.FactionComp;
+            if (faction == null) return;
+
+            WorldSettlementFC ws = WorldSettlement;
+
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(new Rect(x, curY, 70f, 26f), "SC_NewRoute".Translate());
+
+            float bx = x + 74f;
+
+            // Resource picker
+            string resLabel = newRouteResource != null
+                ? newRouteResource.label.CapitalizeFirst()
+                : (string)"SC_ResourcePicker".Translate();
+            if (Widgets.ButtonText(new Rect(bx, curY, 110f, 24f), resLabel))
+            {
+                List<FloatMenuOption> options = new List<FloatMenuOption>();
+                foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+                {
+                    if (def.isPoolResource) continue;
+                    ResourceTypeDef captured = def;
+                    options.Add(new FloatMenuOption(def.label.CapitalizeFirst(), delegate { newRouteResource = captured; }));
+                }
+                Find.WindowStack.Add(new FloatMenu(options));
+            }
+            bx += 114f;
+
+            // Other settlement picker
+            float pickerW = width - (bx - x) - 74f - 54f - 8f;
+            if (pickerW < 120f) pickerW = 120f;
+
+            string otherLabel = newRouteOther != null
+                ? newRouteOther.Name
+                : (string)"SC_PickSettlement".Translate();
+            if (Widgets.ButtonText(new Rect(bx, curY, pickerW, 24f), otherLabel))
+            {
+                List<FloatMenuOption> options = new List<FloatMenuOption>();
+                foreach (WorldSettlementFC s in faction.settlements)
+                {
+                    if (s == ws) continue;
+                    WorldSettlementFC captured = s;
+                    string label = s.Name;
+                    if (newRouteResource != null)
+                    {
+                        if (newRouteIsOutgoing)
+                        {
+                            foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
+                            {
+                                if (needDef.resource == newRouteResource)
+                                {
+                                    double demand = needDef.CalculateDemand(captured);
+                                    label += " (need: " + demand.ToString("F1") + ")";
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            ResourceFC res = s.GetResource(newRouteResource);
+                            if (res != null)
+                                label += " (prod: " + res.rawTotalProduction.ToString("F1") + ")";
+                        }
+                    }
+                    options.Add(new FloatMenuOption(label, delegate { newRouteOther = captured; }));
+                }
+                Find.WindowStack.Add(new FloatMenu(options));
+            }
+            bx += pickerW + 4f;
+
+            // Amount
+            Widgets.TextFieldNumeric(new Rect(bx, curY, 70f, 24f),
+                ref newRouteAmount, ref newRouteAmountBuffer, 0f, 9999f);
+            bx += 74f;
+
+            // Add button
+            if (Widgets.ButtonText(new Rect(bx, curY, 50f, 24f), "SC_Add".Translate()))
+            {
+                if (newRouteOther != null && newRouteResource != null && newRouteAmount > 0)
+                {
+                    WorldSettlementFC src = newRouteIsOutgoing ? ws : newRouteOther;
+                    WorldSettlementFC dest = newRouteIsOutgoing ? newRouteOther : ws;
+                    SupplyRoute route = new SupplyRoute(src, dest, newRouteResource, newRouteAmount);
+                    wc.SupplyRoutes.Add(route);
+
+                    newRouteOther = null;
+                    newRouteResource = null;
+                    newRouteAmount = 0;
+                    newRouteAmountBuffer = "";
+                }
+            }
+
+            Text.Anchor = TextAnchor.UpperLeft;
+            curY += 28f;
+        }
+
         // --- Shared: Allocation Sliders ---
 
         private void DrawAllocationSliders(Rect viewRect, ref float curY, float rowHeight)
         {
+            int idx = 0;
             foreach (ResourceFC resource in uiSettlement.Resources)
             {
                 if (resource.def.isPoolResource)
@@ -965,18 +1071,27 @@ namespace FactionColonies.SupplyChain
 
                 Rect row = new Rect(0f, curY, viewRect.width, rowHeight);
 
+                // Alternating row highlights
+                if (idx % 2 == 0) Widgets.DrawHighlight(row);
+
+                // Resource-colored accent bar
+                Color resColor = def.color != default(Color) ? def.color : Color.gray;
+                Widgets.DrawBoxSolid(new Rect(0f, curY, AccentW, rowHeight), resColor);
+
+                float cx = AccentW + 4f;
+
                 if (def.Icon != null)
-                    GUI.DrawTexture(new Rect(row.x, row.y + 2f, 24f, 24f), def.Icon);
+                    GUI.DrawTexture(new Rect(cx, curY + 2f, 24f, 24f), def.Icon);
 
                 Text.Anchor = TextAnchor.MiddleLeft;
-                Widgets.Label(new Rect(row.x + 28f, row.y, 120f, rowHeight),
+                Widgets.Label(new Rect(cx + 28f, curY, 120f, rowHeight),
                     def.label.CapitalizeFirst());
-                Widgets.Label(new Rect(row.x + 150f, row.y, 80f, rowHeight),
+                Widgets.Label(new Rect(cx + 150f, curY, 80f, rowHeight),
                     "SC_ProdLabel".Translate(rawProd.ToString("F1")));
 
                 float sliderVal = (float)currentAlloc;
                 float newVal = Widgets.HorizontalSlider(
-                    new Rect(row.x + 235f, row.y + 8f, 200f, rowHeight - 16f),
+                    new Rect(cx + 235f, curY + 8f, 200f, rowHeight - 16f),
                     sliderVal, 0f, (float)maxAlloc, false,
                     null, null, null, 0.5f);
 
@@ -985,19 +1100,23 @@ namespace FactionColonies.SupplyChain
                     SetAllocation(def, newVal);
                 }
 
-                Widgets.Label(new Rect(row.x + 445f, row.y, 80f, rowHeight),
+                Widgets.Label(new Rect(cx + 445f, curY, 80f, rowHeight),
                     "SC_Units".Translate(currentAlloc.ToString("F1")));
 
                 float silverDiverted = (float)(currentAlloc * FCSettings.silverPerResource);
-                Text.Font = GameFont.Tiny;
-                GUI.color = new Color(1f, 0.7f, 0.3f);
-                Widgets.Label(new Rect(row.x + 530f, row.y, 100f, rowHeight),
-                    "SC_SilverDiverted".Translate(silverDiverted.ToString("F0")));
-                GUI.color = Color.white;
-                Text.Font = GameFont.Small;
+                if (silverDiverted >= 0.5f)
+                {
+                    Text.Font = GameFont.Tiny;
+                    GUI.color = new Color(1f, 0.7f, 0.3f);
+                    Widgets.Label(new Rect(cx + 530f, curY, 100f, rowHeight),
+                        "SC_SilverDiverted".Translate(silverDiverted.ToString("F0")));
+                    GUI.color = Color.white;
+                    Text.Font = GameFont.Small;
+                }
 
                 Text.Anchor = TextAnchor.UpperLeft;
                 curY += rowHeight;
+                idx++;
             }
         }
 
@@ -1075,6 +1194,7 @@ namespace FactionColonies.SupplyChain
             if (needStates.Count == 0) return;
 
             Text.Font = GameFont.Medium;
+            Text.Anchor = TextAnchor.MiddleCenter;
             Widgets.Label(new Rect(AccentW + 6f, curY, viewRect.width, 30f), "SC_SettlementNeeds".Translate());
             Text.Font = GameFont.Small;
             curY += 34f;
@@ -1138,10 +1258,60 @@ namespace FactionColonies.SupplyChain
                     Text.Font = GameFont.Small;
                 }
 
+                // Tooltip explaining demand source
+                string tooltip = BuildNeedTooltip(state);
+                if (tooltip != null)
+                    UIUtil.TipRegionByText(rowRect, tooltip);
+
                 Text.Anchor = TextAnchor.UpperLeft;
                 curY += 26f;
                 idx++;
             }
+        }
+
+        private string BuildNeedTooltip(NeedState state)
+        {
+            WorldSettlementFC ws = WorldSettlement;
+            if (ws == null) return null;
+
+            if (state.needId.StartsWith("bldg."))
+            {
+                // Building need: show building name + input amount
+                string bldgInfo = state.needId.Replace("bldg.", "").Replace(".", " - ");
+                return bldgInfo + ": " + state.demanded.ToString("F1") + " " + state.resource.label;
+            }
+
+            SettlementNeedDef needDef = DefDatabase<SettlementNeedDef>.GetNamedSilentFail(state.needId);
+            if (needDef == null) return null;
+
+            string scalingDesc;
+            switch (needDef.scaling)
+            {
+                case NeedScaling.PerWorker:
+                    scalingDesc = needDef.baseAmount.ToString("F1") + " per worker x " + ws.workers + " = " + state.demanded.ToString("F1");
+                    break;
+                case NeedScaling.PerLevel:
+                    scalingDesc = needDef.baseAmount.ToString("F1") + " per level x " + ws.settlementLevel + " = " + state.demanded.ToString("F1");
+                    break;
+                default:
+                    scalingDesc = needDef.baseAmount.ToString("F1") + " (flat)";
+                    break;
+            }
+
+            string tip = needDef.label.CapitalizeFirst() + "\n" + scalingDesc;
+
+            if (state.Satisfaction < 1f && needDef.penalties != null)
+            {
+                tip += "\n\nPenalties:";
+                float deficit = 1f - state.Satisfaction;
+                foreach (NeedPenalty penalty in needDef.penalties)
+                {
+                    double penaltyVal = penalty.maxValue * deficit;
+                    tip += "\n  " + (penalty.label ?? penalty.stat.label) + ": -" + penaltyVal.ToString("F1");
+                }
+            }
+
+            return tip;
         }
 
         private string GetPenaltySummary(NeedState state)
