@@ -287,58 +287,6 @@ namespace FactionColonies.SupplyChain
             return flow;
         }
 
-        internal static string BuildFlowTooltip(ResourceTypeDef def, double amt, double cap, FlowBreakdown flow)
-        {
-            string tip = def.label.CapitalizeFirst() + ": " + amt.ToString("F1") + " / " + cap.ToString("F0");
-
-            double net = flow.Net;
-            if (net > 0.01)
-                tip += "\n" + (string)"SC_BarNetPositive".Translate(net.ToString("F1"));
-            else if (net < -0.01)
-                tip += "\n" + (string)"SC_BarNetNegative".Translate((-net).ToString("F1"));
-            else
-                tip += "\n" + (string)"SC_BarNetEven".Translate();
-
-            if (flow.production > 0)
-                tip += "\n" + (string)"SC_BarFlowProduction".Translate(flow.production.ToString("F1"));
-            if (flow.routeIn > 0)
-                tip += "\n" + (string)"SC_BarFlowRouteIn".Translate(flow.routeIn.ToString("F1"));
-            if (flow.needs > 0)
-                tip += "\n" + (string)"SC_BarFlowNeeds".Translate(flow.needs.ToString("F1"));
-            if (flow.routeOut > 0)
-                tip += "\n" + (string)"SC_BarFlowRouteOut".Translate(flow.routeOut.ToString("F1"));
-            if (flow.sellOrders > 0)
-                tip += "\n" + (string)"SC_BarFlowSellOrders".Translate(flow.sellOrders.ToString("F1"));
-
-            return tip;
-        }
-
-        internal static void DrawFlowIndicator(float x, float y, double net)
-        {
-            GameFont prevFont = Text.Font;
-            TextAnchor prevAnchor = Text.Anchor;
-            Text.Font = GameFont.Small;
-            Text.Anchor = TextAnchor.MiddleCenter;
-            if (net > 0.01)
-            {
-                GUI.color = AccentUtil.Income;
-                Widgets.Label(new Rect(x, y, 14f, 16f), "+");
-            }
-            else if (net < -0.01)
-            {
-                GUI.color = AccentUtil.Expense;
-                Widgets.Label(new Rect(x, y, 14f, 16f), "-");
-            }
-            else
-            {
-                GUI.color = Color.gray;
-                Widgets.Label(new Rect(x, y, 14f, 16f), "=");
-            }
-            GUI.color = Color.white;
-            Text.Font = prevFont;
-            Text.Anchor = prevAnchor;
-        }
-
         // --- Mode Switching ---
 
         public void SwitchMode(SupplyChainMode newMode)
@@ -833,7 +781,7 @@ namespace FactionColonies.SupplyChain
                     GUI.DrawTexture(new Rect(inner.x, curY + 2f, 24f, 24f), def.Icon);
 
                 FlowBreakdown simpleFlow = CalculateSimpleFlow(simpleFaction, def);
-                DrawFlowIndicator(inner.x + 26f, curY + 6f, simpleFlow.Net);
+                UIUtilSC.DrawFlowIndicator(inner.x + 26f, curY + 6f, simpleFlow.Net);
 
                 Text.Anchor = TextAnchor.MiddleLeft;
                 Widgets.Label(new Rect(inner.x + 42f, curY, 100f, barHeight), def.label.CapitalizeFirst());
@@ -845,7 +793,7 @@ namespace FactionColonies.SupplyChain
                     "SC_StockpileAmount".Translate(amount.ToString("F1"), cap.ToString("F0")));
 
                 Rect rowTipRect = new Rect(inner.x, curY, inner.width, barHeight);
-                UIUtil.TipRegionByText(rowTipRect, BuildFlowTooltip(def, amount, cap, simpleFlow));
+                UIUtil.TipRegionByText(rowTipRect, UIUtilSC.BuildFlowTooltip(def, amount, cap, simpleFlow));
 
                 Text.Anchor = TextAnchor.UpperLeft;
                 curY += barHeight + 2f;
@@ -1013,7 +961,7 @@ namespace FactionColonies.SupplyChain
 
                         if (resCount > 0)
                         {
-                            float totalBarW = rowW - cx - 4f;
+                            float totalBarW = rowW - cx - 4f - (3f * (resCount - 1));
                             float slotW = totalBarW / resCount;
                             float barX = cx;
 
@@ -1026,15 +974,19 @@ namespace FactionColonies.SupplyChain
 
                                 float fill = (float)(amt / cap);
 
+                                FlowBreakdown flow = CalculateFlow(settlement, comp, def);
+
+                                Rect slotRect = new Rect(barX, barY, slotW, 16f);
+                                UIUtilSC.DrawFlowHighlight(slotRect, flow.Net);
+
                                 // Icon
                                 if (def.Icon != null)
                                     GUI.DrawTexture(new Rect(barX, barY, 16f, 16f), def.Icon);
 
                                 // Flow indicator (between icon and bar)
-                                FlowBreakdown flow = CalculateFlow(settlement, comp, def);
                                 float indicatorW = 14f;
                                 float indX = barX + 18f;
-                                DrawFlowIndicator(indX, barY, flow.Net);
+                                UIUtilSC.DrawFlowIndicator(indX, barY, flow.Net);
 
                                 // Fill bar (after indicator)
                                 float barStart = indX + indicatorW + 2f;
@@ -1045,9 +997,9 @@ namespace FactionColonies.SupplyChain
 
                                 // Tooltip
                                 Rect tipRect = new Rect(barX, barY, slotW, 16f);
-                                UIUtil.TipRegionByText(tipRect, BuildFlowTooltip(def, amt, cap, flow));
+                                UIUtil.TipRegionByText(tipRect, UIUtilSC.BuildFlowTooltip(def, amt, cap, flow));
 
-                                barX += slotW;
+                                barX += slotW + 3f;
                             }
                         }
                     }

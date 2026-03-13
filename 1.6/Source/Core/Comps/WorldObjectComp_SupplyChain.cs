@@ -491,7 +491,7 @@ namespace FactionColonies.SupplyChain
                 WorldComponent_SupplyChain.FlowBreakdown flow = default(WorldComponent_SupplyChain.FlowBreakdown);
                 if (flowWc != null && flowSettlement != null)
                     flow = flowWc.CalculateFlow(flowSettlement, this, def);
-                WorldComponent_SupplyChain.DrawFlowIndicator(26f, curY + 6f, flow.Net);
+                UIUtilSC.DrawFlowIndicator(26f, curY + 6f, flow.Net);
 
                 Text.Anchor = TextAnchor.MiddleLeft;
                 Widgets.Label(new Rect(42f, curY, 100f, barHeight), def.label.CapitalizeFirst());
@@ -503,8 +503,7 @@ namespace FactionColonies.SupplyChain
                     "SC_StockpileAmount".Translate(amount.ToString("F1"), cap.ToString("F0")));
 
                 Rect rowTipRect = new Rect(0f, curY, viewRect.width, barHeight);
-                UIUtil.TipRegionByText(rowTipRect,
-                    WorldComponent_SupplyChain.BuildFlowTooltip(def, amount, cap, flow));
+                UIUtil.TipRegionByText(rowTipRect, UIUtilSC.BuildFlowTooltip(def, amount, cap, flow));
 
                 Text.Anchor = TextAnchor.UpperLeft;
 
