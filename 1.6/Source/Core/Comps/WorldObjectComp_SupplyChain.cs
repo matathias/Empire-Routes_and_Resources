@@ -370,7 +370,7 @@ namespace FactionColonies.SupplyChain
         {
             if (uiSettlement == null) return;
 
-            WorldComponent_SupplyChain wc = Find.World.GetComponent<WorldComponent_SupplyChain>();
+            WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
             if (wc != null)
                 wc.EnsureCapsAndPools();
             bool isComplex = wc != null && wc.Mode == SupplyChainMode.Complex;
@@ -706,7 +706,7 @@ namespace FactionColonies.SupplyChain
 
         private void DrawRoutesSummary(Rect viewRect, ref float curY)
         {
-            WorldComponent_SupplyChain wc = Find.World.GetComponent<WorldComponent_SupplyChain>();
+            WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
             if (wc == null) return;
 
             WorldSettlementFC ws = WorldSettlement;

@@ -51,7 +51,7 @@ namespace FactionColonies.SupplyChain
                 // If a world is loaded, apply the switch immediately
                 if (Find.World != null)
                 {
-                    WorldComponent_SupplyChain wc = Find.World.GetComponent<WorldComponent_SupplyChain>();
+                    WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
                     if (wc != null)
                         wc.SwitchMode(newMode);
                 }
