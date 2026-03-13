@@ -37,7 +37,7 @@ namespace FactionColonies.SupplyChain
         // Complex mode UI state
         private ResourceTypeDef newLocalSellResource;
         private string newLocalSellAmountBuffer = "";
-        private double newLocalSellAmount;
+        private float newLocalSellAmount;
 
         public WorldSettlementFC WorldSettlement
         {
@@ -202,7 +202,7 @@ namespace FactionColonies.SupplyChain
                 }
             }
 
-            return total;
+            return total != 0.0 ? total : stat.IdentityValue;
         }
 
         public string GetStatModifierDesc(FCStatDef stat)
@@ -521,17 +521,17 @@ namespace FactionColonies.SupplyChain
 
                 Widgets.Label(new Rect(24f, curY, 120f, 26f),
                     order.resource.label.CapitalizeFirst());
-                Widgets.Label(new Rect(150f, curY, 100f, 26f),
+                Widgets.Label(new Rect(150f, curY, 130f, 26f),
                     "SC_UnitsPerPeriod".Translate(order.amountPerPeriod.ToString("F1")));
 
                 float expectedSilver = (float)(order.amountPerPeriod * FCSettings.silverPerResource
                     * SupplyChainSettings.overflowPenaltyRate);
                 GUI.color = new Color(0.7f, 1f, 0.7f);
-                Widgets.Label(new Rect(260f, curY, 100f, 26f),
+                Widgets.Label(new Rect(290f, curY, 100f, 26f),
                     "SC_ExpectedSilver".Translate(expectedSilver.ToString("F0")));
                 GUI.color = Color.white;
 
-                if (Widgets.ButtonText(new Rect(370f, curY, 60f, 24f), "SC_Remove".Translate()))
+                if (Widgets.ButtonText(new Rect(400f, curY, 60f, 24f), "SC_Remove".Translate()))
                 {
                     if (toRemove == null) toRemove = new List<SellOrder>();
                     toRemove.Add(order);
@@ -654,7 +654,7 @@ namespace FactionColonies.SupplyChain
                 GUI.color = Color.white;
 
                 // Numeric
-                Widgets.Label(new Rect(264f, curY, 120f, 24f),
+                Widgets.Label(new Rect(264f, curY, 110f, 24f),
                     "SC_SatisfactionDisplay".Translate(
                         (satisfaction * 100f).ToString("F0"),
                         state.fulfilled.ToString("F1"),
@@ -667,7 +667,7 @@ namespace FactionColonies.SupplyChain
                     GUI.color = new Color(1f, 0.5f, 0.5f);
                     string penaltyText = GetPenaltySummary(state);
                     if (penaltyText != null)
-                        Widgets.Label(new Rect(390f, curY, 200f, 24f), penaltyText);
+                        Widgets.Label(new Rect(380f, curY, 250f, 24f), penaltyText);
                     GUI.color = Color.white;
                     Text.Font = GameFont.Small;
                 }

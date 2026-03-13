@@ -27,14 +27,14 @@ namespace FactionColonies.SupplyChain
         private Vector2 scrollPos;
         private ResourceTypeDef newSellOrderResource;
         private string newSellOrderAmountBuffer = "";
-        private double newSellOrderAmount;
+        private float newSellOrderAmount;
 
         // Route creation UI state
         private WorldSettlementFC newRouteSource;
         private WorldSettlementFC newRouteDest;
         private ResourceTypeDef newRouteResource;
         private string newRouteAmountBuffer = "";
-        private double newRouteAmount;
+        private float newRouteAmount;
 
         public WorldComponent_SupplyChain(World world) : base(world)
         {
@@ -700,17 +700,17 @@ namespace FactionColonies.SupplyChain
                 Widgets.Label(new Rect(inner.x + 24f, curY, 120f, 26f),
                     order.resource.label.CapitalizeFirst());
 
-                Widgets.Label(new Rect(inner.x + 150f, curY, 100f, 26f),
+                Widgets.Label(new Rect(inner.x + 150f, curY, 130f, 26f),
                     "SC_UnitsPerPeriod".Translate(order.amountPerPeriod.ToString("F1")));
 
                 float expectedSilver = (float)(order.amountPerPeriod * FCSettings.silverPerResource
                     * SupplyChainSettings.overflowPenaltyRate);
                 GUI.color = new Color(0.7f, 1f, 0.7f);
-                Widgets.Label(new Rect(inner.x + 260f, curY, 100f, 26f),
+                Widgets.Label(new Rect(inner.x + 290f, curY, 100f, 26f),
                     "SC_ExpectedSilver".Translate(expectedSilver.ToString("F0")));
                 GUI.color = Color.white;
 
-                if (Widgets.ButtonText(new Rect(inner.x + 370f, curY, 60f, 24f), "SC_Remove".Translate()))
+                if (Widgets.ButtonText(new Rect(inner.x + 400f, curY, 60f, 24f), "SC_Remove".Translate()))
                 {
                     if (toRemove == null) toRemove = new List<SellOrder>();
                     toRemove.Add(order);
