@@ -909,7 +909,7 @@ namespace FactionColonies.SupplyChain
             for (int i = 0; i < 2; i++)
             {
                 Rect tabRect = new Rect(inner.x + tabW * i, tabY, tabW, tabH);
-                if (Widgets.ButtonText(tabRect, tabLabels[i]))
+                if (UIUtil.ButtonFlat(tabRect, tabLabels[i], highlighted: complexTab == i))
                     complexTab = i;
                 if (complexTab == i)
                     chosenRect = tabRect;
@@ -960,7 +960,28 @@ namespace FactionColonies.SupplyChain
                     Rect sRow = new Rect(0f, curY, rowW, settRowH);
                     if (sIdx % 2 == 0) Widgets.DrawHighlight(sRow);
 
-                    Color accent = AccentUtil.GetSettlementAccent(settlement);
+                    // Determine accent from flow state
+                    Color accent = Color.gray;
+                    if (comp != null)
+                    {
+                        bool hasDeficit = false;
+                        bool hasSurplus = false;
+                        foreach (ResourceTypeDef flowDef in DefDatabase<ResourceTypeDef>.AllDefs)
+                        {
+                            if (flowDef.isPoolResource) continue;
+                            IStockpilePool checkPool = comp.GetPool();
+                            if (checkPool == null || checkPool.GetCap(flowDef) <= 0) continue;
+                            FlowBreakdown flow = CalculateFlow(settlement, comp, flowDef);
+                            if (flow.Net < -0.01)
+                                hasDeficit = true;
+                            else if (flow.Net > 0.01)
+                                hasSurplus = true;
+                        }
+                        if (hasDeficit)
+                            accent = AccentUtil.Expense;
+                        else if (hasSurplus)
+                            accent = AccentUtil.Income;
+                    }
                     Widgets.DrawBoxSolid(new Rect(0f, curY, accentW, settRowH), accent);
 
                     float cx = accentW + 6f;
@@ -1119,10 +1140,12 @@ namespace FactionColonies.SupplyChain
                 if (rIdx % 2 == 0) Widgets.DrawHighlight(rRow);
 
                 float eff = (float)route.CachedEfficiency;
+                Color routeAccent = route.resource != null ? route.resource.color : Color.gray;
                 Color effAccent = AccentUtil.GetStatColor(eff * 100f, false);
-                Widgets.DrawBoxSolid(new Rect(0f, curY, accentW, routeRowH), effAccent);
+                Widgets.DrawBoxSolid(new Rect(0f, curY, accentW, routeRowH), routeAccent);
+                Widgets.DrawBoxSolid(new Rect(accentW + 2f, curY, accentW, routeRowH), effAccent);
 
-                float cx = accentW + 6f;
+                float cx = accentW * 2 + 2f + 6f;
 
                 Text.Anchor = TextAnchor.MiddleLeft;
 
@@ -1153,7 +1176,7 @@ namespace FactionColonies.SupplyChain
                 Widgets.Label(new Rect(amtX, curY, 106f, routeRowH),
                     "SC_PerPeriod".Translate(route.amountPerPeriod.ToString("F1")));
 
-                GUI.color = new Color(0.7f, 1f, 0.7f);
+                GUI.color = effAccent;
                 Rect effRect = new Rect(effX, curY, 66f, routeRowH);
                 Widgets.Label(effRect, "SC_EfficiencyPercent".Translate((eff * 100).ToString("F0")));
                 GUI.color = Color.white;
