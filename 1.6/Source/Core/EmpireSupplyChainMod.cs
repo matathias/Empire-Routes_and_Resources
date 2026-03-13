@@ -37,9 +37,11 @@ namespace FactionColonies.SupplyChain
 
             // Mode toggle
             string modeLabel = mode == SupplyChainMode.Simple ? "Simple" : "Complex";
-            ls.Label("Supply chain mode: " + modeLabel);
+            ls.Label("SC_SettingsMode".Translate(modeLabel));
 
-            string buttonLabel = mode == SupplyChainMode.Simple ? "Switch to Complex" : "Switch to Simple";
+            string buttonLabel = mode == SupplyChainMode.Simple
+                ? "SC_SettingsSwitchComplex".Translate()
+                : "SC_SettingsSwitchSimple".Translate();
             if (ls.ButtonText(buttonLabel))
             {
                 SupplyChainMode newMode = mode == SupplyChainMode.Simple
@@ -56,28 +58,30 @@ namespace FactionColonies.SupplyChain
             }
             ls.Gap(12f);
 
-            ls.CheckboxLabeled("Enable debug logging", ref printDebug);
+            ls.CheckboxLabeled("SC_SettingsDebugLog".Translate(), ref printDebug);
             ls.Gap(12f);
 
-            ls.Label("Overflow/Sell penalty rate: " + overflowPenaltyRate.ToString("P0")
-                + " (silver per unit = " + (FCSettings.silverPerResource * overflowPenaltyRate).ToString("F0") + ")");
+            ls.Label("SC_SettingsOverflowRate".Translate(
+                overflowPenaltyRate.ToString("P0"),
+                (FCSettings.silverPerResource * overflowPenaltyRate).ToString("F0")));
             overflowPenaltyRate = ls.Slider(overflowPenaltyRate, 0.1f, 1.0f);
             ls.Gap(12f);
 
-            ls.Label("Base stockpile cap per settlement per resource: " + baseCapPerSettlement.ToString("F0"));
+            ls.Label("SC_SettingsBaseCap".Translate(baseCapPerSettlement.ToString("F0")));
             if (capBuffer == null)
                 capBuffer = baseCapPerSettlement.ToString("F0");
             ls.TextFieldNumeric(ref baseCapPerSettlement, ref capBuffer, 10f, 500f);
             ls.Gap(12f);
 
-            ls.Label("Route efficiency decay per travel day: " + routeDecayPerDay.ToString("F2")
-                + " (e.g. 5-day route = " + (1.0 / (1.0 + 5.0 * routeDecayPerDay) * 100).ToString("F0") + "% efficiency)");
+            ls.Label("SC_SettingsRouteDecay".Translate(
+                routeDecayPerDay.ToString("F2"),
+                (1.0 / (1.0 + 5.0 * routeDecayPerDay) * 100).ToString("F0")));
             if (routeDecayBuffer == null)
                 routeDecayBuffer = routeDecayPerDay.ToString("F2");
             ls.TextFieldNumeric(ref routeDecayPerDay, ref routeDecayBuffer, 0.01f, 1f);
             ls.Gap(12f);
 
-            ls.Label("Local stockpile cap per resource (Complex mode): " + localCapBase.ToString("F0"));
+            ls.Label("SC_SettingsLocalCap".Translate(localCapBase.ToString("F0")));
             if (localCapBuffer == null)
                 localCapBuffer = localCapBase.ToString("F0");
             ls.TextFieldNumeric(ref localCapBase, ref localCapBuffer, 10f, 500f);
@@ -95,7 +99,7 @@ namespace FactionColonies.SupplyChain
             settings = GetSettings<SupplyChainSettings>();
         }
 
-        public override string SettingsCategory() => "Empire - Supply Chain";
+        public override string SettingsCategory() => "SC_SettingsCategory".Translate();
 
         public override void DoSettingsWindowContents(Rect inRect) => settings.DoWindowContents(inRect);
     }

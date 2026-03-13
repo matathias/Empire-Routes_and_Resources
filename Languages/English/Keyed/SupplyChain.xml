@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+
+    <!-- Settings -->
+    <SC_SettingsCategory>Empire - Supply Chain</SC_SettingsCategory>
+    <SC_SettingsMode>Supply chain mode: {0}</SC_SettingsMode>
+    <SC_SettingsSwitchComplex>Switch to Complex</SC_SettingsSwitchComplex>
+    <SC_SettingsSwitchSimple>Switch to Simple</SC_SettingsSwitchSimple>
+    <SC_SettingsDebugLog>Enable debug logging</SC_SettingsDebugLog>
+    <SC_SettingsOverflowRate>Overflow/Sell penalty rate: {0} (silver per unit = {1})</SC_SettingsOverflowRate>
+    <SC_SettingsBaseCap>Base stockpile cap per settlement per resource: {0}</SC_SettingsBaseCap>
+    <SC_SettingsRouteDecay>Route efficiency decay per travel day: {0} (e.g. 5-day route = {1}% efficiency)</SC_SettingsRouteDecay>
+    <SC_SettingsLocalCap>Local stockpile cap per resource (Complex mode): {0}</SC_SettingsLocalCap>
+
+    <!-- Shared UI -->
+    <SC_TabName>Supply Chain</SC_TabName>
+    <SC_Add>Add</SC_Add>
+    <SC_Remove>Remove</SC_Remove>
+    <SC_AddColon>Add:</SC_AddColon>
+    <SC_PickResource>Pick resource...</SC_PickResource>
+    <SC_UnitsPerPeriod>{0} units/period</SC_UnitsPerPeriod>
+    <SC_ExpectedSilver>~{0} silver</SC_ExpectedSilver>
+    <SC_SupplyRoutes>Supply Routes</SC_SupplyRoutes>
+
+    <!-- Faction Tab - Simple Mode -->
+    <SC_FactionStockpile>Faction Stockpile</SC_FactionStockpile>
+    <SC_ModeSimple>Mode: Simple</SC_ModeSimple>
+    <SC_StandingSellOrders>Standing Sell Orders</SC_StandingSellOrders>
+    <SC_OverflowInfo>Overflow and sell orders convert at {0} of base silver rate ({1} silver per unit). Silver is distributed across settlements.</SC_OverflowInfo>
+
+    <!-- Faction Tab - Complex Mode -->
+    <SC_EmpireSupplyNetwork>Empire Supply Network</SC_EmpireSupplyNetwork>
+    <SC_ModeComplex>Mode: Complex</SC_ModeComplex>
+    <SC_SettlementStockpiles>Settlement Stockpiles</SC_SettlementStockpiles>
+    <SC_TotalUnits>Total: {0} units stored</SC_TotalUnits>
+    <SC_PerPeriod>{0}/period</SC_PerPeriod>
+    <SC_EfficiencyPercent>{0}%</SC_EfficiencyPercent>
+    <SC_NewRoute>New route:</SC_NewRoute>
+    <SC_SourcePicker>Source...</SC_SourcePicker>
+    <SC_DestPicker>Dest...</SC_DestPicker>
+    <SC_ResourcePicker>Resource...</SC_ResourcePicker>
+    <SC_SameSettlementError>Source and destination cannot be the same settlement.</SC_SameSettlementError>
+
+    <!-- Settlement Tab - Simple Mode -->
+    <SC_StockpileAllocations>Stockpile Allocations</SC_StockpileAllocations>
+    <SC_CapContribution>This settlement contributes {0} cap per resource to the faction stockpile.</SC_CapContribution>
+
+    <!-- Settlement Tab - Complex Mode -->
+    <SC_ProductionAllocations>Production Allocations</SC_ProductionAllocations>
+    <SC_LocalStockpile>Local Stockpile</SC_LocalStockpile>
+    <SC_StockpileAmount>{0} / {1}</SC_StockpileAmount>
+    <SC_LocalSellOrders>Local Sell Orders</SC_LocalSellOrders>
+    <SC_RouteOut>OUT</SC_RouteOut>
+    <SC_RouteOutDetail>-> {0} ({1})</SC_RouteOutDetail>
+    <SC_EffLabel>{0}% eff.</SC_EffLabel>
+    <SC_RouteIn>IN</SC_RouteIn>
+    <SC_RouteInDetail>&lt;- {0} ({1})</SC_RouteInDetail>
+    <SC_NoRoutes>No supply routes. Manage routes from the faction Supply Chain tab.</SC_NoRoutes>
+
+    <!-- Settlement Tab - Shared -->
+    <SC_ProdLabel>Prod: {0}</SC_ProdLabel>
+    <SC_Units>{0} units</SC_Units>
+    <SC_SilverDiverted>-{0} silver</SC_SilverDiverted>
+    <SC_SettlementNeeds>Settlement Needs</SC_SettlementNeeds>
+    <SC_SatisfactionDisplay>{0}% ({1} / {2})</SC_SatisfactionDisplay>
+    <SC_PenaltyLine>+{0} {1}</SC_PenaltyLine>
+    <SC_UnmetNeedPenalty>Unmet {0} need: +{1}</SC_UnmetNeedPenalty>
+
+</LanguageData>

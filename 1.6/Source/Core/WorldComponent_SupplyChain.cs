@@ -597,7 +597,7 @@ namespace FactionColonies.SupplyChain
 
         public string TabName()
         {
-            return "Supply Chain";
+            return "SC_TabName".Translate();
         }
 
         public void PreOpenWindow(FactionFC faction)
@@ -642,10 +642,10 @@ namespace FactionColonies.SupplyChain
 
             // Header
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(inner.x, curY, 300f, 30f), "Faction Stockpile");
+            Widgets.Label(new Rect(inner.x, curY, 300f, 30f), "SC_FactionStockpile".Translate());
             Text.Font = GameFont.Tiny;
             GUI.color = Color.gray;
-            Widgets.Label(new Rect(inner.x + 310f, curY + 4f, 100f, 26f), "Mode: Simple");
+            Widgets.Label(new Rect(inner.x + 310f, curY + 4f, 100f, 26f), "SC_ModeSimple".Translate());
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
             curY += 38f;
@@ -674,7 +674,7 @@ namespace FactionColonies.SupplyChain
                 Widgets.FillableBar(barRect, fillPct);
 
                 Widgets.Label(new Rect(inner.x + 135f + barWidth + 8f, curY, 150f, barHeight),
-                    amount.ToString("F1") + " / " + cap.ToString("F0"));
+                    "SC_StockpileAmount".Translate(amount.ToString("F1"), cap.ToString("F0")));
 
                 Text.Anchor = TextAnchor.UpperLeft;
                 curY += barHeight + 2f;
@@ -684,7 +684,7 @@ namespace FactionColonies.SupplyChain
 
             // Sell Orders section
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(inner.x, curY, 300f, 30f), "Standing Sell Orders");
+            Widgets.Label(new Rect(inner.x, curY, 300f, 30f), "SC_StandingSellOrders".Translate());
             Text.Font = GameFont.Small;
             curY += 34f;
 
@@ -701,16 +701,16 @@ namespace FactionColonies.SupplyChain
                     order.resource.label.CapitalizeFirst());
 
                 Widgets.Label(new Rect(inner.x + 150f, curY, 100f, 26f),
-                    order.amountPerPeriod.ToString("F1") + " units/period");
+                    "SC_UnitsPerPeriod".Translate(order.amountPerPeriod.ToString("F1")));
 
                 float expectedSilver = (float)(order.amountPerPeriod * FCSettings.silverPerResource
                     * SupplyChainSettings.overflowPenaltyRate);
                 GUI.color = new Color(0.7f, 1f, 0.7f);
                 Widgets.Label(new Rect(inner.x + 260f, curY, 100f, 26f),
-                    "~" + expectedSilver.ToString("F0") + " silver");
+                    "SC_ExpectedSilver".Translate(expectedSilver.ToString("F0")));
                 GUI.color = Color.white;
 
-                if (Widgets.ButtonText(new Rect(inner.x + 370f, curY, 60f, 24f), "Remove"))
+                if (Widgets.ButtonText(new Rect(inner.x + 370f, curY, 60f, 24f), "SC_Remove".Translate()))
                 {
                     if (toRemove == null) toRemove = new List<SellOrder>();
                     toRemove.Add(order);
@@ -733,9 +733,9 @@ namespace FactionColonies.SupplyChain
             Text.Font = GameFont.Tiny;
             GUI.color = Color.gray;
             Widgets.Label(new Rect(inner.x, curY, inner.width, 40f),
-                "Overflow and sell orders convert at " + SupplyChainSettings.overflowPenaltyRate.ToString("P0")
-                + " of base silver rate (" + (FCSettings.silverPerResource * SupplyChainSettings.overflowPenaltyRate).ToString("F0")
-                + " silver per unit). Silver is distributed across settlements.");
+                "SC_OverflowInfo".Translate(
+                    SupplyChainSettings.overflowPenaltyRate.ToString("P0"),
+                    (FCSettings.silverPerResource * SupplyChainSettings.overflowPenaltyRate).ToString("F0")));
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
         }
@@ -762,17 +762,17 @@ namespace FactionColonies.SupplyChain
 
             // Header
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0f, curY, 300f, 30f), "Empire Supply Network");
+            Widgets.Label(new Rect(0f, curY, 300f, 30f), "SC_EmpireSupplyNetwork".Translate());
             Text.Font = GameFont.Tiny;
             GUI.color = Color.gray;
-            Widgets.Label(new Rect(310f, curY + 4f, 100f, 26f), "Mode: Complex");
+            Widgets.Label(new Rect(310f, curY + 4f, 100f, 26f), "SC_ModeComplex".Translate());
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
             curY += 38f;
 
             // --- Settlement Overview ---
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0f, curY, 300f, 30f), "Settlement Stockpiles");
+            Widgets.Label(new Rect(0f, curY, 300f, 30f), "SC_SettlementStockpiles".Translate());
             Text.Font = GameFont.Small;
             curY += 34f;
 
@@ -786,7 +786,7 @@ namespace FactionColonies.SupplyChain
                     Text.Anchor = TextAnchor.MiddleLeft;
                     Widgets.Label(new Rect(0f, curY, 200f, 26f), settlement.Name);
                     Widgets.Label(new Rect(210f, curY, 200f, 26f),
-                        "Total: " + totalValue.ToString("F1") + " units stored");
+                        "SC_TotalUnits".Translate(totalValue.ToString("F1")));
                     Text.Anchor = TextAnchor.UpperLeft;
                     curY += 28f;
                 }
@@ -795,7 +795,7 @@ namespace FactionColonies.SupplyChain
 
             // --- Routes ---
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0f, curY, 300f, 30f), "Supply Routes");
+            Widgets.Label(new Rect(0f, curY, 300f, 30f), "SC_SupplyRoutes".Translate());
             Text.Font = GameFont.Small;
             curY += 34f;
 
@@ -821,14 +821,14 @@ namespace FactionColonies.SupplyChain
                 Widgets.Label(new Rect(108f, curY, 220f, 26f),
                     route.source.Name + " -> " + route.destination.Name);
                 Widgets.Label(new Rect(332f, curY, 80f, 26f),
-                    route.amountPerPeriod.ToString("F1") + "/period");
+                    "SC_PerPeriod".Translate(route.amountPerPeriod.ToString("F1")));
 
                 GUI.color = new Color(0.7f, 1f, 0.7f);
                 Widgets.Label(new Rect(416f, curY, 60f, 26f),
-                    (route.CachedEfficiency * 100).ToString("F0") + "%");
+                    "SC_EfficiencyPercent".Translate((route.CachedEfficiency * 100).ToString("F0")));
                 GUI.color = Color.white;
 
-                if (Widgets.ButtonText(new Rect(480f, curY, 60f, 24f), "Remove"))
+                if (Widgets.ButtonText(new Rect(480f, curY, 60f, 24f), "SC_Remove".Translate()))
                 {
                     if (routesToRemove == null) routesToRemove = new List<SupplyRoute>();
                     routesToRemove.Add(route);
@@ -858,10 +858,10 @@ namespace FactionColonies.SupplyChain
             if (faction == null) return;
 
             Text.Anchor = TextAnchor.MiddleLeft;
-            Widgets.Label(new Rect(0f, curY, 60f, 26f), "New route:");
+            Widgets.Label(new Rect(0f, curY, 60f, 26f), "SC_NewRoute".Translate());
 
             // Source picker
-            string srcLabel = newRouteSource != null ? newRouteSource.Name : "Source...";
+            string srcLabel = newRouteSource != null ? newRouteSource.Name : (string)"SC_SourcePicker".Translate();
             if (Widgets.ButtonText(new Rect(64f, curY, 100f, 24f), srcLabel))
             {
                 List<FloatMenuOption> options = new List<FloatMenuOption>();
@@ -874,7 +874,7 @@ namespace FactionColonies.SupplyChain
             }
 
             // Dest picker
-            string destLabel = newRouteDest != null ? newRouteDest.Name : "Dest...";
+            string destLabel = newRouteDest != null ? newRouteDest.Name : (string)"SC_DestPicker".Translate();
             if (Widgets.ButtonText(new Rect(168f, curY, 100f, 24f), destLabel))
             {
                 List<FloatMenuOption> options = new List<FloatMenuOption>();
@@ -887,7 +887,7 @@ namespace FactionColonies.SupplyChain
             }
 
             // Resource picker
-            string resLabel = newRouteResource != null ? newRouteResource.label.CapitalizeFirst() : "Resource...";
+            string resLabel = newRouteResource != null ? newRouteResource.label.CapitalizeFirst() : (string)"SC_ResourcePicker".Translate();
             if (Widgets.ButtonText(new Rect(272f, curY, 100f, 24f), resLabel))
             {
                 List<FloatMenuOption> options = new List<FloatMenuOption>();
@@ -905,7 +905,7 @@ namespace FactionColonies.SupplyChain
                 ref newRouteAmount, ref newRouteAmountBuffer, 0f, 9999f);
 
             // Confirm
-            if (Widgets.ButtonText(new Rect(440f, curY, 50f, 24f), "Add"))
+            if (Widgets.ButtonText(new Rect(440f, curY, 50f, 24f), "SC_Add".Translate()))
             {
                 if (newRouteSource != null && newRouteDest != null && newRouteResource != null
                     && newRouteAmount > 0 && newRouteSource != newRouteDest)
@@ -929,7 +929,7 @@ namespace FactionColonies.SupplyChain
             {
                 Text.Font = GameFont.Tiny;
                 GUI.color = new Color(1f, 0.5f, 0.5f);
-                Widgets.Label(new Rect(0f, curY, viewRect.width, 20f), "Source and destination cannot be the same settlement.");
+                Widgets.Label(new Rect(0f, curY, viewRect.width, 20f), "SC_SameSettlementError".Translate());
                 GUI.color = Color.white;
                 Text.Font = GameFont.Small;
                 curY += 22f;
@@ -941,9 +941,9 @@ namespace FactionColonies.SupplyChain
         private void DrawAddSellOrderRow(Rect inner, ref float curY)
         {
             Text.Anchor = TextAnchor.MiddleLeft;
-            Widgets.Label(new Rect(inner.x, curY, 40f, 26f), "Add:");
+            Widgets.Label(new Rect(inner.x, curY, 40f, 26f), "SC_AddColon".Translate());
 
-            string resLabel = newSellOrderResource != null ? newSellOrderResource.label.CapitalizeFirst() : "Pick resource...";
+            string resLabel = newSellOrderResource != null ? newSellOrderResource.label.CapitalizeFirst() : (string)"SC_PickResource".Translate();
             if (Widgets.ButtonText(new Rect(inner.x + 44f, curY, 130f, 24f), resLabel))
             {
                 List<FloatMenuOption> options = new List<FloatMenuOption>();
@@ -962,7 +962,7 @@ namespace FactionColonies.SupplyChain
             Widgets.TextFieldNumeric(new Rect(inner.x + 180f, curY, 80f, 24f),
                 ref newSellOrderAmount, ref newSellOrderAmountBuffer, 0f, 9999f);
 
-            if (Widgets.ButtonText(new Rect(inner.x + 268f, curY, 60f, 24f), "Add"))
+            if (Widgets.ButtonText(new Rect(inner.x + 268f, curY, 60f, 24f), "SC_Add".Translate()))
             {
                 if (newSellOrderResource != null && newSellOrderAmount > 0)
                 {
