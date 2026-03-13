@@ -371,6 +371,8 @@ namespace FactionColonies.SupplyChain
             if (uiSettlement == null) return;
 
             WorldComponent_SupplyChain wc = Find.World.GetComponent<WorldComponent_SupplyChain>();
+            if (wc != null)
+                wc.EnsureCapsAndPools();
             bool isComplex = wc != null && wc.Mode == SupplyChainMode.Complex;
 
             if (isComplex)
