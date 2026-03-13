@@ -14,6 +14,7 @@ namespace FactionColonies.SupplyChain
     {
         public FCStatDef stat;
         public double maxValue;
+        public string label;
     }
 
     /// <summary>

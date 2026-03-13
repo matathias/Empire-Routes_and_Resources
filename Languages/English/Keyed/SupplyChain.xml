@@ -63,7 +63,7 @@
     <SC_SilverDiverted>-{0} silver</SC_SilverDiverted>
     <SC_SettlementNeeds>Settlement Needs</SC_SettlementNeeds>
     <SC_SatisfactionDisplay>{0}% ({1} / {2})</SC_SatisfactionDisplay>
-    <SC_PenaltyLine>+{0} {1}</SC_PenaltyLine>
+    <SC_PenaltyLine>-{0} {1}</SC_PenaltyLine>
     <SC_UnmetNeedPenalty>Unmet {0} need: -{1}</SC_UnmetNeedPenalty>
 
 </LanguageData>

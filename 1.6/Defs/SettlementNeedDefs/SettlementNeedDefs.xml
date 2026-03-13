@@ -12,10 +12,12 @@
             <li>
                 <stat>happinessLostBase</stat>
                 <maxValue>3.0</maxValue>
+                <label>happiness</label>
             </li>
             <li>
                 <stat>loyaltyLostBase</stat>
                 <maxValue>2.0</maxValue>
+                <label>loyalty</label>
             </li>
         </penalties>
     </FactionColonies.SupplyChain.SettlementNeedDef>

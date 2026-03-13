@@ -690,7 +690,8 @@ namespace FactionColonies.SupplyChain
                 foreach (NeedPenalty penalty in needDef.penalties)
                 {
                     double val = penalty.maxValue * unsatisfied;
-                    string part = "SC_PenaltyLine".Translate(val.ToString("F1"), penalty.stat.label);
+                    string displayLabel = penalty.label ?? penalty.stat.label;
+                    string part = "SC_PenaltyLine".Translate(val.ToString("F1"), displayLabel);
                     result = result == null ? part : result + ", " + part;
                 }
                 return result;
