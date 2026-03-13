@@ -1166,7 +1166,7 @@ namespace FactionColonies.SupplyChain
                 float btnW = Text.CalcSize(btnLabel).x + 28f;
                 if (filterDef.Icon != null)
                     GUI.DrawTexture(new Rect(fbX + 4f, curY + 3f, 16f, 16f), filterDef.Icon);
-                if (UIUtil.ButtonFlat(new Rect(fbX, curY, btnW, fbH), "   " + btnLabel, highlighted: active))
+                if (UIUtil.ButtonFlat(new Rect(fbX, curY, btnW, fbH), "   " + btnLabel, labelColor: filterDef.color, highlighted: active))
                     routeFilterResource = captured;
                 fbX += btnW + 4f;
             }

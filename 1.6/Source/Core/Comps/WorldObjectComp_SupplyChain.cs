@@ -51,6 +51,7 @@ namespace FactionColonies.SupplyChain
         private string newRouteAmountBuffer = "";
         private float newRouteAmount;
         private bool newRouteIsOutgoing = true;
+        private ResourceTypeDef routeFilterResource;
 
         public WorldSettlementFC WorldSettlement
         {
@@ -390,6 +391,7 @@ namespace FactionColonies.SupplyChain
             newRouteAmountBuffer = "";
             newRouteAmount = 0;
             newRouteIsOutgoing = true;
+            routeFilterResource = null;
         }
 
         public void OnTabSwitch()
@@ -669,7 +671,11 @@ namespace FactionColonies.SupplyChain
             UIUtil.TipRegionByText(localSellHeaderRect, (string)"SC_SellOrdersTooltip".Translate(
                 SupplyChainSettings.overflowPenaltyRate.ToString("P0")));
             Text.Font = GameFont.Small;
+            Text.Anchor = TextAnchor.UpperLeft;
             curY += 34f;
+
+            DrawAddLocalSellOrderRow(viewRect, ref curY);
+            curY += 4f;
 
             List<SellOrder> toRemove = null;
             int sellIdx = 0;
@@ -714,9 +720,6 @@ namespace FactionColonies.SupplyChain
                     localSellOrders.Remove(order);
             }
 
-            curY += 4f;
-            DrawAddLocalSellOrderRow(viewRect, ref curY);
-
             Widgets.EndScrollView();
         }
 
@@ -729,8 +732,6 @@ namespace FactionColonies.SupplyChain
 
             WorldSettlementFC ws = WorldSettlement;
             if (ws == null) return;
-
-            float fixedHeaderH = 56f; // toggle (24) + gap (4) + add form (28)
 
             // --- Direction toggle (fixed above scroll) ---
             float toggleW = rect.width / 2f;
@@ -745,19 +746,58 @@ namespace FactionColonies.SupplyChain
             float addCurY = rect.y + 30f;
             DrawAddRouteFormFixed(rect.x, ref addCurY, rect.width, wc);
 
+            // --- Resource filter buttons (fixed above scroll) ---
+            float filterY = rect.y + 58f;
+            float fbX = rect.x;
+            float fbH = 22f;
+            Text.Font = GameFont.Tiny;
+
+            bool allActive = routeFilterResource == null;
+            if (UIUtil.ButtonFlat(new Rect(fbX, filterY, 40f, fbH), (string)"SC_All".Translate(), highlighted: allActive))
+                routeFilterResource = null;
+            fbX += 44f;
+
+            HashSet<ResourceTypeDef> routeResources = new HashSet<ResourceTypeDef>();
+            foreach (SupplyRoute r in wc.SupplyRoutes)
+            {
+                if (!r.IsValid() || r.resource == null) continue;
+                if (newRouteIsOutgoing && r.source == ws) routeResources.Add(r.resource);
+                else if (!newRouteIsOutgoing && r.destination == ws) routeResources.Add(r.resource);
+            }
+            foreach (ResourceTypeDef filterDef in routeResources)
+            {
+                bool active = routeFilterResource == filterDef;
+                ResourceTypeDef captured = filterDef;
+                string btnLabel = filterDef.label.CapitalizeFirst();
+                float btnW = Text.CalcSize(btnLabel).x + 28f;
+                if (filterDef.Icon != null)
+                    GUI.DrawTexture(new Rect(fbX + 4f, filterY + 3f, 16f, 16f), filterDef.Icon);
+                if (UIUtil.ButtonFlat(new Rect(fbX, filterY, btnW, fbH), "   " + btnLabel, labelColor: filterDef.color, highlighted: active))
+                    routeFilterResource = captured;
+                fbX += btnW + 4f;
+            }
+
+            if (routeFilterResource != null && !routeResources.Contains(routeFilterResource))
+                routeFilterResource = null;
+
+            Text.Font = GameFont.Small;
+
+            float fixedHeaderTotal = 82f; // toggle (26) + add form (28) + filter row (26) + gap (2)
+
             // --- Scrollable route list ---
-            Rect scrollRect = new Rect(rect.x, rect.y + fixedHeaderH, rect.width, rect.height - fixedHeaderH);
+            Rect scrollRect = new Rect(rect.x, rect.y + fixedHeaderTotal, rect.width, rect.height - fixedHeaderTotal);
 
             // Count routes for height estimate
             int routeCount = 0;
             foreach (SupplyRoute route in wc.SupplyRoutes)
             {
                 if (!route.IsValid()) continue;
+                if (routeFilterResource != null && route.resource != routeFilterResource) continue;
                 if (newRouteIsOutgoing && route.source == ws) routeCount++;
                 else if (!newRouteIsOutgoing && route.destination == ws) routeCount++;
             }
 
-            float totalHeight = 36f + routeCount * 30f + 30f;
+            float totalHeight = 4f + routeCount * 30f + 30f;
             float scrollMargin = totalHeight > scrollRect.height ? 16f : 0f;
 
             Rect viewRect = new Rect(0f, 0f, scrollRect.width - scrollMargin, totalHeight);
@@ -774,6 +814,7 @@ namespace FactionColonies.SupplyChain
                 bool isIncoming = route.destination == ws;
                 if (newRouteIsOutgoing && !isOutgoing) continue;
                 if (!newRouteIsOutgoing && !isIncoming) continue;
+                if (routeFilterResource != null && route.resource != routeFilterResource) continue;
 
                 route.RecacheIfDirty();
 
