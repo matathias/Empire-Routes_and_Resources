@@ -38,18 +38,14 @@ namespace FactionColonies.SupplyChain
         }
         internal static void DrawFlowHighlight(Rect rect, double net)
         {
-            Color origColor = GUI.color;
             if (net > 0.01)
             {
-                GUI.color = Color.green;
-                Widgets.DrawHighlight(rect);
+                Widgets.DrawBoxSolid(rect, new Color(0f, 0.6f, 0f, 0.25f));
             }
             else if (net < -0.01)
             {
-                GUI.color = Color.red;
-                Widgets.DrawHighlight(rect);
+                Widgets.DrawBoxSolid(rect, new Color(0.6f, 0f, 0f, 0.25f));
             }
-            GUI.color = origColor;
         }
         internal static string BuildFlowTooltip(ResourceTypeDef def, double amt, double cap, FlowBreakdown flow,
             int numSettlements = 0, double baseCapPerSettlement = 0, double buildingCapBonus = 0)

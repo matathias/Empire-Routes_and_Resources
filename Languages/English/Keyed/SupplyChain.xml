@@ -32,6 +32,7 @@
     <!-- Faction Tab - Complex Mode -->
     <SC_EmpireSupplyNetwork>Empire Supply Network</SC_EmpireSupplyNetwork>
     <SC_ModeComplex>Mode: Complex</SC_ModeComplex>
+    <SC_Settlement>Settlement</SC_Settlement>
     <SC_SettlementStockpiles>Settlement Stockpiles</SC_SettlementStockpiles>
     <SC_TotalUnits>Total: {0} units stored</SC_TotalUnits>
     <SC_PerPeriod>{0}/period</SC_PerPeriod>

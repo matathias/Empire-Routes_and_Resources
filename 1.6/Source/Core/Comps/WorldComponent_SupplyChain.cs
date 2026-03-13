@@ -720,6 +720,8 @@ namespace FactionColonies.SupplyChain
         {
             uiFaction = faction;
             scrollPos = Vector2.zero;
+            scrollPosStockpiles = Vector2.zero;
+            scrollPosRoutes = Vector2.zero;
             newSellOrderResource = null;
             newSellOrderAmountBuffer = "";
             newSellOrderAmount = 0;
@@ -949,130 +951,174 @@ namespace FactionColonies.SupplyChain
 
         private void DrawComplexStockpiles(Rect rect)
         {
-            const float settRowH = 42f;
+            const float settRowH = 28f;
             const float accentW = 4f;
             const float rowGap = 2f;
+            const float nameColW = 200f;
+            const float headerH = 30f;
+            const float barH = 16f;
+            const float cellPad = 2f;
+            const float arrowSize = 16f;
 
             FactionFC faction = FactionCache.FactionComp;
-            int settlementCount = faction != null ? faction.settlements.Count : 0;
-            float totalHeight = settlementCount * (settRowH + rowGap) + 20f;
+            if (faction == null) return;
 
-            Rect viewRect = new Rect(0f, 0f, rect.width - 16f, totalHeight);
-            Widgets.BeginScrollView(rect, ref scrollPosStockpiles, viewRect);
-            float curY = 4f;
-            float rowW = viewRect.width;
-
-            if (faction != null)
+            // Pre-compute valid resource columns (non-pool with cap > 0 in any settlement)
+            List<ResourceTypeDef> columns = new List<ResourceTypeDef>();
+            foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
             {
-                int sIdx = 0;
-                foreach (WorldSettlementFC settlement in faction.settlements)
+                if (def.isPoolResource) continue;
+                bool anyHasCap = false;
+                foreach (WorldSettlementFC s in faction.settlements)
                 {
-                    WorldObjectComp_SupplyChain comp = GetComp(settlement);
-
-                    Rect sRow = new Rect(0f, curY, rowW, settRowH);
-                    if (sIdx % 2 == 0) Widgets.DrawHighlight(sRow);
-
-                    // Determine accent from flow state
-                    Color accent = Color.gray;
-                    if (comp != null)
+                    WorldObjectComp_SupplyChain c = GetComp(s);
+                    IStockpilePool p = c != null ? c.GetPool() : null;
+                    if (p != null && p.GetCap(def) > 0)
                     {
-                        bool hasDeficit = false;
-                        bool hasSurplus = false;
-                        foreach (ResourceTypeDef flowDef in DefDatabase<ResourceTypeDef>.AllDefs)
-                        {
-                            if (flowDef.isPoolResource) continue;
-                            IStockpilePool checkPool = comp.GetPool();
-                            if (checkPool == null || checkPool.GetCap(flowDef) <= 0) continue;
-                            FlowBreakdown flow = CalculateFlow(settlement, comp, flowDef);
-                            if (flow.Net < -0.01)
-                                hasDeficit = true;
-                            else if (flow.Net > 0.01)
-                                hasSurplus = true;
-                        }
-                        if (hasDeficit)
-                            accent = AccentUtil.Expense;
-                        else if (hasSurplus)
-                            accent = AccentUtil.Income;
+                        anyHasCap = true;
+                        break;
                     }
-                    Widgets.DrawBoxSolid(new Rect(0f, curY, accentW, settRowH), accent);
-
-                    float cx = accentW + 6f;
-
-                    // Top line: settlement name (clickable)
-                    Text.Anchor = TextAnchor.MiddleLeft;
-                    bool prevWordWrap = Text.WordWrap;
-                    Text.WordWrap = false;
-                    Rect nameRect = new Rect(cx, curY, rowW - cx - 4f, 24f);
-                    Widgets.Label(nameRect, settlement.Name);
-                    Text.WordWrap = prevWordWrap;
-                    if (Mouse.IsOver(nameRect))
-                        Widgets.DrawHighlight(nameRect);
-                    if (Widgets.ButtonInvisible(nameRect))
-                        Find.WindowStack.Add(new SettlementWindowFc(settlement));
-
-                    // Bottom line: full-width stockpile bars
-                    IStockpilePool sPool = comp != null ? comp.GetPool() : null;
-                    float barY = curY + 22f;
-                    if (sPool != null)
-                    {
-                        // Count valid resources for dynamic width
-                        int resCount = 0;
-                        foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
-                        {
-                            if (def.isPoolResource) continue;
-                            if (sPool.GetCap(def) > 0) resCount++;
-                        }
-
-                        if (resCount > 0)
-                        {
-                            float totalBarW = rowW - cx - 4f - (3f * (resCount - 1));
-                            float slotW = totalBarW / resCount;
-                            float barX = cx;
-
-                            foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
-                            {
-                                if (def.isPoolResource) continue;
-                                double amt = sPool.GetAmount(def);
-                                double cap = sPool.GetCap(def);
-                                if (cap <= 0) continue;
-
-                                float fill = (float)(amt / cap);
-
-                                FlowBreakdown flow = CalculateFlow(settlement, comp, def);
-
-                                Rect slotRect = new Rect(barX, barY, slotW, 16f);
-                                UIUtilSC.DrawFlowHighlight(slotRect, flow.Net);
-
-                                // Icon
-                                if (def.Icon != null)
-                                    GUI.DrawTexture(new Rect(barX, barY, 16f, 16f), def.Icon);
-
-                                // Flow indicator (between icon and bar)
-                                float indicatorW = 14f;
-                                float indX = barX + 18f;
-                                UIUtilSC.DrawFlowIndicator(indX, barY, flow.Net);
-
-                                // Fill bar (after indicator)
-                                float barStart = indX + indicatorW + 2f;
-                                float miniBarW = slotW - (barStart - barX);
-                                if (miniBarW < 10f) miniBarW = 10f;
-                                Rect miniBar = new Rect(barStart, barY + 3f, miniBarW, 10f);
-                                Widgets.FillableBar(miniBar, fill);
-
-                                // Tooltip
-                                Rect tipRect = new Rect(barX, barY, slotW, 16f);
-                                UIUtil.TipRegionByText(tipRect, UIUtilSC.BuildFlowTooltip(def, amt, cap, flow));
-
-                                barX += slotW + 3f;
-                            }
-                        }
-                    }
-
-                    Text.Anchor = TextAnchor.UpperLeft;
-
-                    curY += settRowH + rowGap;
-                    sIdx++;
                 }
+                if (anyHasCap) columns.Add(def);
+            }
+
+            int resCount = columns.Count;
+            float availableW = rect.width - 16f; // account for scrollbar
+            float colW = resCount > 0 ? (availableW - nameColW) / resCount : 0f;
+
+            // --- Pinned header row (outside scroll) ---
+            Rect headerRect = new Rect(rect.x, rect.y, rect.width, headerH);
+            Widgets.DrawBoxSolid(headerRect, new Color(0.1f, 0.1f, 0.1f, 0.5f));
+
+            Text.Font = GameFont.Tiny;
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(new Rect(rect.x + accentW + 6f, rect.y, nameColW - accentW - 6f, headerH), "SC_Settlement".Translate());
+            Text.Anchor = TextAnchor.UpperLeft;
+
+            for (int i = 0; i < resCount; i++)
+            {
+                ResourceTypeDef def = columns[i];
+                float colX = rect.x + nameColW + colW * i;
+                // Center icon in column
+                float iconSize = 24f;
+                float iconX = colX + (colW - iconSize) / 2f;
+                float iconY = rect.y + (headerH - iconSize) / 2f;
+                if (def.Icon != null)
+                    GUI.DrawTexture(new Rect(iconX, iconY, iconSize, iconSize), def.Icon);
+                // Tooltip on header
+                UIUtil.TipRegionByText(new Rect(colX, rect.y, colW, headerH), def.label.CapitalizeFirst());
+            }
+
+            Text.Font = GameFont.Small;
+
+            // --- Scrollable settlement rows ---
+            Rect scrollRect = new Rect(rect.x, rect.y + headerH, rect.width, rect.height - headerH);
+            int settlementCount = faction.settlements.Count;
+            float totalHeight = settlementCount * (settRowH + rowGap) + 20f;
+            Rect viewRect = new Rect(0f, 0f, scrollRect.width - 16f, totalHeight);
+
+            Widgets.BeginScrollView(scrollRect, ref scrollPosStockpiles, viewRect);
+            float curY = 4f;
+
+            int sIdx = 0;
+            foreach (WorldSettlementFC settlement in faction.settlements)
+            {
+                WorldObjectComp_SupplyChain comp = GetComp(settlement);
+
+                Rect sRow = new Rect(0f, curY, viewRect.width, settRowH);
+                if (sIdx % 2 == 0) Widgets.DrawHighlight(sRow);
+                if (Mouse.IsOver(sRow)) Widgets.DrawHighlight(sRow);
+
+                // Determine accent from flow state
+                Color accent = Color.gray;
+                if (comp != null)
+                {
+                    bool hasDeficit = false;
+                    bool hasSurplus = false;
+                    foreach (ResourceTypeDef flowDef in columns)
+                    {
+                        IStockpilePool checkPool = comp.GetPool();
+                        if (checkPool == null || checkPool.GetCap(flowDef) <= 0) continue;
+                        FlowBreakdown flow = CalculateFlow(settlement, comp, flowDef);
+                        if (flow.Net < -0.01)
+                            hasDeficit = true;
+                        else if (flow.Net > 0.01)
+                            hasSurplus = true;
+                    }
+                    if (hasDeficit)
+                        accent = AccentUtil.Expense;
+                    else if (hasSurplus)
+                        accent = AccentUtil.Income;
+                }
+                Widgets.DrawBoxSolid(new Rect(0f, curY, accentW, settRowH), accent);
+
+                // Settlement name (clickable)
+                Text.Anchor = TextAnchor.MiddleLeft;
+                bool prevWordWrap = Text.WordWrap;
+                Text.WordWrap = false;
+                float nameWidth = nameColW - accentW - 10f;
+                Rect nameRect = new Rect(accentW + 6f, curY, nameWidth, settRowH);
+                Widgets.Label(nameRect, settlement.Name.Truncate(nameWidth));
+                Text.WordWrap = prevWordWrap;
+                if (Mouse.IsOver(nameRect))
+                    Widgets.DrawHighlight(nameRect);
+                if (Widgets.ButtonInvisible(nameRect))
+                    Find.WindowStack.Add(new SettlementWindowFc(settlement));
+
+                // Resource cells
+                IStockpilePool sPool = comp != null ? comp.GetPool() : null;
+                for (int i = 0; i < resCount; i++)
+                {
+                    ResourceTypeDef def = columns[i];
+                    float cellX = nameColW + colW * i;
+                    Rect cellRect = new Rect(cellX, curY, colW, settRowH);
+
+                    double amt = sPool != null ? sPool.GetAmount(def) : 0;
+                    double cap = sPool != null ? sPool.GetCap(def) : 0;
+
+                    if (cap <= 0)
+                    {
+                        // No capacity for this resource in this settlement — draw dash
+                        Text.Anchor = TextAnchor.MiddleCenter;
+                        GUI.color = Color.gray;
+                        Widgets.Label(cellRect, "-");
+                        GUI.color = Color.white;
+                        continue;
+                    }
+
+                    float fill = (float)(amt / cap);
+                    FlowBreakdown flow = CalculateFlow(settlement, comp, def);
+
+                    // Flow highlight on cell background
+                    UIUtilSC.DrawFlowHighlight(cellRect, flow.Net);
+
+                    // Fill bar centered vertically in cell
+                    float barY = curY + (settRowH - barH) / 2f;
+                    Rect barRect = new Rect(cellX + cellPad, barY, colW - cellPad * 2f, barH);
+                    Widgets.FillableBar(barRect, fill);
+
+                    // Arrow indicator (top-right corner of cell)
+                    if (flow.Net > 0.01)
+                    {
+                        GUI.color = AccentUtil.Income;
+                        GUI.DrawTexture(new Rect(cellX + colW - arrowSize - 1f, curY + 1f, arrowSize, arrowSize), TexUI.ArrowTexRight);
+                        GUI.color = Color.white;
+                    }
+                    else if (flow.Net < -0.01)
+                    {
+                        GUI.color = AccentUtil.Expense;
+                        GUI.DrawTexture(new Rect(cellX + colW - arrowSize - 1f, curY + 1f, arrowSize, arrowSize), TexUI.ArrowTexLeft);
+                        GUI.color = Color.white;
+                    }
+
+                    // Tooltip
+                    UIUtil.TipRegionByText(cellRect, UIUtilSC.BuildFlowTooltip(def, amt, cap, flow));
+                }
+
+                Text.Anchor = TextAnchor.UpperLeft;
+
+                curY += settRowH + rowGap;
+                sIdx++;
             }
 
             Widgets.EndScrollView();
