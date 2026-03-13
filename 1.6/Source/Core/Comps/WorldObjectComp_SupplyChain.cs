@@ -114,6 +114,20 @@ namespace FactionColonies.SupplyChain
                     continue;
                 localCaps[def] = SupplyChainSettings.localCapBase;
             }
+
+            WorldSettlementFC ws = WorldSettlement;
+            if (ws?.BuildingsComp == null) return;
+            foreach (BuildingFC building in ws.BuildingsComp.Buildings)
+            {
+                if (building.def == null || building.def == BuildingFCDefOf.Empty) continue;
+                BuildingNeedExtension ext = building.def.GetModExtension<BuildingNeedExtension>();
+                if (ext?.capBonuses == null) continue;
+                foreach (BuildingCapBonus bonus in ext.capBonuses)
+                {
+                    if (bonus.resource != null && !bonus.resource.isPoolResource && localCaps.ContainsKey(bonus.resource))
+                        localCaps[bonus.resource] += bonus.amount;
+                }
+            }
         }
 
         // --- Needs ---
@@ -521,7 +535,10 @@ namespace FactionColonies.SupplyChain
 
             // --- Local Sell Orders ---
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0f, curY, viewRect.width, 30f), "SC_LocalSellOrders".Translate());
+            Rect localSellHeaderRect = new Rect(0f, curY, viewRect.width, 30f);
+            Widgets.Label(localSellHeaderRect, "SC_LocalSellOrders".Translate());
+            UIUtil.TipRegionByText(localSellHeaderRect, (string)"SC_SellOrdersTooltip".Translate(
+                SupplyChainSettings.overflowPenaltyRate.ToString("P0")));
             Text.Font = GameFont.Small;
             curY += 34f;
 

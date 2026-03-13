@@ -152,6 +152,23 @@ namespace FactionColonies.SupplyChain
                     continue;
                 factionCaps[def] = numSettlements * SupplyChainSettings.baseCapPerSettlement;
             }
+
+            if (faction == null) return;
+            foreach (WorldSettlementFC settlement in faction.settlements)
+            {
+                if (settlement.BuildingsComp == null) continue;
+                foreach (BuildingFC building in settlement.BuildingsComp.Buildings)
+                {
+                    if (building.def == null || building.def == BuildingFCDefOf.Empty) continue;
+                    BuildingNeedExtension ext = building.def.GetModExtension<BuildingNeedExtension>();
+                    if (ext?.capBonuses == null) continue;
+                    foreach (BuildingCapBonus bonus in ext.capBonuses)
+                    {
+                        if (bonus.resource != null && !bonus.resource.isPoolResource && factionCaps.ContainsKey(bonus.resource))
+                            factionCaps[bonus.resource] += bonus.amount;
+                    }
+                }
+            }
         }
 
         private void InitAllLocalPools()
@@ -197,9 +214,11 @@ namespace FactionColonies.SupplyChain
         {
             public double production;
             public double routeIn;
-            public double needs;
+            public double baseNeeds;
+            public double buildingNeeds;
             public double routeOut;
             public double sellOrders;
+            public double needs { get { return baseNeeds + buildingNeeds; } }
             public double Net { get { return production + routeIn - needs - routeOut - sellOrders; } }
         }
 
@@ -220,7 +239,7 @@ namespace FactionColonies.SupplyChain
             foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
             {
                 if (needDef.resource == def)
-                    flow.needs += needDef.CalculateDemand(settlement);
+                    flow.baseNeeds += needDef.CalculateDemand(settlement);
             }
 
             if (settlement.BuildingsComp != null)
@@ -233,7 +252,7 @@ namespace FactionColonies.SupplyChain
                     foreach (BuildingResourceInput input in ext.inputs)
                     {
                         if (input.resource == def)
-                            flow.needs += input.amount;
+                            flow.buildingNeeds += input.amount;
                     }
                 }
             }
@@ -264,7 +283,7 @@ namespace FactionColonies.SupplyChain
                 foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
                 {
                     if (needDef.resource == def)
-                        flow.needs += needDef.CalculateDemand(settlement);
+                        flow.baseNeeds += needDef.CalculateDemand(settlement);
                 }
 
                 if (settlement.BuildingsComp != null)
@@ -277,7 +296,7 @@ namespace FactionColonies.SupplyChain
                         foreach (BuildingResourceInput input in ext.inputs)
                         {
                             if (input.resource == def)
-                                flow.needs += input.amount;
+                                flow.buildingNeeds += input.amount;
                         }
                     }
                 }
@@ -797,8 +816,13 @@ namespace FactionColonies.SupplyChain
                 Widgets.Label(new Rect(inner.x + labelEndX + barWidth + 8f, curY, amountTextW, barHeight),
                     "SC_StockpileAmount".Translate(amount.ToString("F1"), cap.ToString("F0")));
 
+                int numSettlements = simpleFaction != null ? simpleFaction.settlements.Count : 0;
+                double baseCap = numSettlements * SupplyChainSettings.baseCapPerSettlement;
+                double buildingCapBonus = cap - baseCap;
+
                 Rect rowTipRect = new Rect(inner.x, curY, inner.width, barHeight);
-                UIUtil.TipRegionByText(rowTipRect, UIUtilSC.BuildFlowTooltip(def, amount, cap, simpleFlow));
+                UIUtil.TipRegionByText(rowTipRect, UIUtilSC.BuildFlowTooltip(def, amount, cap, simpleFlow,
+                    numSettlements, SupplyChainSettings.baseCapPerSettlement, buildingCapBonus));
 
                 Text.Anchor = TextAnchor.UpperLeft;
                 curY += barHeight + 2f;
@@ -808,7 +832,10 @@ namespace FactionColonies.SupplyChain
 
             // Sell Orders section
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(inner.x, curY, 300f, 30f), "SC_StandingSellOrders".Translate());
+            Rect sellHeaderRect = new Rect(inner.x, curY, 300f, 30f);
+            Widgets.Label(sellHeaderRect, "SC_StandingSellOrders".Translate());
+            UIUtil.TipRegionByText(sellHeaderRect, (string)"SC_SellOrdersTooltip".Translate(
+                SupplyChainSettings.overflowPenaltyRate.ToString("P0")));
             Text.Font = GameFont.Small;
             curY += 34f;
 

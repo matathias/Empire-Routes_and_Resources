@@ -51,9 +51,11 @@ namespace FactionColonies.SupplyChain
             }
             GUI.color = origColor;
         }
-        internal static string BuildFlowTooltip(ResourceTypeDef def, double amt, double cap, FlowBreakdown flow)
+        internal static string BuildFlowTooltip(ResourceTypeDef def, double amt, double cap, FlowBreakdown flow,
+            int numSettlements = 0, double baseCapPerSettlement = 0, double buildingCapBonus = 0)
         {
-            string tip = def.label.CapitalizeFirst() + ": " + amt.ToString("F1") + " / " + cap.ToString("F0");
+            string tip = def.label.CapitalizeFirst() + ": " + amt.ToString("F1") + " / " + cap.ToString("F0")
+                + "\n-----";
 
             double net = flow.Net;
             if (net > 0.01)
@@ -67,12 +69,26 @@ namespace FactionColonies.SupplyChain
                 tip += "\n" + (string)"SC_BarFlowProduction".Translate(flow.production.ToString("F1"));
             if (flow.routeIn > 0)
                 tip += "\n" + (string)"SC_BarFlowRouteIn".Translate(flow.routeIn.ToString("F1"));
-            if (flow.needs > 0)
-                tip += "\n" + (string)"SC_BarFlowNeeds".Translate(flow.needs.ToString("F1"));
+            if (flow.baseNeeds > 0)
+                tip += "\n" + (string)"SC_BarFlowBaseNeeds".Translate(flow.baseNeeds.ToString("F1"));
+            if (flow.buildingNeeds > 0)
+                tip += "\n" + (string)"SC_BarFlowBuildingNeeds".Translate(flow.buildingNeeds.ToString("F1"));
             if (flow.routeOut > 0)
                 tip += "\n" + (string)"SC_BarFlowRouteOut".Translate(flow.routeOut.ToString("F1"));
             if (flow.sellOrders > 0)
                 tip += "\n" + (string)"SC_BarFlowSellOrders".Translate(flow.sellOrders.ToString("F1"));
+
+            if (numSettlements > 0)
+            {
+                double baseCap = numSettlements * baseCapPerSettlement;
+                tip += "\n" + (string)"SC_BarCapBreakdown".Translate(
+                    numSettlements.ToString(), baseCapPerSettlement.ToString("F0"), baseCap.ToString("F0"));
+                if (buildingCapBonus > 0.01)
+                {
+                    tip += "\n" + (string)"SC_BarCapBuildings".Translate(buildingCapBonus.ToString("F0"));
+                    tip += "\n" + (string)"SC_BarCapTotal".Translate(cap.ToString("F0"));
+                }
+            }
 
             return tip;
         }
