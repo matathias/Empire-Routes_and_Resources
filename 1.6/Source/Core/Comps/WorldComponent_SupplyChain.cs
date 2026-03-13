@@ -829,7 +829,7 @@ namespace FactionColonies.SupplyChain
                     Text.Anchor = TextAnchor.MiddleLeft;
                     bool prevWordWrap = Text.WordWrap;
                     Text.WordWrap = false;
-                    Rect nameRect = new Rect(cx, curY, rowW - cx - 4f, 20f);
+                    Rect nameRect = new Rect(cx, curY, rowW - cx - 4f, 24f);
                     Widgets.Label(nameRect, settlement.Name);
                     Text.WordWrap = prevWordWrap;
                     if (Mouse.IsOver(nameRect))
@@ -882,6 +882,10 @@ namespace FactionColonies.SupplyChain
             Widgets.DrawLineHorizontal(0f, curY, rowW);
             curY += 4f;
 
+            // Add new route (above list)
+            DrawAddRouteRow(viewRect, ref curY, faction);
+            curY += 4f;
+
             List<SupplyRoute> routesToRemove = null;
             int rIdx = 0;
             foreach (SupplyRoute route in supplyRoutes)
@@ -903,7 +907,6 @@ namespace FactionColonies.SupplyChain
                 Widgets.DrawBoxSolid(new Rect(0f, curY, accentW, routeRowH), effAccent);
 
                 float cx = accentW + 6f;
-                float cw = rowW - cx - 4f;
 
                 Text.Anchor = TextAnchor.MiddleLeft;
 
@@ -912,17 +915,33 @@ namespace FactionColonies.SupplyChain
 
                 string resName = route.resource != null ? route.resource.label.CapitalizeFirst() : "?";
                 Widgets.Label(new Rect(cx + 24f, curY, 80f, routeRowH), resName);
-                Widgets.Label(new Rect(cx + 108f, curY, 260f, routeRowH),
+
+                // Right-anchored elements
+                float removeX = rowW - 64f;
+                float effX = removeX - 70f;
+                float amtX = effX - 110f;
+
+                // Source -> Dest (fills remaining space)
+                float routeTextX = cx + 108f;
+                float routeTextW = amtX - routeTextX - 4f;
+                Widgets.Label(new Rect(routeTextX, curY, routeTextW, routeRowH),
                     route.source.Name + " -> " + route.destination.Name);
-                Widgets.Label(new Rect(cx + 374f, curY, 100f, routeRowH),
+
+                Widgets.Label(new Rect(amtX, curY, 106f, routeRowH),
                     "SC_PerPeriod".Translate(route.amountPerPeriod.ToString("F1")));
 
                 GUI.color = new Color(0.7f, 1f, 0.7f);
-                Widgets.Label(new Rect(cx + 480f, curY, 60f, routeRowH),
-                    "SC_EfficiencyPercent".Translate((eff * 100).ToString("F0")));
+                Rect effRect = new Rect(effX, curY, 66f, routeRowH);
+                Widgets.Label(effRect, "SC_EfficiencyPercent".Translate((eff * 100).ToString("F0")));
                 GUI.color = Color.white;
 
-                float removeX = rowW - 64f;
+                double travelDays = route.CachedTravelTicks / (double)GenDate.TicksPerDay;
+                UIUtil.TipRegionByText(effRect,
+                    "SC_EfficiencyTooltip".Translate(
+                        travelDays.ToString("F1"),
+                        SupplyChainSettings.routeDecayPerDay.ToString("F2"),
+                        (eff * 100).ToString("F1")));
+
                 if (Widgets.ButtonText(new Rect(removeX, curY + 4f, 60f, routeRowH - 8f), "SC_Remove".Translate()))
                 {
                     if (routesToRemove == null) routesToRemove = new List<SupplyRoute>();
@@ -939,10 +958,6 @@ namespace FactionColonies.SupplyChain
                 foreach (SupplyRoute route in routesToRemove)
                     supplyRoutes.Remove(route);
             }
-
-            // Add new route
-            curY += 4f;
-            DrawAddRouteRow(viewRect, ref curY, faction);
 
             Widgets.EndScrollView();
         }

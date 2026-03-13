@@ -35,6 +35,7 @@
     <SC_TotalUnits>Total: {0} units stored</SC_TotalUnits>
     <SC_PerPeriod>{0}/period</SC_PerPeriod>
     <SC_EfficiencyPercent>{0}%</SC_EfficiencyPercent>
+    <SC_EfficiencyTooltip>Travel: {0} days\nDecay rate: {1}/day\nEfficiency: {2}%\n\nFormula: 1 / (1 + days × decay)</SC_EfficiencyTooltip>
     <SC_NewRoute>New route:</SC_NewRoute>
     <SC_SourcePicker>Source...</SC_SourcePicker>
     <SC_DestPicker>Dest...</SC_DestPicker>
