@@ -471,6 +471,9 @@ namespace FactionColonies.SupplyChain
             curY += 36f;
 
             float barWidth = 300f;
+            WorldComponent_SupplyChain flowWc = SupplyChainCache.Comp;
+            WorldSettlementFC flowSettlement = WorldSettlement;
+
             foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
             {
                 if (def.isPoolResource) continue;
@@ -484,14 +487,25 @@ namespace FactionColonies.SupplyChain
                 if (def.Icon != null)
                     GUI.DrawTexture(new Rect(0f, curY + 2f, 24f, 24f), def.Icon);
 
-                Text.Anchor = TextAnchor.MiddleLeft;
-                Widgets.Label(new Rect(28f, curY, 100f, barHeight), def.label.CapitalizeFirst());
+                // Flow indicator
+                WorldComponent_SupplyChain.FlowBreakdown flow = default(WorldComponent_SupplyChain.FlowBreakdown);
+                if (flowWc != null && flowSettlement != null)
+                    flow = flowWc.CalculateFlow(flowSettlement, this, def);
+                WorldComponent_SupplyChain.DrawFlowIndicator(26f, curY + 6f, flow.Net);
 
-                Rect barRect = new Rect(135f, curY + 4f, barWidth, barHeight - 8f);
+                Text.Anchor = TextAnchor.MiddleLeft;
+                Widgets.Label(new Rect(42f, curY, 100f, barHeight), def.label.CapitalizeFirst());
+
+                Rect barRect = new Rect(150f, curY + 4f, barWidth, barHeight - 8f);
                 Widgets.FillableBar(barRect, fillPct);
 
-                Widgets.Label(new Rect(135f + barWidth + 8f, curY, 150f, barHeight),
+                Widgets.Label(new Rect(150f + barWidth + 8f, curY, 150f, barHeight),
                     "SC_StockpileAmount".Translate(amount.ToString("F1"), cap.ToString("F0")));
+
+                Rect rowTipRect = new Rect(0f, curY, viewRect.width, barHeight);
+                UIUtil.TipRegionByText(rowTipRect,
+                    WorldComponent_SupplyChain.BuildFlowTooltip(def, amount, cap, flow));
+
                 Text.Anchor = TextAnchor.UpperLeft;
 
                 curY += barHeight + 2f;

@@ -36,6 +36,7 @@ namespace FactionColonies.SupplyChain
         private ResourceTypeDef newRouteResource;
         private string newRouteAmountBuffer = "";
         private float newRouteAmount;
+        private ResourceTypeDef routeFilterResource;
 
         public WorldComponent_SupplyChain(World world) : base(world)
         {
@@ -183,6 +184,159 @@ namespace FactionColonies.SupplyChain
                 if (sc != null) return sc;
             }
             return null;
+        }
+
+        // --- Flow Calculation ---
+
+        internal struct FlowBreakdown
+        {
+            public double production;
+            public double routeIn;
+            public double needs;
+            public double routeOut;
+            public double sellOrders;
+            public double Net { get { return production + routeIn - needs - routeOut - sellOrders; } }
+        }
+
+        internal FlowBreakdown CalculateFlow(WorldSettlementFC settlement, WorldObjectComp_SupplyChain comp, ResourceTypeDef def)
+        {
+            FlowBreakdown flow = new FlowBreakdown();
+            flow.production = comp.GetAllocation(def);
+
+            foreach (SupplyRoute route in supplyRoutes)
+            {
+                if (!route.IsValid() || route.resource != def) continue;
+                if (route.destination == settlement)
+                    flow.routeIn += route.amountPerPeriod * route.CachedEfficiency;
+                if (route.source == settlement)
+                    flow.routeOut += route.amountPerPeriod;
+            }
+
+            foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
+            {
+                if (needDef.resource == def)
+                    flow.needs += needDef.CalculateDemand(settlement);
+            }
+
+            if (settlement.BuildingsComp != null)
+            {
+                foreach (BuildingFC building in settlement.BuildingsComp.Buildings)
+                {
+                    if (building.def == null || building.def == BuildingFCDefOf.Empty) continue;
+                    BuildingNeedExtension ext = building.def.GetModExtension<BuildingNeedExtension>();
+                    if (ext == null || ext.inputs == null) continue;
+                    foreach (BuildingResourceInput input in ext.inputs)
+                    {
+                        if (input.resource == def)
+                            flow.needs += input.amount;
+                    }
+                }
+            }
+
+            foreach (SellOrder order in comp.LocalSellOrders)
+            {
+                if (order.resource == def)
+                    flow.sellOrders += order.amountPerPeriod;
+            }
+
+            return flow;
+        }
+
+        /// <summary>
+        /// Calculates faction-level flow for Simple mode by aggregating across all settlements.
+        /// </summary>
+        private FlowBreakdown CalculateSimpleFlow(FactionFC faction, ResourceTypeDef def)
+        {
+            FlowBreakdown flow = new FlowBreakdown();
+            if (faction == null) return flow;
+
+            foreach (WorldSettlementFC settlement in faction.settlements)
+            {
+                WorldObjectComp_SupplyChain comp = GetComp(settlement);
+                if (comp != null)
+                    flow.production += comp.GetAllocation(def);
+
+                foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
+                {
+                    if (needDef.resource == def)
+                        flow.needs += needDef.CalculateDemand(settlement);
+                }
+
+                if (settlement.BuildingsComp != null)
+                {
+                    foreach (BuildingFC building in settlement.BuildingsComp.Buildings)
+                    {
+                        if (building.def == null || building.def == BuildingFCDefOf.Empty) continue;
+                        BuildingNeedExtension ext = building.def.GetModExtension<BuildingNeedExtension>();
+                        if (ext == null || ext.inputs == null) continue;
+                        foreach (BuildingResourceInput input in ext.inputs)
+                        {
+                            if (input.resource == def)
+                                flow.needs += input.amount;
+                        }
+                    }
+                }
+            }
+
+            foreach (SellOrder order in globalSellOrders)
+            {
+                if (order.resource == def)
+                    flow.sellOrders += order.amountPerPeriod;
+            }
+
+            return flow;
+        }
+
+        internal static string BuildFlowTooltip(ResourceTypeDef def, double amt, double cap, FlowBreakdown flow)
+        {
+            string tip = def.label.CapitalizeFirst() + ": " + amt.ToString("F1") + " / " + cap.ToString("F0");
+
+            double net = flow.Net;
+            if (net > 0.01)
+                tip += "\n" + (string)"SC_BarNetPositive".Translate(net.ToString("F1"));
+            else if (net < -0.01)
+                tip += "\n" + (string)"SC_BarNetNegative".Translate((-net).ToString("F1"));
+            else
+                tip += "\n" + (string)"SC_BarNetEven".Translate();
+
+            if (flow.production > 0)
+                tip += "\n" + (string)"SC_BarFlowProduction".Translate(flow.production.ToString("F1"));
+            if (flow.routeIn > 0)
+                tip += "\n" + (string)"SC_BarFlowRouteIn".Translate(flow.routeIn.ToString("F1"));
+            if (flow.needs > 0)
+                tip += "\n" + (string)"SC_BarFlowNeeds".Translate(flow.needs.ToString("F1"));
+            if (flow.routeOut > 0)
+                tip += "\n" + (string)"SC_BarFlowRouteOut".Translate(flow.routeOut.ToString("F1"));
+            if (flow.sellOrders > 0)
+                tip += "\n" + (string)"SC_BarFlowSellOrders".Translate(flow.sellOrders.ToString("F1"));
+
+            return tip;
+        }
+
+        internal static void DrawFlowIndicator(float x, float y, double net)
+        {
+            GameFont prevFont = Text.Font;
+            TextAnchor prevAnchor = Text.Anchor;
+            Text.Font = GameFont.Small;
+            Text.Anchor = TextAnchor.MiddleCenter;
+            if (net > 0.01)
+            {
+                GUI.color = AccentUtil.Income;
+                Widgets.Label(new Rect(x, y, 14f, 16f), "+");
+            }
+            else if (net < -0.01)
+            {
+                GUI.color = AccentUtil.Expense;
+                Widgets.Label(new Rect(x, y, 14f, 16f), "-");
+            }
+            else
+            {
+                GUI.color = Color.gray;
+                Widgets.Label(new Rect(x, y, 14f, 16f), "=");
+            }
+            GUI.color = Color.white;
+            Text.Font = prevFont;
+            Text.Anchor = prevAnchor;
         }
 
         // --- Mode Switching ---
@@ -658,8 +812,9 @@ namespace FactionColonies.SupplyChain
             curY += 38f;
 
             // Resource bars — scale bar to fill available width
+            FactionFC simpleFaction = FactionCache.FactionComp;
             float barHeight = 28f;
-            float labelEndX = 135f;
+            float labelEndX = 150f;
             float amountTextW = 150f;
             float barWidth = inner.width - labelEndX - amountTextW - 16f;
             if (barWidth < 100f) barWidth = 100f;
@@ -677,14 +832,20 @@ namespace FactionColonies.SupplyChain
                 if (def.Icon != null)
                     GUI.DrawTexture(new Rect(inner.x, curY + 2f, 24f, 24f), def.Icon);
 
+                FlowBreakdown simpleFlow = CalculateSimpleFlow(simpleFaction, def);
+                DrawFlowIndicator(inner.x + 26f, curY + 6f, simpleFlow.Net);
+
                 Text.Anchor = TextAnchor.MiddleLeft;
-                Widgets.Label(new Rect(inner.x + 28f, curY, 100f, barHeight), def.label.CapitalizeFirst());
+                Widgets.Label(new Rect(inner.x + 42f, curY, 100f, barHeight), def.label.CapitalizeFirst());
 
                 Rect barRect = new Rect(inner.x + labelEndX, curY + 4f, barWidth, barHeight - 8f);
                 Widgets.FillableBar(barRect, fillPct);
 
                 Widgets.Label(new Rect(inner.x + labelEndX + barWidth + 8f, curY, amountTextW, barHeight),
                     "SC_StockpileAmount".Translate(amount.ToString("F1"), cap.ToString("F0")));
+
+                Rect rowTipRect = new Rect(inner.x, curY, inner.width, barHeight);
+                UIUtil.TipRegionByText(rowTipRect, BuildFlowTooltip(def, amount, cap, simpleFlow));
 
                 Text.Anchor = TextAnchor.UpperLeft;
                 curY += barHeight + 2f;
@@ -782,7 +943,7 @@ namespace FactionColonies.SupplyChain
             int settlementCount = faction != null ? faction.settlements.Count : 0;
             float totalHeight = 50f
                 + settlementCount * (settRowH + rowGap) + 50f
-                + supplyRoutes.Count * (routeRowH + rowGap) + 120f
+                + supplyRoutes.Count * (routeRowH + rowGap) + 150f
                 + 60f;
 
             Rect viewRect = new Rect(0f, 0f, inner.width - 16f, totalHeight);
@@ -837,32 +998,57 @@ namespace FactionColonies.SupplyChain
                     if (Widgets.ButtonInvisible(nameRect))
                         Find.WindowStack.Add(new SettlementWindowFc(settlement));
 
-                    // Bottom line: mini stockpile bars
+                    // Bottom line: full-width stockpile bars
                     IStockpilePool sPool = comp != null ? comp.GetPool() : null;
-                    float barX = cx;
                     float barY = curY + 22f;
                     if (sPool != null)
                     {
+                        // Count valid resources for dynamic width
+                        int resCount = 0;
                         foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
                         {
                             if (def.isPoolResource) continue;
-                            double amt = sPool.GetAmount(def);
-                            double cap = sPool.GetCap(def);
-                            if (cap <= 0) continue;
+                            if (sPool.GetCap(def) > 0) resCount++;
+                        }
 
-                            float fill = (float)(amt / cap);
+                        if (resCount > 0)
+                        {
+                            float totalBarW = rowW - cx - 4f;
+                            float slotW = totalBarW / resCount;
+                            float barX = cx;
 
-                            if (def.Icon != null)
-                                GUI.DrawTexture(new Rect(barX, barY, 16f, 16f), def.Icon);
+                            foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+                            {
+                                if (def.isPoolResource) continue;
+                                double amt = sPool.GetAmount(def);
+                                double cap = sPool.GetCap(def);
+                                if (cap <= 0) continue;
 
-                            Rect miniBar = new Rect(barX + 18f, barY + 3f, 40f, 10f);
-                            Widgets.FillableBar(miniBar, fill);
+                                float fill = (float)(amt / cap);
 
-                            Rect tipRect = new Rect(barX, barY, 60f, 16f);
-                            UIUtil.TipRegionByText(tipRect,
-                                def.label.CapitalizeFirst() + ": " + amt.ToString("F1") + " / " + cap.ToString("F0"));
+                                // Icon
+                                if (def.Icon != null)
+                                    GUI.DrawTexture(new Rect(barX, barY, 16f, 16f), def.Icon);
 
-                            barX += 64f;
+                                // Flow indicator (between icon and bar)
+                                FlowBreakdown flow = CalculateFlow(settlement, comp, def);
+                                float indicatorW = 14f;
+                                float indX = barX + 18f;
+                                DrawFlowIndicator(indX, barY, flow.Net);
+
+                                // Fill bar (after indicator)
+                                float barStart = indX + indicatorW + 2f;
+                                float miniBarW = slotW - (barStart - barX);
+                                if (miniBarW < 10f) miniBarW = 10f;
+                                Rect miniBar = new Rect(barStart, barY + 3f, miniBarW, 10f);
+                                Widgets.FillableBar(miniBar, fill);
+
+                                // Tooltip
+                                Rect tipRect = new Rect(barX, barY, slotW, 16f);
+                                UIUtil.TipRegionByText(tipRect, BuildFlowTooltip(def, amt, cap, flow));
+
+                                barX += slotW;
+                            }
                         }
                     }
 
@@ -886,6 +1072,42 @@ namespace FactionColonies.SupplyChain
             DrawAddRouteRow(viewRect, ref curY, faction);
             curY += 4f;
 
+            // Resource filter buttons
+            float fbX = 0f;
+            float fbH = 22f;
+            Text.Font = GameFont.Tiny;
+
+            bool allActive = routeFilterResource == null;
+            if (UIUtil.ButtonFlat(new Rect(fbX, curY, 40f, fbH), (string)"SC_All".Translate(), highlighted: allActive))
+                routeFilterResource = null;
+            fbX += 44f;
+
+            HashSet<ResourceTypeDef> routeResources = new HashSet<ResourceTypeDef>();
+            foreach (SupplyRoute r in supplyRoutes)
+            {
+                if (r.IsValid() && r.resource != null)
+                    routeResources.Add(r.resource);
+            }
+            foreach (ResourceTypeDef filterDef in routeResources)
+            {
+                bool active = routeFilterResource == filterDef;
+                ResourceTypeDef captured = filterDef;
+                string btnLabel = filterDef.label.CapitalizeFirst();
+                float btnW = Text.CalcSize(btnLabel).x + 28f;
+                if (filterDef.Icon != null)
+                    GUI.DrawTexture(new Rect(fbX + 4f, curY + 3f, 16f, 16f), filterDef.Icon);
+                if (UIUtil.ButtonFlat(new Rect(fbX, curY, btnW, fbH), "   " + btnLabel, highlighted: active))
+                    routeFilterResource = captured;
+                fbX += btnW + 4f;
+            }
+
+            // Reset filter if filtered resource has no routes
+            if (routeFilterResource != null && !routeResources.Contains(routeFilterResource))
+                routeFilterResource = null;
+
+            Text.Font = GameFont.Small;
+            curY += fbH + 4f;
+
             List<SupplyRoute> routesToRemove = null;
             int rIdx = 0;
             foreach (SupplyRoute route in supplyRoutes)
@@ -896,6 +1118,9 @@ namespace FactionColonies.SupplyChain
                     routesToRemove.Add(route);
                     continue;
                 }
+
+                if (routeFilterResource != null && route.resource != routeFilterResource)
+                    continue;
 
                 route.RecacheIfDirty();
 
@@ -921,11 +1146,18 @@ namespace FactionColonies.SupplyChain
                 float effX = removeX - 70f;
                 float amtX = effX - 110f;
 
-                // Source -> Dest (fills remaining space)
+                // Source / Arrow / Dest columns
                 float routeTextX = cx + 108f;
                 float routeTextW = amtX - routeTextX - 4f;
-                Widgets.Label(new Rect(routeTextX, curY, routeTextW, routeRowH),
-                    route.source.Name + " -> " + route.destination.Name);
+                float arrowW = 24f;
+                float nameColW = (routeTextW - arrowW) / 2f;
+
+                Text.Anchor = TextAnchor.MiddleRight;
+                Widgets.Label(new Rect(routeTextX, curY, nameColW, routeRowH), route.source.Name);
+                Text.Anchor = TextAnchor.MiddleCenter;
+                Widgets.Label(new Rect(routeTextX + nameColW, curY, arrowW, routeRowH), "\u2192");
+                Text.Anchor = TextAnchor.MiddleLeft;
+                Widgets.Label(new Rect(routeTextX + nameColW + arrowW, curY, nameColW, routeRowH), route.destination.Name);
 
                 Widgets.Label(new Rect(amtX, curY, 106f, routeRowH),
                     "SC_PerPeriod".Translate(route.amountPerPeriod.ToString("F1")));

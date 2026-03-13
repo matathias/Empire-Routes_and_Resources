@@ -41,6 +41,17 @@
     <SC_DestPicker>Dest...</SC_DestPicker>
     <SC_ResourcePicker>Resource...</SC_ResourcePicker>
     <SC_SameSettlementError>Source and destination cannot be the same settlement.</SC_SameSettlementError>
+    <SC_All>All</SC_All>
+
+    <!-- Stockpile Bar Flow Tooltips -->
+    <SC_BarNetPositive>Net: +{0}/period</SC_BarNetPositive>
+    <SC_BarNetNegative>Net: -{0}/period</SC_BarNetNegative>
+    <SC_BarNetEven>Net: 0/period</SC_BarNetEven>
+    <SC_BarFlowProduction>  Production: +{0}</SC_BarFlowProduction>
+    <SC_BarFlowRouteIn>  Route in: +{0}</SC_BarFlowRouteIn>
+    <SC_BarFlowNeeds>  Needs: -{0}</SC_BarFlowNeeds>
+    <SC_BarFlowRouteOut>  Routes out: -{0}</SC_BarFlowRouteOut>
+    <SC_BarFlowSellOrders>  Sell orders: -{0}</SC_BarFlowSellOrders>
 
     <!-- Settlement Tab - Simple Mode -->
     <SC_StockpileAllocations>Stockpile Allocations</SC_StockpileAllocations>
