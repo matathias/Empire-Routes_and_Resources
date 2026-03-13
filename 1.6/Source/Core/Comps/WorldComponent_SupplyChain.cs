@@ -30,6 +30,11 @@ namespace FactionColonies.SupplyChain
         private string newSellOrderAmountBuffer = "";
         private float newSellOrderAmount;
 
+        // Complex mode tab state
+        private int complexTab = 0; // 0 = Stockpiles, 1 = Routes
+        private Vector2 scrollPosStockpiles;
+        private Vector2 scrollPosRoutes;
+
         // Route creation UI state
         private WorldSettlementFC newRouteSource;
         private WorldSettlementFC newRouteDest;
@@ -881,43 +886,69 @@ namespace FactionColonies.SupplyChain
 
             EnsureCapsAndPools();
 
+            // Header
+            Text.Font = GameFont.Medium;
+            Widgets.Label(new Rect(inner.x, inner.y, 300f, 30f), "SC_EmpireSupplyNetwork".Translate());
+            Text.Font = GameFont.Tiny;
+            GUI.color = Color.gray;
+            Widgets.Label(new Rect(inner.x + 310f, inner.y + 4f, 100f, 26f), "SC_ModeComplex".Translate());
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+
+            // Tab bar
+            float tabY = inner.y + 38f;
+            float tabH = 24f;
+            float tabW = inner.width / 2f;
+            string[] tabLabels = new string[]
+            {
+                (string)"SC_TabStockpiles".Translate(),
+                (string)"SC_TabRoutes".Translate()
+            };
+
+            Rect chosenRect = new Rect();
+            for (int i = 0; i < 2; i++)
+            {
+                Rect tabRect = new Rect(inner.x + tabW * i, tabY, tabW, tabH);
+                if (Widgets.ButtonText(tabRect, tabLabels[i]))
+                    complexTab = i;
+                if (complexTab == i)
+                    chosenRect = tabRect;
+            }
+
+            // Tab underline decoration
+            Color origColor = GUI.color;
+            GUI.color = Color.gray;
+            Widgets.DrawLineHorizontal(inner.x, chosenRect.yMax, chosenRect.x - inner.x);
+            Widgets.DrawLineVertical(chosenRect.x, chosenRect.y, chosenRect.height);
+            Widgets.DrawLineHorizontal(chosenRect.x, chosenRect.y, chosenRect.width);
+            Widgets.DrawLineVertical(chosenRect.xMax, chosenRect.y, chosenRect.height);
+            Widgets.DrawLineHorizontal(chosenRect.xMax, chosenRect.yMax, inner.xMax - chosenRect.xMax);
+            GUI.color = origColor;
+
+            // Content area below tabs
+            float contentY = tabY + tabH;
+            Rect contentRect = new Rect(inner.x, contentY, inner.width, inner.yMax - contentY);
+
+            if (complexTab == 0)
+                DrawComplexStockpiles(contentRect);
+            else
+                DrawComplexRoutes(contentRect);
+        }
+
+        private void DrawComplexStockpiles(Rect rect)
+        {
             const float settRowH = 42f;
-            const float routeRowH = 32f;
             const float accentW = 4f;
             const float rowGap = 2f;
 
-            // Calculate scroll height
             FactionFC faction = FactionCache.FactionComp;
             int settlementCount = faction != null ? faction.settlements.Count : 0;
-            float totalHeight = 50f
-                + settlementCount * (settRowH + rowGap) + 50f
-                + supplyRoutes.Count * (routeRowH + rowGap) + 150f
-                + 60f;
+            float totalHeight = settlementCount * (settRowH + rowGap) + 20f;
 
-            Rect viewRect = new Rect(0f, 0f, inner.width - 16f, totalHeight);
-            Rect scrollRect = new Rect(inner.x, inner.y, inner.width, inner.height);
-
-            Widgets.BeginScrollView(scrollRect, ref scrollPos, viewRect);
-            float curY = 0f;
+            Rect viewRect = new Rect(0f, 0f, rect.width - 16f, totalHeight);
+            Widgets.BeginScrollView(rect, ref scrollPosStockpiles, viewRect);
+            float curY = 4f;
             float rowW = viewRect.width;
-
-            // Header
-            Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0f, curY, 300f, 30f), "SC_EmpireSupplyNetwork".Translate());
-            Text.Font = GameFont.Tiny;
-            GUI.color = Color.gray;
-            Widgets.Label(new Rect(310f, curY + 4f, 100f, 26f), "SC_ModeComplex".Translate());
-            GUI.color = Color.white;
-            Text.Font = GameFont.Small;
-            curY += 38f;
-
-            // --- Settlement Overview ---
-            Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0f, curY, 300f, 30f), "SC_SettlementStockpiles".Translate());
-            Text.Font = GameFont.Small;
-            curY += 32f;
-            Widgets.DrawLineHorizontal(0f, curY, rowW);
-            curY += 4f;
 
             if (faction != null)
             {
@@ -1010,15 +1041,23 @@ namespace FactionColonies.SupplyChain
                     sIdx++;
                 }
             }
-            curY += 12f;
 
-            // --- Routes ---
-            Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0f, curY, 300f, 30f), "SC_SupplyRoutes".Translate());
-            Text.Font = GameFont.Small;
-            curY += 32f;
-            Widgets.DrawLineHorizontal(0f, curY, rowW);
-            curY += 4f;
+            Widgets.EndScrollView();
+        }
+
+        private void DrawComplexRoutes(Rect rect)
+        {
+            const float routeRowH = 32f;
+            const float accentW = 4f;
+            const float rowGap = 2f;
+
+            FactionFC faction = FactionCache.FactionComp;
+            float totalHeight = supplyRoutes.Count * (routeRowH + rowGap) + 150f;
+
+            Rect viewRect = new Rect(0f, 0f, rect.width - 16f, totalHeight);
+            Widgets.BeginScrollView(rect, ref scrollPosRoutes, viewRect);
+            float curY = 4f;
+            float rowW = viewRect.width;
 
             // Add new route (above list)
             DrawAddRouteRow(viewRect, ref curY, faction);

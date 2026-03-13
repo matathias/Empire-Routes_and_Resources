@@ -42,6 +42,8 @@
     <SC_ResourcePicker>Resource...</SC_ResourcePicker>
     <SC_SameSettlementError>Source and destination cannot be the same settlement.</SC_SameSettlementError>
     <SC_All>All</SC_All>
+    <SC_TabStockpiles>Stockpiles</SC_TabStockpiles>
+    <SC_TabRoutes>Routes</SC_TabRoutes>
 
     <!-- Stockpile Bar Flow Tooltips -->
     <SC_BarNetPositive>Net: +{0}/period</SC_BarNetPositive>
