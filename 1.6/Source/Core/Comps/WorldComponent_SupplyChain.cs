@@ -864,12 +864,16 @@ namespace FactionColonies.SupplyChain
 
             // Resource bars — scale bar to fill available width
             FactionFC simpleFaction = FactionCache.FactionComp;
-            float barHeight = 28f;
-            float labelEndX = 150f;
+            const float barHeight = 28f;
+            const float accentW = 4f;
+            const float arrowSize = 16f;
+            float contentX = inner.x + accentW + 4f;
+            float labelEndX = contentX + 130f;
             float amountTextW = 150f;
-            float barWidth = inner.width - labelEndX - amountTextW - 16f;
+            float barWidth = inner.width - (labelEndX - inner.x) - arrowSize - 8f - amountTextW - 4f;
             if (barWidth < 100f) barWidth = 100f;
 
+            int resIdx = 0;
             foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
             {
                 if (def.isPoolResource) continue;
@@ -879,32 +883,54 @@ namespace FactionColonies.SupplyChain
                 if (cap <= 0) continue;
 
                 float fillPct = cap > 0 ? (float)(amount / cap) : 0f;
+                FlowBreakdown simpleFlow = GetCachedSimpleFlow(simpleFaction, def);
+
+                Rect rowRect = new Rect(inner.x, curY, inner.width, barHeight);
+                if (resIdx % 2 == 0) Widgets.DrawHighlight(rowRect);
+                UIUtilSC.DrawFlowHighlight(rowRect, simpleFlow.Net);
+
+                // Left accent bar colored by flow
+                Color accentColor = simpleFlow.Net > 0.01 ? AccentUtil.Income
+                    : simpleFlow.Net < -0.01 ? AccentUtil.Expense : Color.gray;
+                Widgets.DrawBoxSolid(new Rect(inner.x, curY, accentW, barHeight), accentColor);
 
                 if (def.Icon != null)
-                    GUI.DrawTexture(new Rect(inner.x, curY + 2f, 24f, 24f), def.Icon);
-
-                FlowBreakdown simpleFlow = GetCachedSimpleFlow(simpleFaction, def);
-                UIUtilSC.DrawFlowIndicator(inner.x + 26f, curY + 6f, simpleFlow.Net);
+                    GUI.DrawTexture(new Rect(contentX, curY + 2f, 24f, 24f), def.Icon);
 
                 Text.Anchor = TextAnchor.MiddleLeft;
-                Widgets.Label(new Rect(inner.x + 42f, curY, 100f, barHeight), def.label.CapitalizeFirst());
+                Widgets.Label(new Rect(contentX + 28f, curY, 100f, barHeight), def.label.CapitalizeFirst());
 
-                Rect barRect = new Rect(inner.x + labelEndX, curY + 4f, barWidth, barHeight - 8f);
+                Rect barRect = new Rect(labelEndX, curY + 4f, barWidth, barHeight - 8f);
                 Widgets.FillableBar(barRect, fillPct);
 
-                Widgets.Label(new Rect(inner.x + labelEndX + barWidth + 8f, curY, amountTextW, barHeight),
+                // Arrow indicator (between bar and amount text)
+                float arrowX = barRect.xMax + 2f;
+                if (simpleFlow.Net > 0.01)
+                {
+                    GUI.color = AccentUtil.Income;
+                    GUI.DrawTexture(new Rect(arrowX, curY + (barHeight - arrowSize) / 2f, arrowSize, arrowSize), TexUI.ArrowTexRight);
+                    GUI.color = Color.white;
+                }
+                else if (simpleFlow.Net < -0.01)
+                {
+                    GUI.color = AccentUtil.Expense;
+                    GUI.DrawTexture(new Rect(arrowX, curY + (barHeight - arrowSize) / 2f, arrowSize, arrowSize), TexUI.ArrowTexLeft);
+                    GUI.color = Color.white;
+                }
+
+                Widgets.Label(new Rect(arrowX + arrowSize + 4f, curY, amountTextW, barHeight),
                     "SC_StockpileAmount".Translate(amount.ToString("F1"), cap.ToString("F0")));
 
                 int numSettlements = simpleFaction != null ? simpleFaction.settlements.Count : 0;
                 double baseCap = numSettlements * SupplyChainSettings.baseCapPerSettlement;
                 double buildingCapBonus = cap - baseCap;
 
-                Rect rowTipRect = new Rect(inner.x, curY, inner.width, barHeight);
-                UIUtil.TipRegionByText(rowTipRect, UIUtilSC.BuildFlowTooltip(def, amount, cap, simpleFlow,
+                UIUtil.TipRegionByText(rowRect, UIUtilSC.BuildFlowTooltip(def, amount, cap, simpleFlow,
                     numSettlements, SupplyChainSettings.baseCapPerSettlement, buildingCapBonus));
 
                 Text.Anchor = TextAnchor.UpperLeft;
                 curY += barHeight + 2f;
+                resIdx++;
             }
 
             curY += 12f;
@@ -917,6 +943,9 @@ namespace FactionColonies.SupplyChain
                 SupplyChainSettings.overflowPenaltyRate.ToString("P0")));
             Text.Font = GameFont.Small;
             curY += 34f;
+
+            DrawAddSellOrderRow(inner, ref curY);
+            curY += 4f;
 
             const float sellRowH = 28f;
             const float sellAccentW = 4f;
@@ -969,9 +998,6 @@ namespace FactionColonies.SupplyChain
                     globalSellOrders.Remove(order);
                 DirtyFlowCache();
             }
-
-            curY += 4f;
-            DrawAddSellOrderRow(inner, ref curY);
 
             // Overflow info
             curY += 16f;

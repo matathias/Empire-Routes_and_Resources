@@ -539,15 +539,7 @@ namespace FactionColonies.SupplyChain
                     chosenRect = tabRect;
             }
 
-            // Tab underline decoration
-            Color origColor = GUI.color;
-            GUI.color = Color.gray;
-            Widgets.DrawLineHorizontal(inner.x, chosenRect.yMax, chosenRect.x - inner.x);
-            Widgets.DrawLineVertical(chosenRect.x, chosenRect.y, chosenRect.height);
-            Widgets.DrawLineHorizontal(chosenRect.x, chosenRect.y, chosenRect.width);
-            Widgets.DrawLineVertical(chosenRect.xMax, chosenRect.y, chosenRect.height);
-            Widgets.DrawLineHorizontal(chosenRect.xMax, chosenRect.yMax, inner.xMax - chosenRect.xMax);
-            GUI.color = origColor;
+            UIUtil.DrawTabDecoratorHorizontalTop(chosenRect, inner, Color.gray);
 
             // Content area below tabs
             float contentY = inner.y + tabH;
@@ -776,12 +768,15 @@ namespace FactionColonies.SupplyChain
 
             // --- Direction toggle (fixed above scroll) ---
             float toggleW = rect.width / 2f;
-            if (UIUtil.ButtonFlat(new Rect(rect.x, rect.y+2f, toggleW, 24f),
-                (string)"SC_DirectionFrom".Translate(), highlighted: newRouteIsOutgoing))
+            Rect fromRect = new Rect(rect.x, rect.y + 3f, toggleW, 24f);
+            Rect toRect = new Rect(rect.x + toggleW, rect.y + 3f, toggleW, 24f);
+            Rect currentRect = newRouteIsOutgoing ? fromRect : toRect;
+            if (UIUtil.ButtonFlat(fromRect, (string)"SC_DirectionFrom".Translate(), highlighted: newRouteIsOutgoing))
                 newRouteIsOutgoing = true;
-            if (UIUtil.ButtonFlat(new Rect(rect.x + toggleW, rect.y+2f, toggleW, 24f),
-                (string)"SC_DirectionTo".Translate(), highlighted: !newRouteIsOutgoing))
+            if (UIUtil.ButtonFlat(toRect, (string)"SC_DirectionTo".Translate(), highlighted: !newRouteIsOutgoing))
                 newRouteIsOutgoing = false;
+
+            UIUtil.DrawTabDecoratorHorizontalTop(currentRect, rect, Color.gray);
 
             // --- Add Route form (fixed above scroll) ---
             float addCurY = rect.y + 30f;
@@ -1270,6 +1265,12 @@ namespace FactionColonies.SupplyChain
                     GUI.color = Color.white;
                     Text.Font = GameFont.Small;
                 }
+
+                // Tooltip explaining demand source
+                Rect needRowRect = new Rect(0f, curY, viewRect.width, 24f);
+                string needTip = BuildNeedTooltip(state);
+                if (needTip != null)
+                    UIUtil.TipRegionByText(needRowRect, needTip);
 
                 Text.Anchor = TextAnchor.UpperLeft;
                 curY += 26f;

@@ -11,31 +11,6 @@ namespace FactionColonies.SupplyChain
 {
     internal static class UIUtilSC
     {
-        internal static void DrawFlowIndicator(float x, float y, double net)
-        {
-            GameFont prevFont = Text.Font;
-            TextAnchor prevAnchor = Text.Anchor;
-            Text.Font = GameFont.Small;
-            Text.Anchor = TextAnchor.MiddleCenter;
-            if (net > 0.01)
-            {
-                GUI.color = AccentUtil.Income;
-                Widgets.Label(new Rect(x, y, 14f, 16f), "+");
-            }
-            else if (net < -0.01)
-            {
-                GUI.color = AccentUtil.Expense;
-                Widgets.Label(new Rect(x, y, 14f, 16f), "-");
-            }
-            else
-            {
-                GUI.color = Color.gray;
-                Widgets.Label(new Rect(x, y, 14f, 16f), "=");
-            }
-            GUI.color = Color.white;
-            Text.Font = prevFont;
-            Text.Anchor = prevAnchor;
-        }
         internal static void DrawFlowHighlight(Rect rect, double net)
         {
             if (net > 0.01)
