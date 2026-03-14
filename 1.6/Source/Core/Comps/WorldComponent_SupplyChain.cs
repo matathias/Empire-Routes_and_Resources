@@ -23,6 +23,17 @@ namespace FactionColonies.SupplyChain
         private bool capsAndPoolsDirty = true;
         private FactionStockpilePool pool;
 
+        // Flow cache: keyed by (settlementTile << 16 | resourceDefIndex)
+        private Dictionary<ulong, FlowBreakdown> flowCache = new Dictionary<ulong, FlowBreakdown>();
+        private bool flowCacheDirty = true;
+
+        // Simple-mode flow cache: keyed by resource def index
+        private Dictionary<ushort, FlowBreakdown> simpleFlowCache = new Dictionary<ushort, FlowBreakdown>();
+
+        // Resource columns cache for DrawComplexStockpiles
+        private List<ResourceTypeDef> cachedResourceColumns;
+        private bool resourceColumnsDirty = true;
+
         // UI state (not saved)
         private FactionFC uiFaction;
         private Vector2 scrollPos;
@@ -85,6 +96,7 @@ namespace FactionColonies.SupplyChain
             MainTableRegistry.Register(this);
             LifecycleRegistry.Register(this);
 
+            SupplyChainCache.ClearCompCache();
             capsAndPoolsDirty = true;
 
             // Reconcile with global settings (mode may have changed while this save was unloaded)
@@ -145,7 +157,7 @@ namespace FactionColonies.SupplyChain
                 foreach (BuildingFC building in settlement.BuildingsComp.Buildings)
                 {
                     if (building.def == null || building.def == BuildingFCDefOf.Empty) continue;
-                    BuildingNeedExtension ext = building.def.GetModExtension<BuildingNeedExtension>();
+                    BuildingNeedExtension ext = SupplyChainCache.GetBuildingNeedExt(building.def);
                     if (ext?.capBonuses == null) continue;
                     foreach (BuildingCapBonus bonus in ext.capBonuses)
                     {
@@ -184,16 +196,10 @@ namespace FactionColonies.SupplyChain
 
         internal static WorldObjectComp_SupplyChain GetComp(WorldSettlementFC settlement)
         {
-            if (settlement == null) return null;
-            foreach (WorldObjectComp comp in settlement.AllComps)
-            {
-                WorldObjectComp_SupplyChain sc = comp as WorldObjectComp_SupplyChain;
-                if (sc != null) return sc;
-            }
-            return null;
+            return SupplyChainCache.GetSettlementComp(settlement);
         }
 
-        // --- Flow Calculation ---
+        // --- Flow Calculation & Cache ---
 
         internal struct FlowBreakdown
         {
@@ -205,6 +211,53 @@ namespace FactionColonies.SupplyChain
             public double sellOrders;
             public double needs { get { return baseNeeds + buildingNeeds; } }
             public double Net { get { return production + routeIn - needs - routeOut - sellOrders; } }
+        }
+
+        private static ulong FlowKey(int settlementTile, ushort resourceIndex)
+        {
+            return ((ulong)(uint)settlementTile << 16) | resourceIndex;
+        }
+
+        internal FlowBreakdown GetCachedFlow(WorldSettlementFC settlement, WorldObjectComp_SupplyChain comp, ResourceTypeDef def)
+        {
+            if (flowCacheDirty)
+            {
+                flowCache.Clear();
+                simpleFlowCache.Clear();
+                flowCacheDirty = false;
+            }
+
+            ulong key = FlowKey(settlement.Tile, def.index);
+            FlowBreakdown flow;
+            if (!flowCache.TryGetValue(key, out flow))
+            {
+                flow = CalculateFlow(settlement, comp, def);
+                flowCache[key] = flow;
+            }
+            return flow;
+        }
+
+        internal FlowBreakdown GetCachedSimpleFlow(FactionFC faction, ResourceTypeDef def)
+        {
+            if (flowCacheDirty)
+            {
+                flowCache.Clear();
+                simpleFlowCache.Clear();
+                flowCacheDirty = false;
+            }
+
+            FlowBreakdown flow;
+            if (!simpleFlowCache.TryGetValue(def.index, out flow))
+            {
+                flow = CalculateSimpleFlow(faction, def);
+                simpleFlowCache[def.index] = flow;
+            }
+            return flow;
+        }
+
+        internal void DirtyFlowCache()
+        {
+            flowCacheDirty = true;
         }
 
         internal FlowBreakdown CalculateFlow(WorldSettlementFC settlement, WorldObjectComp_SupplyChain comp, ResourceTypeDef def)
@@ -232,7 +285,7 @@ namespace FactionColonies.SupplyChain
                 foreach (BuildingFC building in settlement.BuildingsComp.Buildings)
                 {
                     if (building.def == null || building.def == BuildingFCDefOf.Empty) continue;
-                    BuildingNeedExtension ext = building.def.GetModExtension<BuildingNeedExtension>();
+                    BuildingNeedExtension ext = SupplyChainCache.GetBuildingNeedExt(building.def);
                     if (ext == null || ext.inputs == null) continue;
                     foreach (BuildingResourceInput input in ext.inputs)
                     {
@@ -276,7 +329,7 @@ namespace FactionColonies.SupplyChain
                     foreach (BuildingFC building in settlement.BuildingsComp.Buildings)
                     {
                         if (building.def == null || building.def == BuildingFCDefOf.Empty) continue;
-                        BuildingNeedExtension ext = building.def.GetModExtension<BuildingNeedExtension>();
+                        BuildingNeedExtension ext = SupplyChainCache.GetBuildingNeedExt(building.def);
                         if (ext == null || ext.inputs == null) continue;
                         foreach (BuildingResourceInput input in ext.inputs)
                         {
@@ -316,6 +369,8 @@ namespace FactionColonies.SupplyChain
 
             mode = newMode;
             capsAndPoolsDirty = false;
+            DirtyFlowCache();
+            resourceColumnsDirty = true;
             LogUtil.Message("Supply chain mode switched to " + newMode);
         }
 
@@ -453,6 +508,7 @@ namespace FactionColonies.SupplyChain
 
             // 2. RESOLVE NEEDS (fair distribution from shared pool)
             NeedResolver.ResolveSettlementNeedsFair(faction, pool, GetComp);
+            DirtyFlowCache();
 
             // 3. OVERFLOW
             foreach (KeyValuePair<ResourceTypeDef, double> kv in totalOverflow)
@@ -482,12 +538,12 @@ namespace FactionColonies.SupplyChain
 
         private void PreTaxResolution_Complex(FactionFC faction)
         {
-            // 1. Recalculate all local caps
+            // 1. Recalculate local caps (only if buildings changed)
             foreach (WorldSettlementFC settlement in faction.settlements)
             {
                 WorldObjectComp_SupplyChain comp = GetComp(settlement);
                 if (comp != null)
-                    comp.RecalculateLocalCaps();
+                    comp.RecalculateLocalCapsIfDirty();
             }
 
             // 2. ACCUMULATE to local pools
@@ -558,6 +614,7 @@ namespace FactionColonies.SupplyChain
             {
                 foreach (SupplyRoute route in invalidRoutes)
                     supplyRoutes.Remove(route);
+                DirtyFlowCache();
             }
 
             // 4. RESOLVE NEEDS (per-settlement, from local pools)
@@ -571,6 +628,7 @@ namespace FactionColonies.SupplyChain
 
                 NeedResolver.ResolveSettlementNeeds(settlement, needPool, needComp);
             }
+            DirtyFlowCache();
 
             // 5. PER-SETTLEMENT OVERFLOW (anything over cap after route transfers)
             foreach (WorldSettlementFC settlement in faction.settlements)
@@ -681,23 +739,57 @@ namespace FactionColonies.SupplyChain
 
         public void OnSettlementCreated(WorldSettlementFC settlement)
         {
+            SupplyChainCache.ClearCompCache();
             InvalidateAllRoutes();
             capsAndPoolsDirty = true;
+            DirtyFlowCache();
+            resourceColumnsDirty = true;
         }
 
         public void OnSettlementRemoved(WorldSettlementFC settlement)
         {
+            SupplyChainCache.ClearCompCache();
             // Remove routes referencing this settlement
             supplyRoutes.RemoveAll(r => r.source == settlement || r.destination == settlement);
             dormantRoutes.RemoveAll(r => r.source == settlement || r.destination == settlement);
             InvalidateAllRoutes();
             capsAndPoolsDirty = true;
+            DirtyFlowCache();
+            resourceColumnsDirty = true;
         }
 
-        public void OnSettlementUpgraded(WorldSettlementFC settlement, int oldLevel, int newLevel) { }
-        public void OnSettlementTypeChanged(WorldSettlementFC settlement, WorldSettlementDef oldDef, WorldSettlementDef newDef) { }
-        public void OnBuildingConstructed(WorldSettlementFC settlement, BuildingFCDef building, int slot) { }
-        public void OnBuildingDeconstructed(WorldSettlementFC settlement, BuildingFCDef building, int slot) { }
+        public void OnSettlementUpgraded(WorldSettlementFC settlement, int oldLevel, int newLevel)
+        {
+            DirtyFlowCache();
+        }
+
+        public void OnSettlementTypeChanged(WorldSettlementFC settlement, WorldSettlementDef oldDef, WorldSettlementDef newDef)
+        {
+            capsAndPoolsDirty = true;
+            DirtyFlowCache();
+            resourceColumnsDirty = true;
+        }
+
+        public void OnBuildingConstructed(WorldSettlementFC settlement, BuildingFCDef building, int slot)
+        {
+            capsAndPoolsDirty = true;
+            DirtyFlowCache();
+            resourceColumnsDirty = true;
+            WorldObjectComp_SupplyChain comp = GetComp(settlement);
+            if (comp != null)
+                comp.DirtyLocalCaps();
+        }
+
+        public void OnBuildingDeconstructed(WorldSettlementFC settlement, BuildingFCDef building, int slot)
+        {
+            capsAndPoolsDirty = true;
+            DirtyFlowCache();
+            resourceColumnsDirty = true;
+            WorldObjectComp_SupplyChain comp = GetComp(settlement);
+            if (comp != null)
+                comp.DirtyLocalCaps();
+        }
+
         public void OnSquadDeployed(WorldSettlementFC settlement, MilitaryJobDef job, bool isExtraSquad) { }
         public void OnSquadRecalled(WorldSettlementFC settlement) { }
         public void OnBattleResolved(WorldSettlementFC settlement, MilitaryJobDef job, bool victory, BattleResult result) { }
@@ -791,7 +883,7 @@ namespace FactionColonies.SupplyChain
                 if (def.Icon != null)
                     GUI.DrawTexture(new Rect(inner.x, curY + 2f, 24f, 24f), def.Icon);
 
-                FlowBreakdown simpleFlow = CalculateSimpleFlow(simpleFaction, def);
+                FlowBreakdown simpleFlow = GetCachedSimpleFlow(simpleFaction, def);
                 UIUtilSC.DrawFlowIndicator(inner.x + 26f, curY + 6f, simpleFlow.Net);
 
                 Text.Anchor = TextAnchor.MiddleLeft;
@@ -875,6 +967,7 @@ namespace FactionColonies.SupplyChain
             {
                 foreach (SellOrder order in toRemove)
                     globalSellOrders.Remove(order);
+                DirtyFlowCache();
             }
 
             curY += 4f;
@@ -963,24 +1056,29 @@ namespace FactionColonies.SupplyChain
             FactionFC faction = FactionCache.FactionComp;
             if (faction == null) return;
 
-            // Pre-compute valid resource columns (non-pool with cap > 0 in any settlement)
-            List<ResourceTypeDef> columns = new List<ResourceTypeDef>();
-            foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+            // Resource columns cache (non-pool with cap > 0 in any settlement)
+            if (resourceColumnsDirty || cachedResourceColumns == null)
             {
-                if (def.isPoolResource) continue;
-                bool anyHasCap = false;
-                foreach (WorldSettlementFC s in faction.settlements)
+                cachedResourceColumns = new List<ResourceTypeDef>();
+                foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
                 {
-                    WorldObjectComp_SupplyChain c = GetComp(s);
-                    IStockpilePool p = c != null ? c.GetPool() : null;
-                    if (p != null && p.GetCap(def) > 0)
+                    if (def.isPoolResource) continue;
+                    bool anyHasCap = false;
+                    foreach (WorldSettlementFC s in faction.settlements)
                     {
-                        anyHasCap = true;
-                        break;
+                        WorldObjectComp_SupplyChain c = GetComp(s);
+                        IStockpilePool p = c != null ? c.GetPool() : null;
+                        if (p != null && p.GetCap(def) > 0)
+                        {
+                            anyHasCap = true;
+                            break;
+                        }
                     }
+                    if (anyHasCap) cachedResourceColumns.Add(def);
                 }
-                if (anyHasCap) columns.Add(def);
+                resourceColumnsDirty = false;
             }
+            List<ResourceTypeDef> columns = cachedResourceColumns;
 
             int resCount = columns.Count;
             float availableW = rect.width - 16f; // account for scrollbar
@@ -1039,7 +1137,7 @@ namespace FactionColonies.SupplyChain
                     {
                         IStockpilePool checkPool = comp.GetPool();
                         if (checkPool == null || checkPool.GetCap(flowDef) <= 0) continue;
-                        FlowBreakdown flow = CalculateFlow(settlement, comp, flowDef);
+                        FlowBreakdown flow = GetCachedFlow(settlement, comp, flowDef);
                         if (flow.Net < -0.01)
                             hasDeficit = true;
                         else if (flow.Net > 0.01)
@@ -1087,7 +1185,7 @@ namespace FactionColonies.SupplyChain
                     }
 
                     float fill = (float)(amt / cap);
-                    FlowBreakdown flow = CalculateFlow(settlement, comp, def);
+                    FlowBreakdown flow = GetCachedFlow(settlement, comp, def);
 
                     // Flow highlight on cell background
                     UIUtilSC.DrawFlowHighlight(cellRect, flow.Net);
@@ -1261,6 +1359,7 @@ namespace FactionColonies.SupplyChain
             {
                 foreach (SupplyRoute route in routesToRemove)
                     supplyRoutes.Remove(route);
+                DirtyFlowCache();
             }
 
             Widgets.EndScrollView();
@@ -1359,6 +1458,7 @@ namespace FactionColonies.SupplyChain
                 {
                     SupplyRoute route = new SupplyRoute(newRouteSource, newRouteDest, newRouteResource, newRouteAmount);
                     supplyRoutes.Add(route);
+                    DirtyFlowCache();
 
                     newRouteSource = null;
                     newRouteDest = null;
@@ -1414,6 +1514,7 @@ namespace FactionColonies.SupplyChain
                 if (newSellOrderResource != null && newSellOrderAmount > 0)
                 {
                     globalSellOrders.Add(new SellOrder(newSellOrderResource, newSellOrderAmount));
+                    DirtyFlowCache();
                     newSellOrderResource = null;
                     newSellOrderAmount = 0;
                     newSellOrderAmountBuffer = "";

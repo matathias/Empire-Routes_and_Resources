@@ -27,6 +27,8 @@ namespace FactionColonies.SupplyChain
         private List<SellOrder> localSellOrders = new List<SellOrder>();
         private LocalStockpilePool localPool;
 
+        private bool localCapsDirty = true;
+
         // Needs
         private List<NeedState> needStates = new List<NeedState>();
 
@@ -134,7 +136,7 @@ namespace FactionColonies.SupplyChain
             foreach (BuildingFC building in ws.BuildingsComp.Buildings)
             {
                 if (building.def == null || building.def == BuildingFCDefOf.Empty) continue;
-                BuildingNeedExtension ext = building.def.GetModExtension<BuildingNeedExtension>();
+                BuildingNeedExtension ext = SupplyChainCache.GetBuildingNeedExt(building.def);
                 if (ext?.capBonuses == null) continue;
                 foreach (BuildingCapBonus bonus in ext.capBonuses)
                 {
@@ -142,6 +144,18 @@ namespace FactionColonies.SupplyChain
                         localCaps[bonus.resource] += bonus.amount;
                 }
             }
+            localCapsDirty = false;
+        }
+
+        public void RecalculateLocalCapsIfDirty()
+        {
+            if (!localCapsDirty) return;
+            RecalculateLocalCaps();
+        }
+
+        public void DirtyLocalCaps()
+        {
+            localCapsDirty = true;
         }
 
         // --- Needs ---
@@ -154,6 +168,7 @@ namespace FactionColonies.SupplyChain
         public void SetNeedStates(List<NeedState> states)
         {
             needStates = states ?? new List<NeedState>();
+            statModsDirty = true;
         }
 
         private NeedState FindNeedState(string needId)
@@ -168,7 +183,30 @@ namespace FactionColonies.SupplyChain
 
         // --- IStatModifierProvider ---
 
+        private Dictionary<FCStatDef, double> cachedStatMods;
+        private bool statModsDirty = true;
+
         public double GetStatModifier(FCStatDef stat)
+        {
+            if (statModsDirty || cachedStatMods == null)
+            {
+                if (cachedStatMods == null)
+                    cachedStatMods = new Dictionary<FCStatDef, double>();
+                else
+                    cachedStatMods.Clear();
+                statModsDirty = false;
+            }
+
+            double val;
+            if (cachedStatMods.TryGetValue(stat, out val))
+                return val;
+
+            val = ComputeStatModifier(stat);
+            cachedStatMods[stat] = val;
+            return val;
+        }
+
+        private double ComputeStatModifier(FCStatDef stat)
         {
             double total = 0.0;
 
@@ -197,7 +235,7 @@ namespace FactionColonies.SupplyChain
                     if (building.def == null || building.def == BuildingFCDefOf.Empty)
                         continue;
 
-                    BuildingNeedExtension ext = building.def.GetModExtension<BuildingNeedExtension>();
+                    BuildingNeedExtension ext = SupplyChainCache.GetBuildingNeedExt(building.def);
                     if (ext == null) continue;
 
                     List<NeedPenalty> penalties = ext.penalties;
@@ -281,6 +319,7 @@ namespace FactionColonies.SupplyChain
             {
                 resource.ClearStockpileAllocation(key);
                 allocations.Remove(def);
+                SupplyChainCache.Comp?.DirtyFlowCache();
                 return true;
             }
 
@@ -288,6 +327,7 @@ namespace FactionColonies.SupplyChain
             if (ok)
             {
                 allocations[def] = amount;
+                SupplyChainCache.Comp?.DirtyFlowCache();
             }
             return ok;
         }
@@ -576,7 +616,7 @@ namespace FactionColonies.SupplyChain
                 // Flow calculation
                 WorldComponent_SupplyChain.FlowBreakdown flow = default(WorldComponent_SupplyChain.FlowBreakdown);
                 if (flowWc != null && flowSettlement != null)
-                    flow = flowWc.CalculateFlow(flowSettlement, this, def);
+                    flow = flowWc.GetCachedFlow(flowSettlement, this, def);
 
                 // Row highlight: alternating gray + flow-based red/green
                 if (idx % 2 == 0) Widgets.DrawHighlight(rowRect);
@@ -718,6 +758,7 @@ namespace FactionColonies.SupplyChain
             {
                 foreach (SellOrder order in toRemove)
                     localSellOrders.Remove(order);
+                SupplyChainCache.Comp?.DirtyFlowCache();
             }
 
             Widgets.EndScrollView();
@@ -875,7 +916,10 @@ namespace FactionColonies.SupplyChain
             }
 
             if (routeToRemove != null)
+            {
                 wc.SupplyRoutes.Remove(routeToRemove);
+                wc.DirtyFlowCache();
+            }
 
             if (routeIdx == 0)
             {
@@ -980,6 +1024,7 @@ namespace FactionColonies.SupplyChain
                     WorldSettlementFC dest = newRouteIsOutgoing ? newRouteOther : ws;
                     SupplyRoute route = new SupplyRoute(src, dest, newRouteResource, newRouteAmount);
                     wc.SupplyRoutes.Add(route);
+                    wc.DirtyFlowCache();
 
                     newRouteOther = null;
                     newRouteResource = null;
@@ -1080,6 +1125,7 @@ namespace FactionColonies.SupplyChain
                     WorldSettlementFC dest = newRouteIsOutgoing ? newRouteOther : ws;
                     SupplyRoute route = new SupplyRoute(src, dest, newRouteResource, newRouteAmount);
                     wc.SupplyRoutes.Add(route);
+                    wc.DirtyFlowCache();
 
                     newRouteOther = null;
                     newRouteResource = null;
@@ -1498,6 +1544,7 @@ namespace FactionColonies.SupplyChain
                 if (newLocalSellResource != null && newLocalSellAmount > 0)
                 {
                     localSellOrders.Add(new SellOrder(newLocalSellResource, newLocalSellAmount));
+                    SupplyChainCache.Comp?.DirtyFlowCache();
                     newLocalSellResource = null;
                     newLocalSellAmount = 0;
                     newLocalSellAmountBuffer = "";

@@ -82,7 +82,7 @@ namespace FactionColonies.SupplyChain
                         if (building.def == null || building.def == BuildingFCDefOf.Empty)
                             continue;
 
-                        BuildingNeedExtension ext = building.def.GetModExtension<BuildingNeedExtension>();
+                        BuildingNeedExtension ext = SupplyChainCache.GetBuildingNeedExt(building.def);
                         if (ext == null || ext.inputs == null) continue;
 
                         foreach (BuildingResourceInput input in ext.inputs)
@@ -173,7 +173,7 @@ namespace FactionColonies.SupplyChain
                 if (building.def == null || building.def == BuildingFCDefOf.Empty)
                     continue;
 
-                BuildingNeedExtension ext = building.def.GetModExtension<BuildingNeedExtension>();
+                BuildingNeedExtension ext = SupplyChainCache.GetBuildingNeedExt(building.def);
                 if (ext == null || ext.inputs == null) continue;
 
                 foreach (BuildingResourceInput input in ext.inputs)
