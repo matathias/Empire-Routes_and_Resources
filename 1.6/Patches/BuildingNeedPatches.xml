@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Patch>
+
+	<!-- ============================================================ -->
+	<!-- Helper: ensure modExtensions node exists on a BuildingFCDef  -->
+	<!-- (most base mod buildings don't have one)                     -->
+	<!-- ============================================================ -->
+
+	<!-- Smithy — needs Mining (ore/metal) -->
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="Smithy"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="Smithy"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="Smithy"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Mining</resource><amount>0.5</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>happinessLostBase</stat><maxValue>1.0</maxValue><label>material shortage</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- firearmsFactory — needs Mining (metal for weapons) -->
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="firearmsFactory"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="firearmsFactory"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="firearmsFactory"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Mining</resource><amount>0.75</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>happinessLostBase</stat><maxValue>1.5</maxValue><label>ammo shortage</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- barracks — needs Food (feed the troops) -->
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="barracks"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="barracks"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="barracks"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Food</resource><amount>0.5</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>loyaltyLostBase</stat><maxValue>1.0</maxValue><label>hungry troops</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- inhouseMercCompany — needs Food (feed the mercs) -->
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="inhouseMercCompany"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="inhouseMercCompany"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="inhouseMercCompany"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Food</resource><amount>0.75</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>loyaltyLostBase</stat><maxValue>1.5</maxValue><label>hungry mercs</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- TextileFactory — needs Animals (leather/wool) -->
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="TextileFactory"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="TextileFactory"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="TextileFactory"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Animals</resource><amount>0.3</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>happinessLostBase</stat><maxValue>0.5</maxValue><label>material shortage</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- researchLabs — needs Power -->
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="researchLabs"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="researchLabs"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="researchLabs"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Power</resource><amount>0.5</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>happinessLostBase</stat><maxValue>1.0</maxValue><label>power outage</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- indoorHydroponics — needs Power (lots of it) -->
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="indoorHydroponics"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="indoorHydroponics"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="indoorHydroponics"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Power</resource><amount>0.75</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>happinessLostBase</stat><maxValue>1.0</maxValue><label>crops wilting</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- IMED — needs Power (mining equipment) -->
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="IMED"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="IMED"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="IMED"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Power</resource><amount>0.5</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>happinessLostBase</stat><maxValue>1.0</maxValue><label>equipment idle</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- JunkFoodFactory — needs Power -->
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="JunkFoodFactory"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="JunkFoodFactory"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="JunkFoodFactory"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Power</resource><amount>0.25</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>happinessLostBase</stat><maxValue>0.5</maxValue><label>production halt</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- animalTestingFacility — needs Animals -->
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="animalTestingFacility"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="animalTestingFacility"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="animalTestingFacility"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Animals</resource><amount>0.25</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>happinessLostBase</stat><maxValue>0.5</maxValue><label>no test subjects</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- bionicsManufacturingPlant — needs Power + Research -->
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="bionicsManufacturingPlant"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="bionicsManufacturingPlant"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="bionicsManufacturingPlant"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Power</resource><amount>0.5</amount></li>
+					<li><resource>RTD_Research</resource><amount>0.3</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>happinessLostBase</stat><maxValue>1.5</maxValue><label>manufacturing halted</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- CloningLab — needs Power + Medicine -->
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="CloningLab"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="CloningLab"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="CloningLab"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Power</resource><amount>0.5</amount></li>
+					<li><resource>RTD_Medicine</resource><amount>0.5</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>happinessLostBase</stat><maxValue>1.5</maxValue><label>cloning offline</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- FoodReconstruction — needs Power -->
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="FoodReconstruction"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="FoodReconstruction"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="FoodReconstruction"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Power</resource><amount>0.5</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>happinessLostBase</stat><maxValue>1.0</maxValue><label>reconstruction offline</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+</Patch>

@@ -66,6 +66,14 @@ namespace FactionColonies.SupplyChain
             double travelDays = cachedTravelTicks / (double)GenDate.TicksPerDay;
             double baseEfficiency = 1.0 / (1.0 + travelDays * SupplyChainSettings.routeDecayPerDay);
 
+            // Apply route efficiency bonus stat from source settlement
+            FCStatDef routeEffStat = DefDatabase<FCStatDef>.GetNamedSilentFail("SC_RouteEfficiencyBonus");
+            if (routeEffStat != null)
+            {
+                double bonus = FactionCache.FactionComp.GetStatValue(routeEffStat, source);
+                baseEfficiency += bonus;
+            }
+
             // Apply modifier hooks
             foreach (ISupplyRouteModifier mod in SupplyRouteModifierRegistry.Modifiers)
             {

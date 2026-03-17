@@ -45,7 +45,7 @@ namespace FactionColonies.SupplyChain
         /// Used in Simple mode.
         /// </summary>
         public static void ResolveSettlementNeedsFair(FactionFC faction,
-            IStockpilePool pool, Func<WorldSettlementFC, WorldObjectComp_SupplyChain> getComp)
+            IStockpilePool pool)
         {
             if (pool == null) return;
 
@@ -55,7 +55,7 @@ namespace FactionColonies.SupplyChain
 
             foreach (WorldSettlementFC settlement in faction.settlements)
             {
-                WorldObjectComp_SupplyChain comp = getComp(settlement);
+                WorldObjectComp_SupplyChain comp = SupplyChainCache.GetSettlementComp(settlement);
                 if (comp == null) continue;
 
                 // Base needs
@@ -153,7 +153,7 @@ namespace FactionColonies.SupplyChain
             // Settlements with no demands still need cleared states
             foreach (WorldSettlementFC settlement in faction.settlements)
             {
-                WorldObjectComp_SupplyChain comp = getComp(settlement);
+                WorldObjectComp_SupplyChain comp = SupplyChainCache.GetSettlementComp(settlement);
                 if (comp == null) continue;
                 if (!compStates.ContainsKey(comp))
                 {

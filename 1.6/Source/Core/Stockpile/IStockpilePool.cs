@@ -2,8 +2,7 @@ namespace FactionColonies.SupplyChain
 {
     /// <summary>
     /// Mode-agnostic abstraction for drawing/crediting resources from a stockpile pool.
-    /// Simple mode uses FactionStockpilePool (one shared pool).
-    /// Complex mode will use LocalStockpilePool (per-settlement pools).
+    /// Both Simple and Complex modes use DictionaryStockpilePool backed by different dictionaries.
     /// </summary>
     public interface IStockpilePool
     {

@@ -33,9 +33,7 @@
     <SC_EmpireSupplyNetwork>Empire Supply Network</SC_EmpireSupplyNetwork>
     <SC_ModeComplex>Mode: Complex</SC_ModeComplex>
     <SC_Settlement>Settlement</SC_Settlement>
-    <SC_SettlementStockpiles>Settlement Stockpiles</SC_SettlementStockpiles>
-    <SC_TotalUnits>Total: {0} units stored</SC_TotalUnits>
-    <SC_PerPeriod>{0}/period</SC_PerPeriod>
+<SC_PerPeriod>{0}/period</SC_PerPeriod>
     <SC_EfficiencyPercent>{0}%</SC_EfficiencyPercent>
     <SC_EfficiencyTooltip>Travel: {0} days\nDecay rate: {1}/day\nEfficiency: {2}%\n\nFormula: 1 / (1 + days × decay)</SC_EfficiencyTooltip>
     <SC_NewRoute>New route:</SC_NewRoute>
@@ -71,9 +69,7 @@
     <SC_SubRoutes>Routes</SC_SubRoutes>
     <SC_DirectionFrom>From This Settlement</SC_DirectionFrom>
     <SC_DirectionTo>To This Settlement</SC_DirectionTo>
-    <SC_RoutesOutgoing>Outgoing Routes</SC_RoutesOutgoing>
-    <SC_RoutesIncoming>Incoming Routes</SC_RoutesIncoming>
-    <SC_NoRoutesDirection>No routes in this direction.</SC_NoRoutesDirection>
+<SC_NoRoutesDirection>No routes in this direction.</SC_NoRoutesDirection>
     <SC_PickSettlement>Settlement...</SC_PickSettlement>
 
     <!-- Settlement Tab - Complex Mode -->
@@ -96,5 +92,17 @@
     <SC_SatisfactionDisplay>{0}% ({1} / {2})</SC_SatisfactionDisplay>
     <SC_PenaltyLine>-{0} {1}</SC_PenaltyLine>
     <SC_UnmetNeedPenalty>Unmet {0} need: -{1}</SC_UnmetNeedPenalty>
+
+    <!-- Tithe Injection -->
+    <SC_TitheInjection>Tithe Injection</SC_TitheInjection>
+    <SC_TitheInjectionTooltip>Tithe injection converts stockpiled resources into additional tithe budget.\n\nConfigured amounts are drawn from the stockpile each tax period. The budget raises the tithe cap for that resource, letting you choose what items to receive via the tithe menu.\n\nIf the stockpile doesn't have enough, only what's available is injected.</SC_TitheInjectionTooltip>
+    <SC_TitheInjectionPerSettlement>Configure tithe injections per settlement in the settlement Supply Chain tab.</SC_TitheInjectionPerSettlement>
+    <SC_TitheBudgetValue>+{0} silver tithe budget</SC_TitheBudgetValue>
+    <SC_TitheInjectionDesc>Supply chain tithe injection: +{0} silver</SC_TitheInjectionDesc>
+    <SC_BarFlowTitheInjection>  Tithe injection: -{0}</SC_BarFlowTitheInjection>
+
+    <!-- Stat Descriptions -->
+    <SC_Stat_SellRateMultiplier>Multiplier applied to sell order silver rates. Higher values mean more silver per unit sold.</SC_Stat_SellRateMultiplier>
+    <SC_Stat_RouteEfficiencyBonus>Bonus added to supply route efficiency for routes originating from this settlement. Reduces losses in transit.</SC_Stat_RouteEfficiencyBonus>
 
 </LanguageData>

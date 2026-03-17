@@ -4,15 +4,15 @@ using System.Collections.Generic;
 namespace FactionColonies.SupplyChain
 {
     /// <summary>
-    /// IStockpilePool implementation for Complex Mode.
-    /// Wraps per-settlement local stockpile dictionaries owned by WorldObjectComp_SupplyChain.
+    /// IStockpilePool backed by a pair of dictionaries (amounts + caps).
+    /// Used by both Simple mode (faction-level) and Complex mode (per-settlement).
     /// </summary>
-    public class LocalStockpilePool : IStockpilePool
+    public class DictionaryStockpilePool : IStockpilePool
     {
         private readonly Dictionary<ResourceTypeDef, double> stockpile;
         private readonly Dictionary<ResourceTypeDef, double> caps;
 
-        public LocalStockpilePool(Dictionary<ResourceTypeDef, double> stockpile, Dictionary<ResourceTypeDef, double> caps)
+        public DictionaryStockpilePool(Dictionary<ResourceTypeDef, double> stockpile, Dictionary<ResourceTypeDef, double> caps)
         {
             this.stockpile = stockpile;
             this.caps = caps;
@@ -62,7 +62,7 @@ namespace FactionColonies.SupplyChain
             double credited = Math.Min(amount, space);
             stockpile[resource] = current + credited;
 
-            return amount - credited;
+            return amount - credited; // excess
         }
     }
 }

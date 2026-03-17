@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+	<FactionColonies.SupplyChain.SettlementNeedDef>
+		<defName>Need_Power</defName>
+		<label>power</label>
+		<description>Settlements require power to maintain infrastructure and keep buildings running.</description>
+		<resource>RTD_Power</resource>
+		<baseAmount>0.25</baseAmount>
+		<scaling>PerLevel</scaling>
+		<penalties>
+			<li>
+				<stat>happinessLostBase</stat>
+				<maxValue>2.0</maxValue>
+				<label>happiness</label>
+			</li>
+			<li>
+				<stat>unrestGainedBase</stat>
+				<maxValue>1.0</maxValue>
+				<label>unrest</label>
+			</li>
+		</penalties>
+	</FactionColonies.SupplyChain.SettlementNeedDef>
+
+	<FactionColonies.SupplyChain.SettlementNeedDef>
+		<defName>Need_Medicine</defName>
+		<label>medicine</label>
+		<description>Workers need access to medicine to stay healthy and productive.</description>
+		<resource>RTD_Medicine</resource>
+		<baseAmount>0.15</baseAmount>
+		<scaling>PerWorker</scaling>
+		<penalties>
+			<li>
+				<stat>happinessLostBase</stat>
+				<maxValue>1.5</maxValue>
+				<label>happiness</label>
+			</li>
+		</penalties>
+	</FactionColonies.SupplyChain.SettlementNeedDef>
+
+	<FactionColonies.SupplyChain.SettlementNeedDef>
+		<defName>Need_BuildingMaterials</defName>
+		<label>building materials</label>
+		<description>Settlements require a steady supply of building materials for maintenance and repairs.</description>
+		<resource>RTD_Logging</resource>
+		<baseAmount>0.2</baseAmount>
+		<scaling>PerLevel</scaling>
+		<penalties>
+			<li>
+				<stat>loyaltyLostBase</stat>
+				<maxValue>1.5</maxValue>
+				<label>loyalty</label>
+			</li>
+		</penalties>
+	</FactionColonies.SupplyChain.SettlementNeedDef>
+
+</Defs>

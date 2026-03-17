@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+	<!-- Warehouse — increases stockpile caps for all resources -->
+	<FactionColonies.BuildingFCDef ParentName="BuildingFCDef_Surface_Industrial">
+		<defName>SC_Warehouse</defName>
+		<label>Warehouse</label>
+		<desc>A large storage facility that increases the settlement's stockpile capacity for all resources.</desc>
+		<cost>800</cost>
+		<constructionDuration>90000</constructionDuration>
+		<upkeep>100</upkeep>
+		<iconPath>SupplyChain/Buildings/Warehouse</iconPath>
+		<modExtensions>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<capBonuses>
+					<li><resource>RTD_Food</resource><amount>25</amount></li>
+					<li><resource>RTD_Weapons</resource><amount>25</amount></li>
+					<li><resource>RTD_Apparel</resource><amount>25</amount></li>
+					<li><resource>RTD_Animals</resource><amount>25</amount></li>
+					<li><resource>RTD_Logging</resource><amount>25</amount></li>
+					<li><resource>RTD_Mining</resource><amount>25</amount></li>
+					<li><resource>RTD_Research</resource><amount>25</amount></li>
+					<li><resource>RTD_Power</resource><amount>25</amount></li>
+					<li><resource>RTD_Medicine</resource><amount>25</amount></li>
+				</capBonuses>
+			</li>
+		</modExtensions>
+	</FactionColonies.BuildingFCDef>
+
+	<!-- Trade Post — improves sell order rates, small happiness bonus -->
+	<FactionColonies.BuildingFCDef ParentName="BuildingFCDef_Surface_Medieval">
+		<defName>SC_TradePost</defName>
+		<label>Trade Post</label>
+		<desc>A trading outpost that improves the rates your settlements get when selling goods on the market.</desc>
+		<cost>600</cost>
+		<constructionDuration>60000</constructionDuration>
+		<upkeep>75</upkeep>
+		<statModifiers>
+			<li><stat>SC_SellRateMultiplier</stat><value>1.15</value></li>
+			<li><stat>happinessGainedBase</stat><value>0.2</value></li>
+		</statModifiers>
+		<iconPath>SupplyChain/Buildings/TradePost</iconPath>
+	</FactionColonies.BuildingFCDef>
+
+	<!-- Distribution Center — improves supply route efficiency -->
+	<FactionColonies.BuildingFCDef ParentName="BuildingFCDef_Surface_Industrial">
+		<defName>SC_DistributionCenter</defName>
+		<label>Distribution Center</label>
+		<desc>A logistics hub that streamlines supply routes originating from this settlement, reducing losses in transit.</desc>
+		<cost>1200</cost>
+		<constructionDuration>120000</constructionDuration>
+		<upkeep>200</upkeep>
+		<statModifiers>
+			<li><stat>SC_RouteEfficiencyBonus</stat><value>0.1</value></li>
+		</statModifiers>
+		<iconPath>SupplyChain/Buildings/DistributionCenter</iconPath>
+	</FactionColonies.BuildingFCDef>
+
+	<!-- Cold Storage — large food stockpile bonus, requires Power -->
+	<FactionColonies.BuildingFCDef ParentName="BuildingFCDef_Surface_Industrial">
+		<defName>SC_ColdStorage</defName>
+		<label>Cold Storage</label>
+		<desc>A refrigerated storage facility that greatly expands the settlement's food stockpile capacity. Requires a steady power supply to operate.</desc>
+		<cost>1000</cost>
+		<constructionDuration>90000</constructionDuration>
+		<upkeep>150</upkeep>
+		<iconPath>SupplyChain/Buildings/ColdStorage</iconPath>
+		<modExtensions>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Power</resource><amount>0.5</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>happinessLostBase</stat><maxValue>1.0</maxValue><label>cold storage offline</label></li>
+				</penalties>
+				<capBonuses>
+					<li><resource>RTD_Food</resource><amount>50</amount></li>
+				</capBonuses>
+			</li>
+		</modExtensions>
+	</FactionColonies.BuildingFCDef>
+
+</Defs>

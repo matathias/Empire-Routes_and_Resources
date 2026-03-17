@@ -21,7 +21,7 @@ namespace FactionColonies.SupplyChain
         private List<SupplyRoute> dormantRoutes = new List<SupplyRoute>();
 
         private bool capsAndPoolsDirty = true;
-        private FactionStockpilePool pool;
+        private DictionaryStockpilePool pool;
 
         // Flow cache: keyed by (settlementTile << 16 | resourceDefIndex)
         private Dictionary<ulong, FlowBreakdown> flowCache = new Dictionary<ulong, FlowBreakdown>();
@@ -90,7 +90,7 @@ namespace FactionColonies.SupplyChain
             if (dormantRoutes == null)
                 dormantRoutes = new List<SupplyRoute>();
 
-            pool = new FactionStockpilePool(factionStockpile, factionCaps);
+            pool = new DictionaryStockpilePool(factionStockpile, factionCaps);
 
             TaxTickRegistry.Register(this);
             MainTableRegistry.Register(this);
@@ -118,6 +118,7 @@ namespace FactionColonies.SupplyChain
             Scribe_Collections.Look(ref factionStockpile, "factionStockpile", LookMode.Def, LookMode.Value);
             Scribe_Collections.Look(ref factionCaps, "factionCaps", LookMode.Def, LookMode.Value);
             Scribe_Collections.Look(ref globalSellOrders, "globalSellOrders", LookMode.Deep);
+
             Scribe_Collections.Look(ref supplyRoutes, "supplyRoutes", LookMode.Deep);
             Scribe_Collections.Look(ref dormantRoutes, "dormantRoutes", LookMode.Deep);
 
@@ -209,8 +210,9 @@ namespace FactionColonies.SupplyChain
             public double buildingNeeds;
             public double routeOut;
             public double sellOrders;
+            public double titheInjection;
             public double needs { get { return baseNeeds + buildingNeeds; } }
-            public double Net { get { return production + routeIn - needs - routeOut - sellOrders; } }
+            public double Net { get { return production + routeIn - needs - routeOut - sellOrders - titheInjection; } }
         }
 
         private static ulong FlowKey(int settlementTile, ushort resourceIndex)
@@ -274,6 +276,59 @@ namespace FactionColonies.SupplyChain
                     flow.routeOut += route.amountPerPeriod;
             }
 
+            AccumulateSettlementFlow(settlement, def, ref flow);
+
+            foreach (SellOrder order in comp.LocalSellOrders)
+            {
+                if (order.resource == def)
+                    flow.sellOrders += order.amountPerPeriod;
+            }
+
+            flow.titheInjection += comp.GetTitheInjection(def);
+
+            return flow;
+        }
+
+        /// <summary>
+        /// Calculates faction-level flow for Simple mode by aggregating across all settlements.
+        /// </summary>
+        private FlowBreakdown CalculateSimpleFlow(FactionFC faction, ResourceTypeDef def)
+        {
+            FlowBreakdown flow = new FlowBreakdown();
+            if (faction == null) return flow;
+
+            foreach (WorldSettlementFC settlement in faction.settlements)
+            {
+                WorldObjectComp_SupplyChain comp = GetComp(settlement);
+                if (comp != null)
+                    flow.production += comp.GetAllocation(def);
+
+                AccumulateSettlementFlow(settlement, def, ref flow);
+            }
+
+            foreach (SellOrder order in globalSellOrders)
+            {
+                if (order.resource == def)
+                    flow.sellOrders += order.amountPerPeriod;
+            }
+
+            // Aggregate tithe injections across all settlements
+            foreach (WorldSettlementFC s in faction.settlements)
+            {
+                WorldObjectComp_SupplyChain c = GetComp(s);
+                if (c != null)
+                    flow.titheInjection += c.GetTitheInjection(def);
+            }
+
+            return flow;
+        }
+
+        /// <summary>
+        /// Accumulates base needs and building needs for a single settlement into the flow breakdown.
+        /// Shared by both CalculateFlow (Complex) and CalculateSimpleFlow (Simple).
+        /// </summary>
+        private static void AccumulateSettlementFlow(WorldSettlementFC settlement, ResourceTypeDef def, ref FlowBreakdown flow)
+        {
             foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
             {
                 if (needDef.resource == def)
@@ -294,59 +349,6 @@ namespace FactionColonies.SupplyChain
                     }
                 }
             }
-
-            foreach (SellOrder order in comp.LocalSellOrders)
-            {
-                if (order.resource == def)
-                    flow.sellOrders += order.amountPerPeriod;
-            }
-
-            return flow;
-        }
-
-        /// <summary>
-        /// Calculates faction-level flow for Simple mode by aggregating across all settlements.
-        /// </summary>
-        private FlowBreakdown CalculateSimpleFlow(FactionFC faction, ResourceTypeDef def)
-        {
-            FlowBreakdown flow = new FlowBreakdown();
-            if (faction == null) return flow;
-
-            foreach (WorldSettlementFC settlement in faction.settlements)
-            {
-                WorldObjectComp_SupplyChain comp = GetComp(settlement);
-                if (comp != null)
-                    flow.production += comp.GetAllocation(def);
-
-                foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
-                {
-                    if (needDef.resource == def)
-                        flow.baseNeeds += needDef.CalculateDemand(settlement);
-                }
-
-                if (settlement.BuildingsComp != null)
-                {
-                    foreach (BuildingFC building in settlement.BuildingsComp.Buildings)
-                    {
-                        if (building.def == null || building.def == BuildingFCDefOf.Empty) continue;
-                        BuildingNeedExtension ext = SupplyChainCache.GetBuildingNeedExt(building.def);
-                        if (ext == null || ext.inputs == null) continue;
-                        foreach (BuildingResourceInput input in ext.inputs)
-                        {
-                            if (input.resource == def)
-                                flow.buildingNeeds += input.amount;
-                        }
-                    }
-                }
-            }
-
-            foreach (SellOrder order in globalSellOrders)
-            {
-                if (order.resource == def)
-                    flow.sellOrders += order.amountPerPeriod;
-            }
-
-            return flow;
         }
 
         // --- Mode Switching ---
@@ -453,7 +455,7 @@ namespace FactionColonies.SupplyChain
 
             // 3. Reconstruct faction pool and recalculate caps
             RecalculateCaps();
-            pool = new FactionStockpilePool(factionStockpile, factionCaps);
+            pool = new DictionaryStockpilePool(factionStockpile, factionCaps);
         }
 
         // --- ITaxTickParticipant ---
@@ -506,11 +508,19 @@ namespace FactionColonies.SupplyChain
                 }
             }
 
-            // 2. RESOLVE NEEDS (fair distribution from shared pool)
-            NeedResolver.ResolveSettlementNeedsFair(faction, pool, GetComp);
+            // 2. RESOLVE TITHE INJECTIONS (draw from shared pool, set externalTitheBudget)
+            foreach (WorldSettlementFC settlement in faction.settlements)
+            {
+                WorldObjectComp_SupplyChain comp = GetComp(settlement);
+                if (comp != null)
+                    comp.ResolveTitheInjections(pool);
+            }
+
+            // 3. RESOLVE NEEDS (fair distribution from shared pool)
+            NeedResolver.ResolveSettlementNeedsFair(faction, pool);
             DirtyFlowCache();
 
-            // 3. OVERFLOW
+            // 4. OVERFLOW
             foreach (KeyValuePair<ResourceTypeDef, double> kv in totalOverflow)
             {
                 if (kv.Value <= 0) continue;
@@ -522,7 +532,7 @@ namespace FactionColonies.SupplyChain
                     + " -> " + silver.ToString("F0") + " silver");
             }
 
-            // 4. SELL ORDERS
+            // 5. SELL ORDERS
             foreach (SellOrder order in globalSellOrders)
             {
                 float silver = order.Execute(pool);
@@ -617,7 +627,19 @@ namespace FactionColonies.SupplyChain
                 DirtyFlowCache();
             }
 
-            // 4. RESOLVE NEEDS (per-settlement, from local pools)
+            // 4. RESOLVE TITHE INJECTIONS (draw from local pools, set externalTitheBudget)
+            foreach (WorldSettlementFC settlement in faction.settlements)
+            {
+                WorldObjectComp_SupplyChain titheComp = GetComp(settlement);
+                if (titheComp == null) continue;
+
+                IStockpilePool tithePool = titheComp.GetPool();
+                if (tithePool == null) continue;
+
+                titheComp.ResolveTitheInjections(tithePool);
+            }
+
+            // 5. RESOLVE NEEDS (per-settlement, from local pools)
             foreach (WorldSettlementFC settlement in faction.settlements)
             {
                 WorldObjectComp_SupplyChain needComp = GetComp(settlement);
@@ -630,7 +652,7 @@ namespace FactionColonies.SupplyChain
             }
             DirtyFlowCache();
 
-            // 5. PER-SETTLEMENT OVERFLOW (anything over cap after route transfers)
+            // 6. PER-SETTLEMENT OVERFLOW (anything over cap after route transfers)
             foreach (WorldSettlementFC settlement in faction.settlements)
             {
                 WorldObjectComp_SupplyChain comp = GetComp(settlement);
@@ -660,7 +682,7 @@ namespace FactionColonies.SupplyChain
                 }
             }
 
-            // 6. PER-SETTLEMENT SELL ORDERS
+            // 7. PER-SETTLEMENT SELL ORDERS
             foreach (WorldSettlementFC settlement in faction.settlements)
             {
                 WorldObjectComp_SupplyChain comp = GetComp(settlement);
@@ -671,7 +693,7 @@ namespace FactionColonies.SupplyChain
 
                 foreach (SellOrder order in comp.LocalSellOrders)
                 {
-                    float silver = order.Execute(localPool);
+                    float silver = order.Execute(localPool, settlement);
                     if (silver > 0)
                     {
                         settlement.AddOneTimeSilverIncome(silver);
@@ -686,6 +708,32 @@ namespace FactionColonies.SupplyChain
 
         public void PostTaxResolution(FactionFC faction)
         {
+            if (mode == SupplyChainMode.Simple)
+                PostTaxResolution_Simple(faction);
+            else
+                PostTaxResolution_Complex(faction);
+        }
+
+        private void PostTaxResolution_Simple(FactionFC faction)
+        {
+            // Clean up tithe injection state after tax resolution
+            foreach (WorldSettlementFC settlement in faction.settlements)
+            {
+                WorldObjectComp_SupplyChain comp = GetComp(settlement);
+                if (comp != null)
+                    comp.PostTaxCleanup();
+            }
+        }
+
+        private void PostTaxResolution_Complex(FactionFC faction)
+        {
+            // Clean up tithe injection state after tax resolution
+            foreach (WorldSettlementFC settlement in faction.settlements)
+            {
+                WorldObjectComp_SupplyChain comp = GetComp(settlement);
+                if (comp != null)
+                    comp.PostTaxCleanup();
+            }
         }
 
         public void PreSettlementCreateTax(WorldSettlementFC settlement)
@@ -925,7 +973,7 @@ namespace FactionColonies.SupplyChain
                 double baseCap = numSettlements * SupplyChainSettings.baseCapPerSettlement;
                 double buildingCapBonus = cap - baseCap;
 
-                UIUtil.TipRegionByText(rowRect, UIUtilSC.BuildFlowTooltip(def, amount, cap, simpleFlow,
+                TooltipHandler.TipRegion(rowRect, UIUtilSC.BuildFlowTooltip(def, amount, cap, simpleFlow,
                     numSettlements, SupplyChainSettings.baseCapPerSettlement, buildingCapBonus));
 
                 Text.Anchor = TextAnchor.UpperLeft;
@@ -939,7 +987,7 @@ namespace FactionColonies.SupplyChain
             Text.Font = GameFont.Medium;
             Rect sellHeaderRect = new Rect(inner.x, curY, 300f, 30f);
             Widgets.Label(sellHeaderRect, "SC_StandingSellOrders".Translate());
-            UIUtil.TipRegionByText(sellHeaderRect, (string)"SC_SellOrdersTooltip".Translate(
+            TooltipHandler.TipRegion(sellHeaderRect, (string)"SC_SellOrdersTooltip".Translate(
                 SupplyChainSettings.overflowPenaltyRate.ToString("P0")));
             Text.Font = GameFont.Small;
             curY += 34f;
@@ -1009,6 +1057,22 @@ namespace FactionColonies.SupplyChain
                     (FCSettings.silverPerResource * SupplyChainSettings.overflowPenaltyRate).ToString("F0")));
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
+
+            curY += 16f;
+
+            // Tithe Injection info
+            Text.Font = GameFont.Medium;
+            Rect titheHeaderRect = new Rect(inner.x, curY, 300f, 30f);
+            Widgets.Label(titheHeaderRect, "SC_TitheInjection".Translate());
+            TooltipHandler.TipRegion(titheHeaderRect, (string)"SC_TitheInjectionTooltip".Translate());
+            Text.Font = GameFont.Small;
+            curY += 34f;
+
+            GUI.color = Color.gray;
+            Widgets.Label(new Rect(inner.x, curY, inner.width, 24f),
+                "SC_TitheInjectionPerSettlement".Translate());
+            GUI.color = Color.white;
+            curY += 28f;
         }
 
         // --- Complex Mode Faction Tab ---
@@ -1130,7 +1194,7 @@ namespace FactionColonies.SupplyChain
                 if (def.Icon != null)
                     GUI.DrawTexture(new Rect(iconX, iconY, iconSize, iconSize), def.Icon);
                 // Tooltip on header
-                UIUtil.TipRegionByText(new Rect(colX, rect.y, colW, headerH), def.label.CapitalizeFirst());
+                TooltipHandler.TipRegion(new Rect(colX, rect.y, colW, headerH), def.label.CapitalizeFirst());
             }
 
             Text.Font = GameFont.Small;
@@ -1236,7 +1300,7 @@ namespace FactionColonies.SupplyChain
                     }
 
                     // Tooltip
-                    UIUtil.TipRegionByText(cellRect, UIUtilSC.BuildFlowTooltip(def, amt, cap, flow));
+                    TooltipHandler.TipRegion(cellRect, UIUtilSC.BuildFlowTooltip(def, amt, cap, flow));
                 }
 
                 Text.Anchor = TextAnchor.UpperLeft;
@@ -1364,7 +1428,7 @@ namespace FactionColonies.SupplyChain
                 GUI.color = Color.white;
 
                 double travelDays = route.CachedTravelTicks / (double)GenDate.TicksPerDay;
-                UIUtil.TipRegionByText(effRect,
+                TooltipHandler.TipRegion(effRect,
                     "SC_EfficiencyTooltip".Translate(
                         travelDays.ToString("F1"),
                         SupplyChainSettings.routeDecayPerDay.ToString("F2"),

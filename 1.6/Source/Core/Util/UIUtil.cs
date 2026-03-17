@@ -48,6 +48,8 @@ namespace FactionColonies.SupplyChain
                 tip += "\n" + (string)"SC_BarFlowRouteOut".Translate(flow.routeOut.ToString("F1"));
             if (flow.sellOrders > 0)
                 tip += "\n" + (string)"SC_BarFlowSellOrders".Translate(flow.sellOrders.ToString("F1"));
+            if (flow.titheInjection > 0)
+                tip += "\n" + (string)"SC_BarFlowTitheInjection".Translate(flow.titheInjection.ToString("F1"));
 
             if (numSettlements > 0)
             {

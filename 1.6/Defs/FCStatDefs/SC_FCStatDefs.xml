@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+	<FactionColonies.FCStatDef>
+		<defName>SC_SellRateMultiplier</defName>
+		<label>sell rate</label>
+		<aggregation>Multiplicative</aggregation>
+		<appliesToSettlements>true</appliesToSettlements>
+		<descriptionKey>SC_Stat_SellRateMultiplier</descriptionKey>
+	</FactionColonies.FCStatDef>
+
+	<FactionColonies.FCStatDef>
+		<defName>SC_RouteEfficiencyBonus</defName>
+		<label>route efficiency bonus</label>
+		<aggregation>Additive</aggregation>
+		<appliesToSettlements>true</appliesToSettlements>
+		<descriptionKey>SC_Stat_RouteEfficiencyBonus</descriptionKey>
+	</FactionColonies.FCStatDef>
+
+</Defs>

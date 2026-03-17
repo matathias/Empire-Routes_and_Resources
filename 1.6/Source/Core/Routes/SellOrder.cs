@@ -23,6 +23,15 @@ namespace FactionColonies.SupplyChain
         /// </summary>
         public float Execute(IStockpilePool pool)
         {
+            return Execute(pool, null);
+        }
+
+        /// <summary>
+        /// Execute this sell order against the given pool, optionally applying the sell rate
+        /// multiplier stat from the settlement context.
+        /// </summary>
+        public float Execute(IStockpilePool pool, WorldSettlementFC settlement)
+        {
             if (resource == null || amountPerPeriod <= 0)
                 return 0f;
 
@@ -30,7 +39,21 @@ namespace FactionColonies.SupplyChain
             if (!pool.TryDraw(resource, amountPerPeriod, out drawn) || drawn <= 0)
                 return 0f;
 
-            float silver = (float)(drawn * FCSettings.silverPerResource * SupplyChainSettings.overflowPenaltyRate);
+            double sellRate = SupplyChainSettings.overflowPenaltyRate;
+
+            // Apply sell rate multiplier stat if a settlement context is available
+            if (settlement != null && FactionCache.FactionComp != null)
+            {
+                FCStatDef sellRateStat = DefDatabase<FCStatDef>.GetNamedSilentFail("SC_SellRateMultiplier");
+                if (sellRateStat != null)
+                {
+                    double mult = FactionCache.FactionComp.GetStatValue(sellRateStat, settlement);
+                    if (mult > 0)
+                        sellRate *= mult;
+                }
+            }
+
+            float silver = (float)(drawn * FCSettings.silverPerResource * sellRate);
             return silver;
         }
 

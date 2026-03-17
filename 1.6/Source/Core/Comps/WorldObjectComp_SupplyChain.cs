@@ -15,17 +15,23 @@ namespace FactionColonies.SupplyChain
         }
     }
 
-    public class WorldObjectComp_SupplyChain : WorldObjectComp, ISettlementWindowOverview, IStatModifierProvider
+    public class WorldObjectComp_SupplyChain : WorldObjectComp, ISettlementWindowOverview, IStatModifierProvider, ITitheBudgetModifier
     {
         private const string ALLOC_KEY_PREFIX = "SupplyChain.";
 
         private Dictionary<ResourceTypeDef, double> allocations = new Dictionary<ResourceTypeDef, double>();
 
+        // Tithe injection: how many stockpile units per resource to convert to tithe budget
+        private Dictionary<ResourceTypeDef, double> titheInjections = new Dictionary<ResourceTypeDef, double>();
+        // At tax time, stores actual drawn amounts (may be less than configured if stockpile insufficient)
+        private Dictionary<ResourceTypeDef, double> actualTitheDrawn = new Dictionary<ResourceTypeDef, double>();
+        private bool isTaxTime;
+
         // Complex mode fields
         private Dictionary<ResourceTypeDef, double> localStockpile = new Dictionary<ResourceTypeDef, double>();
         private Dictionary<ResourceTypeDef, double> localCaps = new Dictionary<ResourceTypeDef, double>();
         private List<SellOrder> localSellOrders = new List<SellOrder>();
-        private LocalStockpilePool localPool;
+        private DictionaryStockpilePool localPool;
 
         private bool localCapsDirty = true;
 
@@ -40,6 +46,11 @@ namespace FactionColonies.SupplyChain
         private ResourceTypeDef newLocalSellResource;
         private string newLocalSellAmountBuffer = "";
         private float newLocalSellAmount;
+
+        // Tithe injection UI state
+        private ResourceTypeDef newTitheInjResource;
+        private string newTitheInjAmountBuffer = "";
+        private float newTitheInjAmount;
 
         // Sub-tab state (complex mode)
         private int complexSubTab;
@@ -81,6 +92,11 @@ namespace FactionColonies.SupplyChain
             get { return localSellOrders; }
         }
 
+        public Dictionary<ResourceTypeDef, double> TitheInjections
+        {
+            get { return titheInjections; }
+        }
+
         /// <summary>
         /// Initializes the local pool wrapper. Called by WorldComponent after mode switch or FinalizeInit.
         /// </summary>
@@ -90,7 +106,7 @@ namespace FactionColonies.SupplyChain
                 localStockpile = new Dictionary<ResourceTypeDef, double>();
             if (localCaps == null)
                 localCaps = new Dictionary<ResourceTypeDef, double>();
-            localPool = new LocalStockpilePool(localStockpile, localCaps);
+            localPool = new DictionaryStockpilePool(localStockpile, localCaps);
         }
 
         /// <summary>
@@ -297,6 +313,118 @@ namespace FactionColonies.SupplyChain
             return desc;
         }
 
+        // --- ITitheBudgetModifier ---
+
+        public double GetExternalTitheBudget(ResourceFC resource)
+        {
+            if (resource == null || resource.def == null || resource.def.isPoolResource)
+                return 0;
+
+            // At tax time, use actual drawn amounts; otherwise use configured injection (optimistic)
+            if (isTaxTime)
+            {
+                double drawn;
+                return actualTitheDrawn.TryGetValue(resource.def, out drawn) ? drawn * FCSettings.silverPerResource : 0;
+            }
+
+            double injection;
+            return titheInjections.TryGetValue(resource.def, out injection) && injection > 0
+                ? injection * FCSettings.silverPerResource
+                : 0;
+        }
+
+        public string GetExternalTitheBudgetDesc(ResourceFC resource)
+        {
+            if (resource == null || resource.def == null) return null;
+
+            double injection;
+            if (!titheInjections.TryGetValue(resource.def, out injection) || injection <= 0)
+                return null;
+
+            double silverValue = injection * FCSettings.silverPerResource;
+            return "SC_TitheInjectionDesc".Translate(
+                injection.ToString("F1"), resource.def.LabelCap, silverValue.ToString("F0"));
+        }
+
+        // --- Tithe Injection Management ---
+
+        public double GetTitheInjection(ResourceTypeDef def)
+        {
+            double val;
+            return titheInjections.TryGetValue(def, out val) ? val : 0;
+        }
+
+        public void SetTitheInjection(ResourceTypeDef def, double amount)
+        {
+            if (def.isPoolResource) return;
+
+            if (amount <= 0)
+                titheInjections.Remove(def);
+            else
+                titheInjections[def] = amount;
+
+            WorldSettlementFC ws = WorldSettlement;
+            if (ws != null)
+                ws.DirtyProfitCache();
+            SupplyChainCache.Comp?.DirtyFlowCache();
+        }
+
+        /// <summary>
+        /// Called by WorldComponent_SupplyChain during PreTaxResolution.
+        /// Draws from the pool and records actual amounts for GetExternalTitheBudget.
+        /// </summary>
+        public void ResolveTitheInjections(IStockpilePool pool)
+        {
+            actualTitheDrawn.Clear();
+            isTaxTime = true;
+            WorldSettlementFC ws = WorldSettlement;
+
+            foreach (KeyValuePair<ResourceTypeDef, double> kv in titheInjections)
+            {
+                if (kv.Key == null || kv.Key.isPoolResource || kv.Value <= 0) continue;
+
+                double drawn;
+                pool.TryDraw(kv.Key, kv.Value, out drawn);
+
+                if (drawn > 0)
+                    actualTitheDrawn[kv.Key] = drawn;
+
+                string settleName = ws != null ? ws.Name : "unknown";
+                if (SupplyChainSettings.PrintDebug)
+                {
+                    if (drawn < kv.Value && drawn > 0)
+                    {
+                        LogUtil.Message("Tithe injection shortfall at " + settleName + ": "
+                            + kv.Key.label + " wanted " + kv.Value.ToString("F1")
+                            + ", only " + drawn.ToString("F1") + " available (budget reduced to "
+                            + (drawn * FCSettings.silverPerResource).ToString("F0") + " silver)");
+                    }
+                    else if (drawn <= 0)
+                    {
+                        LogUtil.Message("Tithe injection at " + settleName + ": "
+                            + kv.Key.label + " wanted " + kv.Value.ToString("F1")
+                            + ", stockpile empty — skipped");
+                    }
+                    else
+                    {
+                        LogUtil.Message("Tithe injection at " + settleName + ": "
+                            + drawn.ToString("F1") + "/" + kv.Value.ToString("F1") + " "
+                            + kv.Key.label + " ("
+                            + (drawn * FCSettings.silverPerResource).ToString("F0") + " silver budget)");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Called after tax resolution completes to reset the tax-time flag.
+        /// </summary>
+        public void PostTaxCleanup()
+        {
+            isTaxTime = false;
+            actualTitheDrawn.Clear();
+        }
+
         // --- Allocation Management ---
 
         public double GetAllocation(ResourceTypeDef def)
@@ -400,6 +528,10 @@ namespace FactionColonies.SupplyChain
             Scribe_Collections.Look(ref localSellOrders, "localSellOrders", LookMode.Deep);
             if (localSellOrders == null)
                 localSellOrders = new List<SellOrder>();
+
+            Scribe_Collections.Look(ref titheInjections, "titheInjections", LookMode.Def, LookMode.Value);
+            if (titheInjections == null)
+                titheInjections = new Dictionary<ResourceTypeDef, double>();
 
             Scribe_Collections.Look(ref needStates, "needStates", LookMode.Deep);
             if (needStates == null)
@@ -646,7 +778,7 @@ namespace FactionColonies.SupplyChain
                 Widgets.Label(new Rect(arrowX + arrowSize + 4f, curY, 150f, barHeight),
                     "SC_StockpileAmount".Translate(amount.ToString("F1"), cap.ToString("F0")));
 
-                UIUtil.TipRegionByText(rowRect, UIUtilSC.BuildFlowTooltip(def, amount, cap, flow));
+                TooltipHandler.TipRegion(rowRect, UIUtilSC.BuildFlowTooltip(def, amount, cap, flow));
                 Text.Anchor = TextAnchor.UpperLeft;
 
                 curY += barHeight + 2f;
@@ -679,7 +811,8 @@ namespace FactionColonies.SupplyChain
 
             float allocH = 36f + resourceCount * rowHeight + sectionPad;
             float sellH = 36f + localSellOrders.Count * 28f + 32f + sectionPad;
-            float totalHeight = allocH + sellH + 16f;
+            float titheH = 36f + titheInjections.Count * 28f + 32f + sectionPad;
+            float totalHeight = allocH + sellH + titheH + 16f;
             float scrollMargin = totalHeight > rect.height ? 16f : 0f;
 
             Rect viewRect = new Rect(0f, 0f, rect.width - scrollMargin, totalHeight);
@@ -700,7 +833,7 @@ namespace FactionColonies.SupplyChain
             Text.Anchor = TextAnchor.MiddleCenter;
             Rect localSellHeaderRect = new Rect(AccentW + 6f, curY, viewRect.width, 30f);
             Widgets.Label(localSellHeaderRect, "SC_LocalSellOrders".Translate());
-            UIUtil.TipRegionByText(localSellHeaderRect, (string)"SC_SellOrdersTooltip".Translate(
+            TooltipHandler.TipRegion(localSellHeaderRect, (string)"SC_SellOrdersTooltip".Translate(
                 SupplyChainSettings.overflowPenaltyRate.ToString("P0")));
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
@@ -751,6 +884,64 @@ namespace FactionColonies.SupplyChain
                 foreach (SellOrder order in toRemove)
                     localSellOrders.Remove(order);
                 SupplyChainCache.Comp?.DirtyFlowCache();
+            }
+
+            curY += sectionPad;
+
+            // --- Tithe Injection section ---
+            Text.Font = GameFont.Medium;
+            Text.Anchor = TextAnchor.MiddleCenter;
+            Rect titheHeaderRect = new Rect(AccentW + 6f, curY, viewRect.width, 30f);
+            Widgets.Label(titheHeaderRect, "SC_TitheInjection".Translate());
+            TooltipHandler.TipRegion(titheHeaderRect, (string)"SC_TitheInjectionTooltip".Translate());
+            Text.Font = GameFont.Small;
+            Text.Anchor = TextAnchor.UpperLeft;
+            curY += 34f;
+
+            DrawAddTitheInjectionRow(viewRect, ref curY);
+            curY += 4f;
+
+            List<ResourceTypeDef> titheToRemove = null;
+            int titheIdx = 0;
+            foreach (KeyValuePair<ResourceTypeDef, double> kv in titheInjections)
+            {
+                if (kv.Key == null || kv.Value <= 0) continue;
+
+                Rect titheRow = new Rect(0f, curY, viewRect.width, 26f);
+                if (titheIdx % 2 == 0) Widgets.DrawHighlight(titheRow);
+                Widgets.DrawBoxSolid(new Rect(0f, curY, AccentW, 26f), AccentUtil.Expense);
+
+                float cx = AccentW + 4f;
+                Text.Anchor = TextAnchor.MiddleLeft;
+                if (kv.Key.Icon != null)
+                    GUI.DrawTexture(new Rect(cx, curY + 3f, 20f, 20f), kv.Key.Icon);
+
+                Widgets.Label(new Rect(cx + 24f, curY, 120f, 26f),
+                    kv.Key.label.CapitalizeFirst());
+                Widgets.Label(new Rect(cx + 148f, curY, 130f, 26f),
+                    "SC_UnitsPerPeriod".Translate(kv.Value.ToString("F1")));
+
+                double silverBudget = kv.Value * FCSettings.silverPerResource;
+                float xBtnX = titheRow.xMax - 28f;
+                GUI.color = new Color(0.7f, 0.85f, 1f);
+                Widgets.Label(new Rect(cx + 284f, curY, xBtnX - (cx + 284f) - 4f, 26f),
+                    "SC_TitheBudgetValue".Translate(silverBudget.ToString("F0")));
+                GUI.color = Color.white;
+
+                if (Widgets.ButtonText(new Rect(xBtnX, curY + 1f, 24f, 24f), "X"))
+                {
+                    if (titheToRemove == null) titheToRemove = new List<ResourceTypeDef>();
+                    titheToRemove.Add(kv.Key);
+                }
+
+                Text.Anchor = TextAnchor.UpperLeft;
+                curY += 28f;
+                titheIdx++;
+            }
+            if (titheToRemove != null)
+            {
+                foreach (ResourceTypeDef def in titheToRemove)
+                    SetTitheInjection(def, 0);
             }
 
             Widgets.EndScrollView();
@@ -1270,7 +1461,7 @@ namespace FactionColonies.SupplyChain
                 Rect needRowRect = new Rect(0f, curY, viewRect.width, 24f);
                 string needTip = BuildNeedTooltip(state);
                 if (needTip != null)
-                    UIUtil.TipRegionByText(needRowRect, needTip);
+                    TooltipHandler.TipRegion(needRowRect, needTip);
 
                 Text.Anchor = TextAnchor.UpperLeft;
                 curY += 26f;
@@ -1349,7 +1540,7 @@ namespace FactionColonies.SupplyChain
                 // Tooltip explaining demand source
                 string tooltip = BuildNeedTooltip(state);
                 if (tooltip != null)
-                    UIUtil.TipRegionByText(rowRect, tooltip);
+                    TooltipHandler.TipRegion(rowRect, tooltip);
 
                 Text.Anchor = TextAnchor.UpperLeft;
                 curY += 26f;
@@ -1549,6 +1740,45 @@ namespace FactionColonies.SupplyChain
                     newLocalSellResource = null;
                     newLocalSellAmount = 0;
                     newLocalSellAmountBuffer = "";
+                }
+            }
+
+            Text.Anchor = TextAnchor.UpperLeft;
+            curY += 28f;
+        }
+
+        private void DrawAddTitheInjectionRow(Rect viewRect, ref float curY)
+        {
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(new Rect(0f, curY, 40f, 26f), "SC_AddColon".Translate());
+
+            string resLabel = newTitheInjResource != null ? newTitheInjResource.label.CapitalizeFirst() : (string)"SC_PickResource".Translate();
+            if (Widgets.ButtonText(new Rect(44f, curY, 130f, 24f), resLabel))
+            {
+                List<FloatMenuOption> options = new List<FloatMenuOption>();
+                foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+                {
+                    if (def.isPoolResource) continue;
+                    ResourceTypeDef captured = def;
+                    options.Add(new FloatMenuOption(def.label.CapitalizeFirst(), delegate
+                    {
+                        newTitheInjResource = captured;
+                    }));
+                }
+                Find.WindowStack.Add(new FloatMenu(options));
+            }
+
+            Widgets.TextFieldNumeric(new Rect(180f, curY, 80f, 24f),
+                ref newTitheInjAmount, ref newTitheInjAmountBuffer, 0f, 9999f);
+
+            if (Widgets.ButtonText(new Rect(268f, curY, 60f, 24f), "SC_Add".Translate()))
+            {
+                if (newTitheInjResource != null && newTitheInjAmount > 0)
+                {
+                    SetTitheInjection(newTitheInjResource, newTitheInjAmount);
+                    newTitheInjResource = null;
+                    newTitheInjAmount = 0;
+                    newTitheInjAmountBuffer = "";
                 }
             }
 
