@@ -54,8 +54,10 @@ namespace FactionColonies.SupplyChain
 
         // Sub-tab state (complex mode)
         private int complexSubTab;
-        private Vector2 scrollPosOverview;
+        private Vector2 scrollPosStockpile;
+        private Vector2 scrollPosNeeds;
         private Vector2 scrollPosProduction;
+        private Vector2 scrollPosOrders;
         private Vector2 scrollPosRoutes;
 
         // Route creation state
@@ -623,8 +625,10 @@ namespace FactionColonies.SupplyChain
             newLocalSellAmount = 0;
 
             complexSubTab = 0;
-            scrollPosOverview = Vector2.zero;
+            scrollPosStockpile = Vector2.zero;
+            scrollPosNeeds = Vector2.zero;
             scrollPosProduction = Vector2.zero;
+            scrollPosOrders = Vector2.zero;
             scrollPosRoutes = Vector2.zero;
             newRouteOther = null;
             newRouteResource = null;
@@ -847,16 +851,18 @@ namespace FactionColonies.SupplyChain
 
             // Sub-tab bar
             float tabH = 24f;
-            float tabW = inner.width / 3f;
+            float tabW = inner.width / 5f;
             string[] tabLabels = new string[]
             {
-                (string)"SC_SubOverview".Translate(),
+                (string)"SC_SubStockpile".Translate(),
+                (string)"SC_SubNeeds".Translate(),
                 (string)"SC_SubProduction".Translate(),
+                (string)"SC_SubOrders".Translate(),
                 (string)"SC_SubRoutes".Translate()
             };
 
             Rect chosenRect = new Rect();
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 5; i++)
             {
                 Rect tabRect = new Rect(inner.x + tabW * i, inner.y, tabW, tabH);
                 if (UIUtil.ButtonFlat(tabRect, tabLabels[i], highlighted: complexSubTab == i))
@@ -877,9 +883,13 @@ namespace FactionColonies.SupplyChain
             Rect contentRect = new Rect(inner.x, contentY, inner.width, contentH);
 
             if (complexSubTab == 0)
-                DrawComplexOverview(contentRect);
+                DrawComplexStockpile(contentRect);
             else if (complexSubTab == 1)
+                DrawComplexNeeds(contentRect);
+            else if (complexSubTab == 2)
                 DrawComplexProduction(contentRect);
+            else if (complexSubTab == 3)
+                DrawComplexOrders(contentRect);
             else
                 DrawComplexRoutes(contentRect);
 
@@ -891,9 +901,9 @@ namespace FactionColonies.SupplyChain
             }
         }
 
-        // --- Complex Sub-Tab 0: Overview (stockpile + needs) ---
+        // --- Complex Sub-Tab 0: Stockpile ---
 
-        private void DrawComplexOverview(Rect rect)
+        private void DrawComplexStockpile(Rect rect)
         {
             const float barHeight = 28f;
             const float sectionPad = 8f;
@@ -911,12 +921,11 @@ namespace FactionColonies.SupplyChain
             }
 
             float stockpileH = 36f + resourceCount * (barHeight + 2f) + sectionPad;
-            float needsH = needStates.Count > 0 ? 36f + needStates.Count * 26f + sectionPad : 0f;
-            float totalHeight = stockpileH + needsH + 16f;
+            float totalHeight = stockpileH + 16f;
             float scrollMargin = totalHeight > rect.height ? 16f : 0f;
 
             Rect viewRect = new Rect(0f, 0f, rect.width - scrollMargin, totalHeight);
-            Widgets.BeginScrollView(rect, ref scrollPosOverview, viewRect);
+            Widgets.BeginScrollView(rect, ref scrollPosStockpile, viewRect);
             float curY = 4f;
 
             // --- Local Stockpile section ---
@@ -991,18 +1000,36 @@ namespace FactionColonies.SupplyChain
                 idx++;
             }
 
-            // Separator between stockpile and needs
-            if (needStates.Count > 0)
-            {
-                curY += sectionPad;
+            Widgets.EndScrollView();
+        }
 
-                DrawNeedsSection(viewRect, ref curY);
+        // --- Complex Sub-Tab 1: Needs ---
+
+        private void DrawComplexNeeds(Rect rect)
+        {
+            if (needStates.Count == 0)
+            {
+                Text.Font = GameFont.Medium;
+                Text.Anchor = TextAnchor.MiddleCenter;
+                Widgets.Label(rect, "SC_NoNeeds".Translate());
+                Text.Anchor = TextAnchor.UpperLeft;
+                Text.Font = GameFont.Small;
+                return;
             }
+
+            float totalHeight = 36f + needStates.Count * 26f + 16f;
+            float scrollMargin = totalHeight > rect.height ? 16f : 0f;
+
+            Rect viewRect = new Rect(0f, 0f, rect.width - scrollMargin, totalHeight);
+            Widgets.BeginScrollView(rect, ref scrollPosNeeds, viewRect);
+            float curY = 4f;
+
+            DrawNeedsSection(viewRect, ref curY);
 
             Widgets.EndScrollView();
         }
 
-        // --- Complex Sub-Tab 1: Production (sliders + sell orders) ---
+        // --- Complex Sub-Tab 2: Production (allocation sliders) ---
 
         private void DrawComplexProduction(Rect rect)
         {
@@ -1016,9 +1043,7 @@ namespace FactionColonies.SupplyChain
             }
 
             float allocH = 36f + resourceCount * rowHeight + sectionPad;
-            float sellH = 36f + localSellOrders.Count * 28f + 32f + sectionPad;
-            float titheH = 36f + titheInjections.Count * 28f + 32f + sectionPad;
-            float totalHeight = allocH + sellH + titheH + 16f;
+            float totalHeight = allocH + 16f;
             float scrollMargin = totalHeight > rect.height ? 16f : 0f;
 
             Rect viewRect = new Rect(0f, 0f, rect.width - scrollMargin, totalHeight);
@@ -1032,7 +1057,24 @@ namespace FactionColonies.SupplyChain
             curY += 34f;
 
             DrawAllocationSliders(viewRect, ref curY, rowHeight);
-            curY += sectionPad;
+
+            Widgets.EndScrollView();
+        }
+
+        // --- Complex Sub-Tab 3: Orders (sell orders + tithe injection) ---
+
+        private void DrawComplexOrders(Rect rect)
+        {
+            const float sectionPad = 8f;
+
+            float sellH = 36f + localSellOrders.Count * 28f + 32f + sectionPad;
+            float titheH = 36f + titheInjections.Count * 28f + 32f + sectionPad;
+            float totalHeight = sellH + titheH + 16f;
+            float scrollMargin = totalHeight > rect.height ? 16f : 0f;
+
+            Rect viewRect = new Rect(0f, 0f, rect.width - scrollMargin, totalHeight);
+            Widgets.BeginScrollView(rect, ref scrollPosOrders, viewRect);
+            float curY = 4f;
 
             // --- Sell Orders section ---
             Text.Font = GameFont.Medium;
@@ -1153,7 +1195,7 @@ namespace FactionColonies.SupplyChain
             Widgets.EndScrollView();
         }
 
-        // --- Complex Sub-Tab 2: Routes ---
+        // --- Complex Sub-Tab 4: Routes ---
 
         private void DrawComplexRoutes(Rect rect)
         {

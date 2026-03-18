@@ -64,9 +64,12 @@
     <SC_CapContribution>This settlement contributes {0} cap per resource to the faction stockpile.</SC_CapContribution>
 
     <!-- Settlement Tab - Complex Mode Sub-Tabs -->
-    <SC_SubOverview>Overview</SC_SubOverview>
+    <SC_SubStockpile>Stockpile</SC_SubStockpile>
+    <SC_SubNeeds>Needs</SC_SubNeeds>
     <SC_SubProduction>Production</SC_SubProduction>
+    <SC_SubOrders>Orders</SC_SubOrders>
     <SC_SubRoutes>Routes</SC_SubRoutes>
+    <SC_NoNeeds>No settlement needs defined.</SC_NoNeeds>
     <SC_DirectionFrom>From This Settlement</SC_DirectionFrom>
     <SC_DirectionTo>To This Settlement</SC_DirectionTo>
 <SC_NoRoutesDirection>No routes in this direction.</SC_NoRoutesDirection>
