@@ -1,7 +1,40 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-	<!-- Warehouse — increases stockpile caps for all resources -->
+	<!-- ==================== -->
+	<!-- Warehouse Chain (4 tiers) -->
+	<!-- ==================== -->
+
+	<!-- Tier 1: Storehouse (Medieval, base building) -->
+	<FactionColonies.BuildingFCDef ParentName="BuildingFCDef_Surface_Medieval">
+		<defName>SC_Storehouse</defName>
+		<label>Storehouse</label>
+		<desc>A basic storage building that provides modest stockpile capacity for all resources.</desc>
+		<cost>500</cost>
+		<constructionDuration>60000</constructionDuration>
+		<upkeep>75</upkeep>
+		<iconPath>Buildings/Storehouse</iconPath>
+		<upgrades>
+			<li>SC_Warehouse</li>
+		</upgrades>
+		<modExtensions>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<capBonuses>
+					<li><resource>RTD_Food</resource><amount>15</amount></li>
+					<li><resource>RTD_Weapons</resource><amount>15</amount></li>
+					<li><resource>RTD_Apparel</resource><amount>15</amount></li>
+					<li><resource>RTD_Animals</resource><amount>15</amount></li>
+					<li><resource>RTD_Logging</resource><amount>15</amount></li>
+					<li><resource>RTD_Mining</resource><amount>15</amount></li>
+					<li><resource>RTD_Research</resource><amount>15</amount></li>
+					<li><resource>RTD_Power</resource><amount>15</amount></li>
+					<li><resource>RTD_Medicine</resource><amount>15</amount></li>
+				</capBonuses>
+			</li>
+		</modExtensions>
+	</FactionColonies.BuildingFCDef>
+
+	<!-- Tier 2: Warehouse (Industrial, upgrade from Storehouse) -->
 	<FactionColonies.BuildingFCDef ParentName="BuildingFCDef_Surface_Industrial">
 		<defName>SC_Warehouse</defName>
 		<label>Warehouse</label>
@@ -9,7 +42,11 @@
 		<cost>800</cost>
 		<constructionDuration>90000</constructionDuration>
 		<upkeep>100</upkeep>
+		<baseBuilding>false</baseBuilding>
 		<iconPath>Buildings/Warehouse</iconPath>
+		<upgrades>
+			<li>SC_WarehouseComplex</li>
+		</upgrades>
 		<modExtensions>
 			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
 				<capBonuses>
@@ -27,7 +64,95 @@
 		</modExtensions>
 	</FactionColonies.BuildingFCDef>
 
-	<!-- Distribution Center — improves supply route efficiency -->
+	<!-- Tier 3: Warehouse Complex (Spacer, upgrade from Warehouse) -->
+	<FactionColonies.BuildingFCDef ParentName="BuildingFCDef_Surface_Spacer">
+		<defName>SC_WarehouseComplex</defName>
+		<label>Warehouse Complex</label>
+		<desc>An advanced multi-building storage complex with climate control and automated inventory systems.</desc>
+		<cost>1500</cost>
+		<constructionDuration>120000</constructionDuration>
+		<upkeep>175</upkeep>
+		<baseBuilding>false</baseBuilding>
+		<iconPath>Buildings/WarehouseComplex</iconPath>
+		<upgrades>
+			<li>SC_LogisticsHub</li>
+		</upgrades>
+		<modExtensions>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<capBonuses>
+					<li><resource>RTD_Food</resource><amount>50</amount></li>
+					<li><resource>RTD_Weapons</resource><amount>50</amount></li>
+					<li><resource>RTD_Apparel</resource><amount>50</amount></li>
+					<li><resource>RTD_Animals</resource><amount>50</amount></li>
+					<li><resource>RTD_Logging</resource><amount>50</amount></li>
+					<li><resource>RTD_Mining</resource><amount>50</amount></li>
+					<li><resource>RTD_Research</resource><amount>50</amount></li>
+					<li><resource>RTD_Power</resource><amount>50</amount></li>
+					<li><resource>RTD_Medicine</resource><amount>50</amount></li>
+				</capBonuses>
+			</li>
+		</modExtensions>
+	</FactionColonies.BuildingFCDef>
+
+	<!-- Tier 4: Logistics Hub (Ultra, upgrade from Warehouse Complex) -->
+	<FactionColonies.BuildingFCDef ParentName="BuildingFCDef_Surface_Ultra">
+		<defName>SC_LogisticsHub</defName>
+		<label>Logistics Hub</label>
+		<desc>A state-of-the-art logistics center with archotech-assisted storage. Provides unmatched stockpile capacity for all resources.</desc>
+		<cost>4000</cost>
+		<constructionDuration>180000</constructionDuration>
+		<upkeep>300</upkeep>
+		<baseBuilding>false</baseBuilding>
+		<iconPath>Buildings/LogisticsHub</iconPath>
+		<modExtensions>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<capBonuses>
+					<li><resource>RTD_Food</resource><amount>75</amount></li>
+					<li><resource>RTD_Weapons</resource><amount>75</amount></li>
+					<li><resource>RTD_Apparel</resource><amount>75</amount></li>
+					<li><resource>RTD_Animals</resource><amount>75</amount></li>
+					<li><resource>RTD_Logging</resource><amount>75</amount></li>
+					<li><resource>RTD_Mining</resource><amount>75</amount></li>
+					<li><resource>RTD_Research</resource><amount>75</amount></li>
+					<li><resource>RTD_Power</resource><amount>75</amount></li>
+					<li><resource>RTD_Medicine</resource><amount>75</amount></li>
+				</capBonuses>
+			</li>
+		</modExtensions>
+	</FactionColonies.BuildingFCDef>
+
+	<!-- ==================== -->
+	<!-- Cold Storage (upgrade from base mod Granary) -->
+	<!-- ==================== -->
+
+	<FactionColonies.BuildingFCDef ParentName="BuildingFCDef_Surface_Industrial">
+		<defName>SC_ColdStorage</defName>
+		<label>Cold Storage</label>
+		<desc>A refrigerated storage facility that greatly expands the settlement's food stockpile capacity. Requires a steady power supply to operate.</desc>
+		<cost>1000</cost>
+		<constructionDuration>90000</constructionDuration>
+		<upkeep>150</upkeep>
+		<baseBuilding>false</baseBuilding>
+		<iconPath>Buildings/ColdStorage</iconPath>
+		<modExtensions>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Power</resource><amount>0.5</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>happinessLostBase</stat><penaltyPerUnit>2.0</penaltyPerUnit><label>cold storage offline</label></li>
+				</penalties>
+				<capBonuses>
+					<li><resource>RTD_Food</resource><amount>100</amount></li>
+				</capBonuses>
+			</li>
+		</modExtensions>
+	</FactionColonies.BuildingFCDef>
+
+	<!-- ==================== -->
+	<!-- Distribution Center -->
+	<!-- ==================== -->
+
 	<FactionColonies.BuildingFCDef ParentName="BuildingFCDef_Surface_Industrial">
 		<defName>SC_DistributionCenter</defName>
 		<label>Distribution Center</label>
@@ -41,28 +166,125 @@
 		<iconPath>Buildings/DistributionCenter</iconPath>
 	</FactionColonies.BuildingFCDef>
 
-	<!-- Cold Storage — large food stockpile bonus, requires Power -->
-	<FactionColonies.BuildingFCDef ParentName="BuildingFCDef_Surface_Industrial">
-		<defName>SC_ColdStorage</defName>
-		<label>Cold Storage</label>
-		<desc>A refrigerated storage facility that greatly expands the settlement's food stockpile capacity. Requires a steady power supply to operate.</desc>
-		<cost>1000</cost>
-		<constructionDuration>90000</constructionDuration>
-		<upkeep>150</upkeep>
-		<iconPath>Buildings/ColdStorage</iconPath>
+	<!-- ==================== -->
+	<!-- Armory Chain (2 tiers) -->
+	<!-- ==================== -->
+
+	<!-- Tier 1: Armory (Medieval, base building) -->
+	<FactionColonies.BuildingFCDef ParentName="BuildingFCDef_Surface_Medieval">
+		<defName>SC_Armory</defName>
+		<label>Armory</label>
+		<desc>A secure facility for storing weapons and apparel. Greatly increases the settlement's military stockpile capacity.</desc>
+		<cost>700</cost>
+		<constructionDuration>60000</constructionDuration>
+		<upkeep>100</upkeep>
+		<iconPath>Buildings/Armory</iconPath>
+		<upgrades>
+			<li>SC_Arsenal</li>
+		</upgrades>
 		<modExtensions>
 			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
-				<inputs>
-					<li><resource>RTD_Power</resource><amount>0.5</amount></li>
-				</inputs>
-				<penalties>
-					<li><stat>happinessLostBase</stat><penaltyPerUnit>2.0</penaltyPerUnit><label>cold storage offline</label></li>
-				</penalties>
 				<capBonuses>
-					<li><resource>RTD_Food</resource><amount>50</amount></li>
+					<li><resource>RTD_Weapons</resource><amount>40</amount></li>
+					<li><resource>RTD_Apparel</resource><amount>40</amount></li>
 				</capBonuses>
 			</li>
 		</modExtensions>
+	</FactionColonies.BuildingFCDef>
+
+	<!-- Tier 2: Arsenal (Spacer, upgrade from Armory) -->
+	<FactionColonies.BuildingFCDef ParentName="BuildingFCDef_Surface_Spacer">
+		<defName>SC_Arsenal</defName>
+		<label>Arsenal</label>
+		<desc>A high-security weapons depot with advanced containment for volatile materials. Stores military equipment and chemfuel reserves.</desc>
+		<cost>1300</cost>
+		<constructionDuration>90000</constructionDuration>
+		<upkeep>175</upkeep>
+		<baseBuilding>false</baseBuilding>
+		<iconPath>Buildings/Arsenal</iconPath>
+		<modExtensions>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<capBonuses>
+					<li><resource>RTD_Weapons</resource><amount>80</amount></li>
+					<li><resource>RTD_Apparel</resource><amount>80</amount></li>
+					<li><resource>RTD_Chemfuel</resource><amount>30</amount></li>
+				</capBonuses>
+			</li>
+		</modExtensions>
+	</FactionColonies.BuildingFCDef>
+
+	<!-- ==================== -->
+	<!-- Fuel Depot Chain (2 tiers) -->
+	<!-- ==================== -->
+
+	<!-- Tier 1: Fuel Depot (Industrial, base building) -->
+	<FactionColonies.BuildingFCDef ParentName="BuildingFCDef_Surface_Industrial">
+		<defName>SC_FuelDepot</defName>
+		<label>Fuel Depot</label>
+		<desc>A reinforced storage facility for fuel reserves. Increases the settlement's power stockpile capacity, but requires a steady supply of raw materials.</desc>
+		<cost>900</cost>
+		<constructionDuration>90000</constructionDuration>
+		<upkeep>125</upkeep>
+		<iconPath>Buildings/FuelDepot</iconPath>
+		<upgrades>
+			<li>SC_FuelReserve</li>
+		</upgrades>
+		<modExtensions>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Mining</resource><amount>0.3</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>happinessLostBase</stat><penaltyPerUnit>1.5</penaltyPerUnit><label>fuel shortage</label></li>
+				</penalties>
+				<capBonuses>
+					<li><resource>RTD_Power</resource><amount>40</amount></li>
+				</capBonuses>
+			</li>
+		</modExtensions>
+	</FactionColonies.BuildingFCDef>
+
+	<!-- Tier 2: Fuel Reserve (Ultra, upgrade from Fuel Depot) -->
+	<FactionColonies.BuildingFCDef ParentName="BuildingFCDef_Surface_Ultra">
+		<defName>SC_FuelReserve</defName>
+		<label>Fuel Reserve</label>
+		<desc>A massive underground fuel reserve with archotech containment. Provides exceptional power stockpile capacity.</desc>
+		<cost>1800</cost>
+		<constructionDuration>120000</constructionDuration>
+		<upkeep>225</upkeep>
+		<baseBuilding>false</baseBuilding>
+		<iconPath>Buildings/FuelReserve</iconPath>
+		<modExtensions>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Mining</resource><amount>0.3</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>happinessLostBase</stat><penaltyPerUnit>1.5</penaltyPerUnit><label>fuel shortage</label></li>
+				</penalties>
+				<capBonuses>
+					<li><resource>RTD_Power</resource><amount>80</amount></li>
+				</capBonuses>
+			</li>
+		</modExtensions>
+	</FactionColonies.BuildingFCDef>
+
+	<!-- ==================== -->
+	<!-- Customs House (standalone) -->
+	<!-- ==================== -->
+
+	<FactionColonies.BuildingFCDef ParentName="BuildingFCDef_Surface_Industrial">
+		<defName>SC_CustomsHouse</defName>
+		<label>Customs House</label>
+		<desc>A bureaucratic hub that regulates trade and logistics. Improves sell order rates and reduces losses on supply routes.</desc>
+		<cost>1500</cost>
+		<constructionDuration>120000</constructionDuration>
+		<upkeep>250</upkeep>
+		<statModifiers>
+			<li><stat>SC_SellRateMultiplier</stat><value>1.1</value></li>
+			<li><stat>SC_RouteEfficiencyBonus</stat><value>0.05</value></li>
+		</statModifiers>
+		<iconPath>Buildings/CustomsHouse</iconPath>
 	</FactionColonies.BuildingFCDef>
 
 </Defs>
