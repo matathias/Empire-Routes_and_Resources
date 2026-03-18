@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+	<!-- ==================== -->
+	<!-- 9. Famine Season      -->
+	<!-- ==================== -->
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_famineCrisis</defName>
+		<label>Famine Season</label>
+		<desc>A prolonged dry spell has withered crops across the region. Food demand spikes as settlers grow restless.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>600000</timeTillTrigger>
+		<isRandomEvent>true</isRandomEvent>
+		<weight>6</weight>
+		<rangeSettlementsAffected>1~3</rangeSettlementsAffected>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<requiredResource>RTD_Food</requiredResource>
+		<restrictedBiomes>
+			<li>IceSheet</li>
+			<li>SeaIce</li>
+		</restrictedBiomes>
+		<statModifiers>
+			<li><stat>RTD_Food_ProductionMultiplier</stat><value>-0.2</value></li>
+			<li><stat>happinessLostBase</stat><value>2</value></li>
+			<li><stat>unrestGainedBase</stat><value>1</value></li>
+		</statModifiers>
+		<incompatibleEvents>
+			<li>sc_famineCrisis</li>
+			<li>sc_merchantSurplus</li>
+		</incompatibleEvents>
+	</FactionColonies.FCEventDef>
+
+	<!-- ======================== -->
+	<!-- 10. Medicine Shortage     -->
+	<!-- ======================== -->
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_medicineShortage</defName>
+		<label>Medicine Shortage</label>
+		<desc>A plague sweeping nearby settlements has spiked demand for medicine. Supplies are running thin and settlers are worried.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>0</timeTillTrigger>
+		<isRandomEvent>true</isRandomEvent>
+		<weight>8</weight>
+		<rangeSettlementsAffected>1~2</rangeSettlementsAffected>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<requiredResource>RTD_Medicine</requiredResource>
+		<activateAtStart>true</activateAtStart>
+		<options>
+			<li>sc_medShortage_opt1</li>
+			<li>sc_medShortage_opt2</li>
+			<li>sc_medShortage_opt3</li>
+			<li>sc_medShortage_opt4</li>
+		</options>
+		<optionDescription>A plague sweeping nearby settlements has spiked demand for medicine. Supplies are running thin and settlers are worried. How do you handle the crisis?</optionDescription>
+		<incompatibleEvents>
+			<li>sc_medicineShortage</li>
+		</incompatibleEvents>
+	</FactionColonies.FCEventDef>
+
+	<!-- Medicine Shortage Options -->
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_medShortage_opt1</defName>
+		<label>Buy medicine from outside traders.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>800</silverCost>
+		<parentEvent>sc_medicineShortage</parentEvent>
+		<successEvent>sc_medShortage_purchased</successEvent>
+	</FactionColonies.FCOptionDef>
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_medShortage_opt2</defName>
+		<label>Ration existing supplies strictly.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>0</silverCost>
+		<parentEvent>sc_medicineShortage</parentEvent>
+		<successEvent>sc_medShortage_rationed</successEvent>
+	</FactionColonies.FCOptionDef>
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_medShortage_opt3</defName>
+		<label>Divert food production to herbal remedies.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>0</silverCost>
+		<parentEvent>sc_medicineShortage</parentEvent>
+		<successEvent>sc_medShortage_diverted</successEvent>
+	</FactionColonies.FCOptionDef>
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_medShortage_opt4</defName>
+		<label>Our researchers can synthesize substitutes.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>200</silverCost>
+		<parentEvent>sc_medicineShortage</parentEvent>
+		<successEvent>sc_medShortage_synthesized</successEvent>
+		<requiredPolicies>
+			<li>technocratic</li>
+		</requiredPolicies>
+	</FactionColonies.FCOptionDef>
+
+	<!-- Medicine Shortage Outcomes -->
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_medShortage_purchased</defName>
+		<label>Medicine Purchased</label>
+		<desc>Outside traders delivered a shipment of medicine. The shortage is alleviated, at least for now.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>300000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>RTD_Medicine_ProductionAdditive</stat><value>1</value></li>
+		</statModifiers>
+	</FactionColonies.FCEventDef>
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_medShortage_rationed</defName>
+		<label>Strict Rationing</label>
+		<desc>Medicine is being rationed severely. People are unhappy, but everyone gets at least something.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>300000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>happinessLostBase</stat><value>1.5</value></li>
+		</statModifiers>
+	</FactionColonies.FCEventDef>
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_medShortage_diverted</defName>
+		<label>Herbal Remedies</label>
+		<desc>Food workers are brewing herbal remedies instead. Medicine stocks are improving, but meals are getting thinner.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>300000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>RTD_Medicine_ProductionAdditive</stat><value>0.5</value></li>
+			<li><stat>RTD_Food_ProductionAdditive</stat><value>-1</value></li>
+		</statModifiers>
+	</FactionColonies.FCEventDef>
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_medShortage_synthesized</defName>
+		<label>Synthetic Medicine</label>
+		<desc>Your researchers developed a reliable synthesis process. Medicine production is permanently more efficient.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>600000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>RTD_Medicine_ProductionMultiplier</stat><value>0.15</value></li>
+		</statModifiers>
+	</FactionColonies.FCEventDef>
+
+	<!-- ==================== -->
+	<!-- 11. Power Surplus     -->
+	<!-- ==================== -->
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_powerSurplus</defName>
+		<label>Power Surplus</label>
+		<desc>Favorable conditions have generated a surge in power output. Factories hum with extra energy and settlers enjoy well-lit nights.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>300000</timeTillTrigger>
+		<isRandomEvent>true</isRandomEvent>
+		<weight>6</weight>
+		<rangeSettlementsAffected>1~2</rangeSettlementsAffected>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<requiredResource>RTD_Power</requiredResource>
+		<statModifiers>
+			<li><stat>RTD_Power_ProductionAdditive</stat><value>2</value></li>
+			<li><stat>happinessGainedBase</stat><value>0.5</value></li>
+		</statModifiers>
+		<incompatibleEvents>
+			<li>sc_powerSurplus</li>
+		</incompatibleEvents>
+	</FactionColonies.FCEventDef>
+
+</Defs>
