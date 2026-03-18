@@ -14,7 +14,7 @@ namespace FactionColonies.SupplyChain
     public class NeedPenalty
     {
         public FCStatDef stat;
-        public double maxValue;
+        public double penaltyPerUnit;
         public string label;
     }
 

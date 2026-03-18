@@ -234,13 +234,13 @@ namespace FactionColonies.SupplyChain
                 if (needDef.penalties == null) continue;
 
                 NeedState state = FindNeedState(needDef.defName);
-                float unsatisfied = state != null ? (1f - state.Satisfaction) : 0f;
-                if (unsatisfied <= 0f) continue;
+                if (state == null || state.demanded <= 0 || state.fulfilled >= state.demanded) continue;
+                double shortfall = state.demanded - state.fulfilled;
 
                 foreach (NeedPenalty penalty in needDef.penalties)
                 {
                     if (penalty.stat == stat)
-                        total += penalty.maxValue * unsatisfied;
+                        total += penalty.penaltyPerUnit * shortfall;
                 }
             }
 
@@ -259,9 +259,8 @@ namespace FactionColonies.SupplyChain
                     List<NeedPenalty> penalties = ext.penalties;
                     if (penalties == null || penalties.Count == 0) continue;
 
-                    // Average satisfaction across all inputs for this building
-                    float avgUnsatisfied = 0f;
-                    int inputCount = 0;
+                    // Total shortfall across all inputs for this building
+                    double totalShortfall = 0.0;
                     if (ext.inputs != null)
                     {
                         foreach (BuildingResourceInput input in ext.inputs)
@@ -269,19 +268,17 @@ namespace FactionColonies.SupplyChain
                             if (input.resource == null) continue;
                             string needId = "bldg." + building.def.defName + "." + input.resource.defName;
                             NeedState state = FindNeedState(needId);
-                            avgUnsatisfied += state != null ? (1f - state.Satisfaction) : 0f;
-                            inputCount++;
+                            if (state != null && state.demanded > 0 && state.fulfilled < state.demanded)
+                                totalShortfall += state.demanded - state.fulfilled;
                         }
                     }
-                    if (inputCount > 0)
-                        avgUnsatisfied /= inputCount;
 
-                    if (avgUnsatisfied <= 0f) continue;
+                    if (totalShortfall <= 0.0) continue;
 
                     foreach (NeedPenalty penalty in penalties)
                     {
                         if (penalty.stat == stat)
-                            total += penalty.maxValue * avgUnsatisfied;
+                            total += penalty.penaltyPerUnit * totalShortfall;
                     }
                 }
             }
@@ -298,13 +295,13 @@ namespace FactionColonies.SupplyChain
                 if (needDef.penalties == null) continue;
 
                 NeedState state = FindNeedState(needDef.defName);
-                float unsatisfied = state != null ? (1f - state.Satisfaction) : 0f;
-                if (unsatisfied <= 0f) continue;
+                if (state == null || state.demanded <= 0 || state.fulfilled >= state.demanded) continue;
+                double shortfall = state.demanded - state.fulfilled;
 
                 foreach (NeedPenalty penalty in needDef.penalties)
                 {
                     if (penalty.stat != stat) continue;
-                    double val = penalty.maxValue * unsatisfied;
+                    double val = penalty.penaltyPerUnit * shortfall;
                     if (val <= 0) continue;
 
                     string line = "SC_UnmetNeedPenalty".Translate(needDef.label, val.ToString("F1"));
@@ -1790,10 +1787,10 @@ namespace FactionColonies.SupplyChain
             if (state.Satisfaction < 1f && needDef.penalties != null)
             {
                 tip += "\n\nPenalties:";
-                float deficit = 1f - state.Satisfaction;
+                double shortfall = state.demanded - state.fulfilled;
                 foreach (NeedPenalty penalty in needDef.penalties)
                 {
-                    double penaltyVal = penalty.maxValue * deficit;
+                    double penaltyVal = penalty.penaltyPerUnit * shortfall;
                     tip += "\n  " + (penalty.label ?? penalty.stat.label) + ": -" + penaltyVal.ToString("F1");
                 }
             }
@@ -1803,8 +1800,8 @@ namespace FactionColonies.SupplyChain
 
         private string GetPenaltySummary(NeedState state)
         {
-            float unsatisfied = 1f - state.Satisfaction;
-            if (unsatisfied <= 0f) return null;
+            if (state.demanded <= 0 || state.fulfilled >= state.demanded) return null;
+            double shortfall = state.demanded - state.fulfilled;
 
             // Check base need penalties
             SettlementNeedDef needDef = DefDatabase<SettlementNeedDef>.GetNamedSilentFail(state.needId);
@@ -1813,7 +1810,7 @@ namespace FactionColonies.SupplyChain
                 string result = null;
                 foreach (NeedPenalty penalty in needDef.penalties)
                 {
-                    double val = penalty.maxValue * unsatisfied;
+                    double val = penalty.penaltyPerUnit * shortfall;
                     string displayLabel = penalty.label ?? penalty.stat.label;
                     string part = "SC_PenaltyLine".Translate(val.ToString("F1"), displayLabel);
                     result = result == null ? part : result + ", " + part;

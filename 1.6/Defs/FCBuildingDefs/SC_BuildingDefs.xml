@@ -71,7 +71,7 @@
 					<li><resource>RTD_Power</resource><amount>0.5</amount></li>
 				</inputs>
 				<penalties>
-					<li><stat>happinessLostBase</stat><maxValue>1.0</maxValue><label>cold storage offline</label></li>
+					<li><stat>happinessLostBase</stat><penaltyPerUnit>2.0</penaltyPerUnit><label>cold storage offline</label></li>
 				</penalties>
 				<capBonuses>
 					<li><resource>RTD_Food</resource><amount>50</amount></li>

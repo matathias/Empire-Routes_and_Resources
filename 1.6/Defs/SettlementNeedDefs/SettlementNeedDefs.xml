@@ -11,12 +11,12 @@
         <penalties>
             <li>
                 <stat>happinessLostBase</stat>
-                <maxValue>3.0</maxValue>
+                <penaltyPerUnit>0.6</penaltyPerUnit>
                 <label>happiness</label>
             </li>
             <li>
                 <stat>loyaltyLostBase</stat>
-                <maxValue>2.0</maxValue>
+                <penaltyPerUnit>0.4</penaltyPerUnit>
                 <label>loyalty</label>
             </li>
         </penalties>

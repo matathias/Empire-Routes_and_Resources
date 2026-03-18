@@ -12,12 +12,12 @@
 		<penalties>
 			<li>
 				<stat>happinessLostBase</stat>
-				<maxValue>2.0</maxValue>
+				<penaltyPerUnit>1.5</penaltyPerUnit>
 				<label>happiness</label>
 			</li>
 			<li>
 				<stat>unrestGainedBase</stat>
-				<maxValue>1.0</maxValue>
+				<penaltyPerUnit>0.8</penaltyPerUnit>
 				<label>unrest</label>
 			</li>
 		</penalties>
@@ -33,7 +33,7 @@
 		<penalties>
 			<li>
 				<stat>happinessLostBase</stat>
-				<maxValue>1.5</maxValue>
+				<penaltyPerUnit>1.0</penaltyPerUnit>
 				<label>happiness</label>
 			</li>
 		</penalties>
@@ -49,7 +49,7 @@
 		<penalties>
 			<li>
 				<stat>loyaltyLostBase</stat>
-				<maxValue>1.5</maxValue>
+				<penaltyPerUnit>1.5</penaltyPerUnit>
 				<label>loyalty</label>
 			</li>
 		</penalties>
