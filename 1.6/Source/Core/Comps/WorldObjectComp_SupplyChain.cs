@@ -544,6 +544,7 @@ namespace FactionColonies.SupplyChain
 
                 // Ensure any newly added SettlementNeedDefs have placeholder NeedStates
                 WorldSettlementFC ws = WorldSettlement;
+                FactionFC faction = FactionCache.FactionComp;
                 if (ws != null)
                 {
                     HashSet<string> existingIds = new HashSet<string>();
@@ -552,6 +553,7 @@ namespace FactionColonies.SupplyChain
 
                     foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
                     {
+                        if (faction != null && !needDef.IsActiveForFaction(faction)) continue;
                         if (!existingIds.Contains(needDef.defName))
                         {
                             double demand = needDef.CalculateDemand(ws);
@@ -949,7 +951,7 @@ namespace FactionColonies.SupplyChain
             {
                 curY += sectionPad;
 
-                DrawNeedsSectionPolished(viewRect, ref curY);
+                DrawNeedsSection(viewRect, ref curY);
             }
 
             Widgets.EndScrollView();
@@ -1117,6 +1119,7 @@ namespace FactionColonies.SupplyChain
             if (ws == null) return;
 
             // --- Direction toggle (fixed above scroll) ---
+            Text.Font = GameFont.Tiny;
             float toggleW = rect.width / 2f;
             Rect fromRect = new Rect(rect.x, rect.y + 3f, toggleW, 24f);
             Rect toRect = new Rect(rect.x + toggleW, rect.y + 3f, toggleW, 24f);
@@ -1136,7 +1139,6 @@ namespace FactionColonies.SupplyChain
             float filterY = rect.y + 58f;
             float fbX = rect.x;
             float fbH = 22f;
-            Text.Font = GameFont.Tiny;
 
             bool allActive = routeFilterResource == null;
             if (UIUtil.ButtonFlat(new Rect(fbX, filterY, 40f, fbH), (string)"SC_All".Translate(), highlighted: allActive))
@@ -1166,7 +1168,7 @@ namespace FactionColonies.SupplyChain
             if (routeFilterResource != null && !routeResources.Contains(routeFilterResource))
                 routeFilterResource = null;
 
-            Text.Font = GameFont.Small;
+            Text.Font = GameFont.Tiny;
 
             float fixedHeaderTotal = 82f; // toggle (26) + add form (28) + filter row (26) + gap (2)
 
@@ -1268,12 +1270,12 @@ namespace FactionColonies.SupplyChain
 
             if (routeIdx == 0)
             {
-                Text.Font = GameFont.Tiny;
+                //Text.Font = GameFont.Tiny;
                 GUI.color = Color.gray;
                 Widgets.Label(new Rect(AccentW + 6f, curY, viewRect.width, 24f),
                     "SC_NoRoutesDirection".Translate());
                 GUI.color = Color.white;
-                Text.Font = GameFont.Small;
+                //Text.Font = GameFont.Small;
                 curY += 26f;
             }
 
@@ -1559,79 +1561,6 @@ namespace FactionColonies.SupplyChain
             if (needStates.Count == 0) return;
 
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0f, curY, viewRect.width, 30f), "SC_SettlementNeeds".Translate());
-            Text.Font = GameFont.Small;
-            curY += 34f;
-
-            foreach (NeedState state in needStates)
-            {
-                if (state.resource == null) continue;
-
-                float satisfaction = state.Satisfaction;
-
-                // Icon
-                if (state.resource.Icon != null)
-                    GUI.DrawTexture(new Rect(0f, curY + 2f, 20f, 20f), state.resource.Icon);
-
-                // Label (use need def label for base needs, building id for building needs)
-                Text.Anchor = TextAnchor.MiddleLeft;
-                string label;
-                if (state.needId.StartsWith("bldg."))
-                    label = state.needId.Replace("bldg.", "").Replace(".", " - ");
-                else
-                {
-                    SettlementNeedDef needDef = DefDatabase<SettlementNeedDef>.GetNamedSilentFail(state.needId);
-                    label = needDef != null ? needDef.label.CapitalizeFirst() : state.needId;
-                }
-                Widgets.Label(new Rect(24f, curY, 80f, 24f), label);
-
-                // Satisfaction bar
-                Rect barRect = new Rect(108f, curY + 4f, 150f, 16f);
-                if (satisfaction > 0.8f)
-                    GUI.color = new Color(0.4f, 0.8f, 0.4f);
-                else if (satisfaction > 0.4f)
-                    GUI.color = new Color(0.9f, 0.8f, 0.2f);
-                else
-                    GUI.color = new Color(0.9f, 0.3f, 0.3f);
-
-                Widgets.FillableBar(barRect, satisfaction);
-                GUI.color = Color.white;
-
-                // Numeric
-                Widgets.Label(new Rect(264f, curY, 110f, 24f),
-                    "SC_SatisfactionDisplay".Translate(
-                        (satisfaction * 100f).ToString("F0"),
-                        state.fulfilled.ToString("F1"),
-                        state.demanded.ToString("F1")));
-
-                // Penalty summary
-                if (satisfaction < 1f)
-                {
-                    Text.Font = GameFont.Tiny;
-                    GUI.color = new Color(1f, 0.5f, 0.5f);
-                    string penaltyText = GetPenaltySummary(state);
-                    if (penaltyText != null)
-                        Widgets.Label(new Rect(380f, curY, 250f, 24f), penaltyText);
-                    GUI.color = Color.white;
-                    Text.Font = GameFont.Small;
-                }
-
-                // Tooltip explaining demand source
-                Rect needRowRect = new Rect(0f, curY, viewRect.width, 24f);
-                string needTip = BuildNeedTooltip(state);
-                if (needTip != null)
-                    TooltipHandler.TipRegion(needRowRect, needTip);
-
-                Text.Anchor = TextAnchor.UpperLeft;
-                curY += 26f;
-            }
-        }
-
-        private void DrawNeedsSectionPolished(Rect viewRect, ref float curY)
-        {
-            if (needStates.Count == 0) return;
-
-            Text.Font = GameFont.Medium;
             Text.Anchor = TextAnchor.MiddleCenter;
             Widgets.Label(new Rect(AccentW + 6f, curY, viewRect.width, 30f), "SC_SettlementNeeds".Translate());
             Text.Font = GameFont.Small;
@@ -1667,9 +1596,9 @@ namespace FactionColonies.SupplyChain
                     SettlementNeedDef needDef = DefDatabase<SettlementNeedDef>.GetNamedSilentFail(state.needId);
                     label = needDef != null ? needDef.label.CapitalizeFirst() : state.needId;
                 }
-                Widgets.Label(new Rect(cx + 24f, curY, 80f, 24f), label);
+                Widgets.Label(new Rect(cx + 24f, curY, 130f, 24f), label);
 
-                Rect barRect = new Rect(cx + 108f, curY + 4f, 150f, 16f);
+                Rect barRect = new Rect(cx + 158f, curY + 4f, 150f, 16f);
                 if (satisfaction > 0.8f)
                     GUI.color = new Color(0.4f, 0.8f, 0.4f);
                 else if (satisfaction > 0.4f)
@@ -1679,7 +1608,7 @@ namespace FactionColonies.SupplyChain
                 Widgets.FillableBar(barRect, satisfaction);
                 GUI.color = Color.white;
 
-                Widgets.Label(new Rect(cx + 264f, curY, 110f, 24f),
+                Widgets.Label(new Rect(cx + 314f, curY, 110f, 24f),
                     "SC_SatisfactionDisplay".Translate(
                         (satisfaction * 100f).ToString("F0"),
                         state.fulfilled.ToString("F1"),
@@ -1690,8 +1619,9 @@ namespace FactionColonies.SupplyChain
                     Text.Font = GameFont.Tiny;
                     GUI.color = new Color(1f, 0.5f, 0.5f);
                     string penaltyText = GetPenaltySummary(state);
+                    Rect penaltyRect = new Rect(cx + 430f, curY, 200f, 24f);
                     if (penaltyText != null)
-                        Widgets.Label(new Rect(cx + 380f, curY, 250f, 24f), penaltyText);
+                        Widgets.Label(penaltyRect, Text.ClampTextWithEllipsis(penaltyRect, penaltyText));
                     GUI.color = Color.white;
                     Text.Font = GameFont.Small;
                 }

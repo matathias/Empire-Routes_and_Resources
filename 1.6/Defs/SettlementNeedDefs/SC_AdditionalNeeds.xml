@@ -8,6 +8,7 @@
 		<resource>RTD_Power</resource>
 		<baseAmount>0.25</baseAmount>
 		<scaling>PerLevel</scaling>
+		<minTechLevel>Industrial</minTechLevel>
 		<penalties>
 			<li>
 				<stat>happinessLostBase</stat>

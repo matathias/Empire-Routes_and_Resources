@@ -329,8 +329,10 @@ namespace FactionColonies.SupplyChain
         /// </summary>
         private static void AccumulateSettlementFlow(WorldSettlementFC settlement, ResourceTypeDef def, ref FlowBreakdown flow)
         {
+            FactionFC faction = FactionCache.FactionComp;
             foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
             {
+                if (faction != null && !needDef.IsActiveForFaction(faction)) continue;
                 if (needDef.resource == def)
                     flow.baseNeeds += needDef.CalculateDemand(settlement);
             }

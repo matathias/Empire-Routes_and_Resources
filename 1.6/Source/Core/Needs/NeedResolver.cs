@@ -13,16 +13,18 @@ namespace FactionColonies.SupplyChain
         /// Resolves needs for a single settlement by drawing from the given pool.
         /// Used in Complex mode (each settlement draws from its own local pool).
         /// </summary>
-        public static void ResolveSettlementNeeds(WorldSettlementFC settlement,
-            IStockpilePool pool, WorldObjectComp_SupplyChain comp)
+        public static void ResolveSettlementNeeds(WorldSettlementFC settlement, IStockpilePool pool, WorldObjectComp_SupplyChain comp)
         {
             if (pool == null || comp == null) return;
 
             List<NeedState> states = new List<NeedState>();
 
             // 1. Base settlement needs
+            FactionFC faction = FactionCache.FactionComp;
             foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
             {
+                if (faction != null && !needDef.IsActiveForFaction(faction)) continue;
+
                 double demand = needDef.CalculateDemand(settlement);
 
                 double drawn;
@@ -43,8 +45,7 @@ namespace FactionColonies.SupplyChain
         /// Distributes proportionally when supply is scarce.
         /// Used in Simple mode.
         /// </summary>
-        public static void ResolveSettlementNeedsFair(FactionFC faction,
-            IStockpilePool pool)
+        public static void ResolveSettlementNeedsFair(FactionFC faction, IStockpilePool pool)
         {
             if (pool == null) return;
 
@@ -60,6 +61,8 @@ namespace FactionColonies.SupplyChain
                 // Base needs
                 foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
                 {
+                    if (!needDef.IsActiveForFaction(faction)) continue;
+
                     double demand = needDef.CalculateDemand(settlement);
 
                     allDemands.Add(new NeedDemandEntry

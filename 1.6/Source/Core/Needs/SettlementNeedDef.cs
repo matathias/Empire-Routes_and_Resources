@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using RimWorld;
 using Verse;
 
 namespace FactionColonies.SupplyChain
@@ -26,7 +27,13 @@ namespace FactionColonies.SupplyChain
         public ResourceTypeDef resource;
         public double baseAmount;
         public NeedScaling scaling = NeedScaling.Flat;
+        public TechLevel minTechLevel = TechLevel.Undefined;
         public List<NeedPenalty> penalties;
+
+        public bool IsActiveForFaction(FactionFC faction)
+        {
+            return minTechLevel == TechLevel.Undefined || faction.techLevel >= minTechLevel;
+        }
 
         public double CalculateDemand(WorldSettlementFC settlement)
         {
