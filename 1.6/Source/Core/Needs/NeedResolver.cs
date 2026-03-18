@@ -21,7 +21,7 @@ namespace FactionColonies.SupplyChain
 
             // 1. Base settlement needs
             FactionFC faction = FactionCache.FactionComp;
-            foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
+            foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
             {
                 if (faction != null && !needDef.IsActiveForFaction(faction)) continue;
 
@@ -59,7 +59,7 @@ namespace FactionColonies.SupplyChain
                 if (comp == null) continue;
 
                 // Base needs
-                foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
+                foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
                 {
                     if (!needDef.IsActiveForFaction(faction)) continue;
 

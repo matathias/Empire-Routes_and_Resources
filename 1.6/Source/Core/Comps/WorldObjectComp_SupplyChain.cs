@@ -142,7 +142,7 @@ namespace FactionColonies.SupplyChain
 
         public void RecalculateLocalCaps()
         {
-            foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+            foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
             {
                 if (def.isPoolResource)
                     continue;
@@ -229,7 +229,7 @@ namespace FactionColonies.SupplyChain
             double total = 0.0;
 
             // Base settlement needs
-            foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
+            foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
             {
                 if (needDef.penalties == null) continue;
 
@@ -290,7 +290,7 @@ namespace FactionColonies.SupplyChain
         {
             string desc = null;
 
-            foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
+            foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
             {
                 if (needDef.penalties == null) continue;
 
@@ -595,7 +595,7 @@ namespace FactionColonies.SupplyChain
                     for (int i = 0; i < needStates.Count; i++)
                         existingIds.Add(needStates[i].needId);
 
-                    foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
+                    foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
                     {
                         if (faction != null && !needDef.IsActiveForFaction(faction)) continue;
                         if (!existingIds.Contains(needDef.defName))
@@ -732,7 +732,7 @@ namespace FactionColonies.SupplyChain
             float curX = 0f;
             bool any = false;
 
-            foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+            foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
             {
                 if (def.isPoolResource) continue;
                 double cap = localStockpileDict.GetCap(def);
@@ -787,7 +787,7 @@ namespace FactionColonies.SupplyChain
             float curX = rect.x;
             float curY = rect.y + 2f;
 
-            foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+            foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
             {
                 if (def.isPoolResource) continue;
                 double cap = localStockpileDict.GetCap(def);
@@ -910,7 +910,7 @@ namespace FactionColonies.SupplyChain
 
             // Count resources for height calculation
             int resourceCount = 0;
-            foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+            foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
             {
                 if (def.isPoolResource) continue;
                 double cap = localStockpileDict != null ? localStockpileDict.GetCap(def) : 0;
@@ -937,7 +937,7 @@ namespace FactionColonies.SupplyChain
             if (barWidth < 100f) barWidth = 100f;
 
             int idx = 0;
-            foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+            foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
             {
                 if (def.isPoolResource) continue;
 
@@ -1410,7 +1410,7 @@ namespace FactionColonies.SupplyChain
             if (Widgets.ButtonText(new Rect(bx, curY, 110f, 24f), resLabel))
             {
                 List<FloatMenuOption> options = new List<FloatMenuOption>();
-                foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+                foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
                 {
                     if (def.isPoolResource) continue;
                     ResourceTypeDef captured = def;
@@ -1440,7 +1440,7 @@ namespace FactionColonies.SupplyChain
                         if (newRouteIsOutgoing)
                         {
                             // Show need info for destination
-                            foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
+                            foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
                             {
                                 if (needDef.resource == newRouteResource)
                                 {
@@ -1513,7 +1513,7 @@ namespace FactionColonies.SupplyChain
             if (Widgets.ButtonText(new Rect(bx, curY, 110f, 24f), resLabel))
             {
                 List<FloatMenuOption> options = new List<FloatMenuOption>();
-                foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+                foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
                 {
                     if (def.isPoolResource) continue;
                     ResourceTypeDef captured = def;
@@ -1542,7 +1542,7 @@ namespace FactionColonies.SupplyChain
                     {
                         if (newRouteIsOutgoing)
                         {
-                            foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
+                            foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
                             {
                                 if (needDef.resource == newRouteResource)
                                 {
@@ -1836,7 +1836,7 @@ namespace FactionColonies.SupplyChain
             if (Widgets.ButtonText(new Rect(sx + 44f, curY, 130f, 24f), resLabel))
             {
                 List<FloatMenuOption> options = new List<FloatMenuOption>();
-                foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+                foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
                 {
                     if (def.isPoolResource) continue;
                     ResourceTypeDef captured = def;
@@ -1880,7 +1880,7 @@ namespace FactionColonies.SupplyChain
             if (Widgets.ButtonText(new Rect(sx + 44f, curY, 130f, 24f), resLabel))
             {
                 List<FloatMenuOption> options = new List<FloatMenuOption>();
-                foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+                foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
                 {
                     if (def.isPoolResource) continue;
                     ResourceTypeDef captured = def;

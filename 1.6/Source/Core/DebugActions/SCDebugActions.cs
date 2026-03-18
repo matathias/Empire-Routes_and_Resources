@@ -42,7 +42,7 @@ namespace FactionColonies.SupplyChain
         {
             ForEachStockpile((stockpile, label) =>
             {
-                foreach (ResourceTypeDef rtd in DefDatabase<ResourceTypeDef>.AllDefs)
+                foreach (ResourceTypeDef rtd in SupplyChainCache.AllResourceTypeDefs)
                 {
                     double cap = stockpile.GetCap(rtd);
                     double current = stockpile.GetAmount(rtd);
@@ -58,7 +58,7 @@ namespace FactionColonies.SupplyChain
         {
             ForEachStockpile((stockpile, label) =>
             {
-                foreach (ResourceTypeDef rtd in DefDatabase<ResourceTypeDef>.AllDefs)
+                foreach (ResourceTypeDef rtd in SupplyChainCache.AllResourceTypeDefs)
                 {
                     double current = stockpile.GetAmount(rtd);
                     if (current > 0)
@@ -166,7 +166,7 @@ namespace FactionColonies.SupplyChain
             ForEachStockpile((stockpile, label) =>
             {
                 sb.AppendLine("  " + label + ":");
-                foreach (ResourceTypeDef rtd in DefDatabase<ResourceTypeDef>.AllDefs)
+                foreach (ResourceTypeDef rtd in SupplyChainCache.AllResourceTypeDefs)
                 {
                     double amount = stockpile.GetAmount(rtd);
                     double cap = stockpile.GetCap(rtd);

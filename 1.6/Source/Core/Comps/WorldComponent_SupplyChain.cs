@@ -254,7 +254,7 @@ namespace FactionColonies.SupplyChain
             FactionFC faction = FactionCache.FactionComp;
             int numSettlements = faction != null ? faction.settlements.Count : 0;
 
-            foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+            foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
             {
                 if (def.isPoolResource)
                     continue;
@@ -441,7 +441,7 @@ namespace FactionColonies.SupplyChain
         private static void AccumulateSettlementFlow(WorldSettlementFC settlement, ResourceTypeDef def, ref FlowBreakdown flow)
         {
             FactionFC faction = FactionCache.FactionComp;
-            foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
+            foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
             {
                 if (faction != null && !needDef.IsActiveForFaction(faction)) continue;
                 if (needDef.resource == def)
@@ -774,7 +774,7 @@ namespace FactionColonies.SupplyChain
                 IStockpile localStockpile = comp.GetStockpile();
                 if (localStockpile == null) continue;
 
-                foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+                foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
                 {
                     if (def.isPoolResource) continue;
 
@@ -1035,7 +1035,7 @@ namespace FactionColonies.SupplyChain
             if (barWidth < 100f) barWidth = 100f;
 
             int resIdx = 0;
-            foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+            foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
             {
                 if (def.isPoolResource) continue;
 
@@ -1263,7 +1263,7 @@ namespace FactionColonies.SupplyChain
             if (resourceColumnsDirty || cachedResourceColumns == null)
             {
                 cachedResourceColumns = new List<ResourceTypeDef>();
-                foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+                foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
                 {
                     if (def.isPoolResource) continue;
                     bool anyHasCap = false;
@@ -1590,7 +1590,7 @@ namespace FactionColonies.SupplyChain
             if (Widgets.ButtonText(new Rect(bx, curY, 110f, 24f), resLabel))
             {
                 List<FloatMenuOption> options = new List<FloatMenuOption>();
-                foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+                foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
                 {
                     if (def.isPoolResource) continue;
                     ResourceTypeDef captured = def;
@@ -1632,7 +1632,7 @@ namespace FactionColonies.SupplyChain
                     string label = s.Name;
                     if (newRouteResource != null)
                     {
-                        foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
+                        foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
                         {
                             if (needDef.resource == newRouteResource)
                             {
@@ -1697,7 +1697,7 @@ namespace FactionColonies.SupplyChain
             if (Widgets.ButtonText(new Rect(inner.x + 44f, curY, 130f, 24f), resLabel))
             {
                 List<FloatMenuOption> options = new List<FloatMenuOption>();
-                foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+                foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
                 {
                     if (def.isPoolResource) continue;
                     ResourceTypeDef captured = def;

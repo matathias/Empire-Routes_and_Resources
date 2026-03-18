@@ -16,6 +16,10 @@ namespace FactionColonies.SupplyChain
         private static Dictionary<WorldSettlementFC, WorldObjectComp_SupplyChain> _compCache
             = new Dictionary<WorldSettlementFC, WorldObjectComp_SupplyChain>();
 
+        // Cached def lists (defs don't change mid-game)
+        private static List<SettlementNeedDef> _cachedNeedDefs;
+        private static List<ResourceTypeDef> _cachedResourceTypeDefs;
+
         public static WorldComponent_SupplyChain Comp
         {
             get
@@ -23,6 +27,26 @@ namespace FactionColonies.SupplyChain
                 if (_comp == null)
                     _comp = Find.World?.GetComponent<WorldComponent_SupplyChain>();
                 return _comp;
+            }
+        }
+
+        public static List<SettlementNeedDef> AllNeedDefs
+        {
+            get
+            {
+                if (_cachedNeedDefs == null)
+                    _cachedNeedDefs = DefDatabase<SettlementNeedDef>.AllDefsListForReading;
+                return _cachedNeedDefs;
+            }
+        }
+
+        public static List<ResourceTypeDef> AllResourceTypeDefs
+        {
+            get
+            {
+                if (_cachedResourceTypeDefs == null)
+                    _cachedResourceTypeDefs = DefDatabase<ResourceTypeDef>.AllDefsListForReading;
+                return _cachedResourceTypeDefs;
             }
         }
 
@@ -79,6 +103,8 @@ namespace FactionColonies.SupplyChain
             _comp = null;
             _buildingExtCache.Clear();
             _compCache.Clear();
+            _cachedNeedDefs = null;
+            _cachedResourceTypeDefs = null;
         }
     }
 }

@@ -108,7 +108,7 @@ namespace FactionColonies.SupplyChain
         {
             if (resource != null)
                 return new List<ResourceTypeDef> { resource };
-            return new List<ResourceTypeDef>(DefDatabase<ResourceTypeDef>.AllDefsListForReading);
+            return new List<ResourceTypeDef>(SupplyChainCache.AllResourceTypeDefs);
         }
 
         private IStockpile GetStockpile(WorldComponent_SupplyChain wc, WorldSettlementFC settlement)
