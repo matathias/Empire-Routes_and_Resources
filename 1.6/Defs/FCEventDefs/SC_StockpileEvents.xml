@@ -120,6 +120,7 @@
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<incompatibleEvents>
 			<li>sc_merchantSurplus</li>
+			<li>sc_famineCrisis</li>
 		</incompatibleEvents>
 		<modExtensions>
 			<li Class="FactionColonies.SupplyChain.SCEventHandler_Stockpile">
@@ -151,6 +152,7 @@
 		</restrictedBiomes>
 		<incompatibleEvents>
 			<li>sc_spoilage</li>
+			<li>sc_windfallHarvest</li>
 		</incompatibleEvents>
 		<modExtensions>
 			<li Class="FactionColonies.SupplyChain.SCEventHandler_Stockpile">
@@ -182,6 +184,8 @@
 		</restrictedBiomes>
 		<incompatibleEvents>
 			<li>sc_windfallHarvest</li>
+			<li>sc_spoilage</li>
+			<li>sc_famineCrisis</li>
 		</incompatibleEvents>
 		<modExtensions>
 			<li Class="FactionColonies.SupplyChain.SCEventHandler_Stockpile">

@@ -28,6 +28,7 @@
 		<incompatibleEvents>
 			<li>sc_famineCrisis</li>
 			<li>sc_merchantSurplus</li>
+			<li>sc_windfallHarvest</li>
 		</incompatibleEvents>
 	</FactionColonies.FCEventDef>
 
