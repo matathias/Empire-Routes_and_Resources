@@ -16,12 +16,12 @@
 
 ## Design Decisions
 
-- **Simple mode pool model**: Faction-level — one shared pool all settlements deposit into and draw from
+- **Simple mode stockpile model**: Faction-level — one shared stockpile all settlements deposit into and draw from
 - **Simple mode caps**: Sum of settlement warehouse caps (keeps building investment meaningful)
 - **Overflow**: Auto-sell at penalty rate (incentivizes management without total waste)
 - **Mode switching**: Supported mid-game
-  - Simple → Complex: distribute faction pool proportionally to settlements by production share; routes start empty
-  - Complex → Simple: sum all settlement stockpiles into faction pool; routes preserved but dormant (reactivate on switch back)
+  - Simple → Complex: distribute faction stockpile proportionally to settlements by production share; routes start empty
+  - Complex → Simple: sum all settlement stockpiles into faction stockpile; routes preserved but dormant (reactivate on switch back)
 
 ---
 
@@ -32,7 +32,7 @@
 ```
 WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant
 ├── Mode: enum { Simple, Complex }
-├── FactionStockpile: Dict<ResourceTypeDef, double>     (Simple mode — the shared pool)
+├── FactionStockpile: Dict<ResourceTypeDef, double>     (Simple mode — the shared stockpile)
 ├── FactionStockpileCap: double                          (Simple mode — sum of settlement caps)
 ├── SupplyRoutes: List<SupplyRoute>                      (Complex mode)
 ├── DormantRoutes: List<SupplyRoute>                     (preserved when switching Complex→Simple)
@@ -40,22 +40,22 @@ WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant
 │
 ├── PreTaxResolution(faction):
 │   if Simple:
-│     1. AccumulateToFactionPool() — credit allocated units, respect cap
+│     1. AccumulateToFactionStockpile() — credit allocated units, respect cap
 │     2. AutoSellOverflow() — excess → silver at penalty rate via oneTimeSilverIncome
-│     3. ResolveBuildingInputs(faction pool) — check SCBuildingExtension, apply penalties
-│     4. ResolveSellOrders(faction pool)
-│     5. ResolveColonyShipments(faction pool)
+│     3. ResolveBuildingInputs(faction stockpile) — check SCBuildingExtension, apply penalties
+│     4. ResolveSellOrders(faction stockpile)
+│     5. ResolveColonyShipments(faction stockpile)
 │   if Complex:
-│     1. AccumulateToLocalPools() — credit to per-settlement stockpiles
+│     1. AccumulateToLocalStockpiles() — credit to per-settlement stockpiles
 │     2. ResolveRoutes() — pathfinding, efficiency, transfers between settlements
-│     3. ResolveBuildingInputs(local pools)
+│     3. ResolveBuildingInputs(local stockpiles)
 │     4. AutoSellOverflow() per settlement
-│     5. ResolveSellOrders(local pools)
-│     6. ResolveColonyShipments(local pools)
+│     5. ResolveSellOrders(local stockpiles)
+│     6. ResolveColonyShipments(local stockpiles)
 │
 ├── SwitchMode(newMode):
-│   Simple→Complex: distribute faction pool by production share; restore dormant routes
-│   Complex→Simple: merge local pools; stash routes as dormant
+│   Simple→Complex: distribute faction stockpile by production share; restore dormant routes
+│   Complex→Simple: merge local stockpiles; stash routes as dormant
 │
 └── ExposeData(): persist mode, faction stockpile, routes, dormant routes
 
@@ -76,18 +76,18 @@ WorldObjectComp_SupplyChain : WorldObjectComp, ISettlementWindowOverview, IStatM
 
 ### Shared Systems (Mode-Agnostic)
 
-- **`SCBuildingExtension : DefModExtension`** on `BuildingFCDef` — XML-declared input requirements + penalty stat + penalty per unit. Identical in both modes; only the pool source differs.
-- **Sell orders** — convert stockpile resources to silver via `oneTimeSilverIncome`. Same data structure, different source pool.
-- **Colony shipments** — generate Things from stockpile, create `FCEvent` with `TravelUtil.ReturnTicksToArrive()` travel time. Same flow, different source pool.
+- **`SCBuildingExtension : DefModExtension`** on `BuildingFCDef` — XML-declared input requirements + penalty stat + penalty per unit. Identical in both modes; only the stockpile source differs.
+- **Sell orders** — convert stockpile resources to silver via `oneTimeSilverIncome`. Same data structure, different source stockpile.
+- **Colony shipments** — generate Things from stockpile, create `FCEvent` with `TravelUtil.ReturnTicksToArrive()` travel time. Same flow, different source stockpile.
 - **`FCEventCategoryDef`** — submod defines `EC_SupplyRoute` for supply-related events. Filtered in events tab.
 - **`SetStockpileAllocation`** registration — identical per-settlement per-resource registration in both modes.
 
-### Pool Abstraction
+### Stockpile Abstraction
 
-To avoid duplicating "draw from pool" logic, use a simple interface:
+To avoid duplicating "draw from stockpile" logic, use a simple interface:
 
 ```csharp
-interface IStockpilePool
+interface IStockpile
 {
     double GetAmount(ResourceTypeDef resource);
     double Draw(ResourceTypeDef resource, double amount); // returns actual drawn
@@ -96,16 +96,16 @@ interface IStockpilePool
 }
 ```
 
-- `FactionStockpilePool` wraps the WorldComponent's faction dict (Simple mode)
-- `LocalStockpilePool` wraps the WorldObjectComp's local dict (Complex mode)
-- Building input resolution, sell orders, colony shipments all take `IStockpilePool` — zero branching in the shared code
+- `FactionStockpile` wraps the WorldComponent's faction dict (Simple mode)
+- `LocalStockpile` wraps the WorldObjectComp's local dict (Complex mode)
+- Building input resolution, sell orders, colony shipments all take `IStockpile` — zero branching in the shared code
 
 ### Mode-Specific Code
 
 **Simple mode only:**
-- Faction pool accumulation (sum all settlements' allocated units into one dict)
+- Faction stockpile accumulation (sum all settlements' allocated units into one dict)
 - Faction cap calculation (sum of settlement caps, recalculated on building change)
-- Faction-level UI tab (via `MainTableRegistry`) showing pool levels, caps, global sell/shipment controls
+- Faction-level UI tab (via `MainTableRegistry`) showing stockpile levels, caps, global sell/shipment controls
 
 **Complex mode only:**
 - `SupplyRoute` data class (source/dest tiles, resource, amount, cached path/efficiency)
@@ -142,15 +142,15 @@ interface IStockpilePool
 
 | Aspect | Simple Mode | Complex Mode |
 |--------|-------------|--------------|
-| Storage | Faction-level shared pool | Per-settlement local pools |
-| Accumulation | All allocated production → faction pool | Allocated production → local pool |
-| Building inputs | Draw from faction pool | Draw from local pool |
-| Transfers | N/A (shared pool) | Route system with efficiency/pathfinding |
-| Colony shipments | Draw from faction pool | Draw from local pool |
-| Sell orders | Draw from faction pool | Draw from local pool |
+| Storage | Faction-level shared stockpile | Per-settlement local stockpiles |
+| Accumulation | All allocated production → faction stockpile | Allocated production → local stockpile |
+| Building inputs | Draw from faction stockpile | Draw from local stockpile |
+| Transfers | N/A (shared stockpile) | Route system with efficiency/pathfinding |
+| Colony shipments | Draw from faction stockpile | Draw from local stockpile |
+| Sell orders | Draw from faction stockpile | Draw from local stockpile |
 | Caps | Sum of all settlement caps | Per-settlement caps |
 | Overflow | Auto-sell at penalty | Auto-sell at penalty |
-| UI focus | Faction tab (pool overview) | Settlement tab (local management + routes) |
+| UI focus | Faction tab (stockpile overview) | Settlement tab (local management + routes) |
 
 ---
 
@@ -163,10 +163,10 @@ interface IStockpilePool
 - Sell order silver conversion
 - Event category + filtering
 - `WorldObjectComp` allocation persistence
-- `IStockpilePool` abstraction eliminates branching in shared mechanics
+- `IStockpile` abstraction eliminates branching in shared mechanics
 
 Mode-specific (~30%):
-- Simple: faction pool data + faction-level UI
+- Simple: faction stockpile data + faction-level UI
 - Complex: route data structures, pathfinding, efficiency, route resolution, route UI
 
 ---

@@ -30,8 +30,8 @@ namespace FactionColonies.SupplyChain
         private Dictionary<long, string> pairLabelCache = new Dictionary<long, string>();
         private bool pairCacheDirty = true;
 
-        private bool capsAndPoolsDirty = true;
-        private DictionaryStockpilePool pool;
+        private bool capsAndStockpilesDirty = true;
+        private DictionaryStockpile stockpile;
 
         // Flow cache: keyed by (settlementTile << 16 | resourceDefIndex)
         private Dictionary<ulong, FlowBreakdown> flowCache = new Dictionary<ulong, FlowBreakdown>();
@@ -73,9 +73,9 @@ namespace FactionColonies.SupplyChain
             get { return mode; }
         }
 
-        public IStockpilePool Pool
+        public IStockpile Stockpile
         {
-            get { return pool; }
+            get { return stockpile; }
         }
 
         public List<SupplyRoute> SupplyRoutes
@@ -100,14 +100,14 @@ namespace FactionColonies.SupplyChain
             if (dormantRoutes == null)
                 dormantRoutes = new List<SupplyRoute>();
 
-            pool = new DictionaryStockpilePool(factionStockpile, factionCaps);
+            stockpile = new DictionaryStockpile(factionStockpile, factionCaps);
 
             TaxTickRegistry.Register(this);
             MainTableRegistry.Register(this);
             LifecycleRegistry.Register(this);
 
             SupplyChainCache.ClearCompCache();
-            capsAndPoolsDirty = true;
+            capsAndStockpilesDirty = true;
 
             // Reconcile with global settings (mode may have changed while this save was unloaded)
             if (mode != SupplyChainSettings.mode)
@@ -279,7 +279,7 @@ namespace FactionColonies.SupplyChain
             }
         }
 
-        private void InitAllLocalPools()
+        private void InitAllLocalStockpiles()
         {
             FactionFC faction = FactionCache.FactionComp;
             if (faction == null) return;
@@ -290,19 +290,19 @@ namespace FactionColonies.SupplyChain
                 if (comp != null)
                 {
                     comp.RecalculateLocalCaps();
-                    comp.InitLocalPool();
+                    comp.InitLocalStockpile();
                 }
             }
         }
 
-        internal void EnsureCapsAndPools()
+        internal void EnsureCapsAndStockpiles()
         {
-            if (!capsAndPoolsDirty) return;
+            if (!capsAndStockpilesDirty) return;
             if (mode == SupplyChainMode.Simple)
                 RecalculateCaps();
             else
-                InitAllLocalPools();
-            capsAndPoolsDirty = false;
+                InitAllLocalStockpiles();
+            capsAndStockpilesDirty = false;
         }
 
         internal static WorldObjectComp_SupplyChain GetComp(WorldSettlementFC settlement)
@@ -483,7 +483,7 @@ namespace FactionColonies.SupplyChain
             }
 
             mode = newMode;
-            capsAndPoolsDirty = false;
+            capsAndStockpilesDirty = false;
             DirtyFlowCache();
             resourceColumnsDirty = true;
             LogUtil.Message("Supply chain mode switched to " + newMode);
@@ -513,7 +513,7 @@ namespace FactionColonies.SupplyChain
                 if (comp == null) continue;
 
                 comp.RecalculateLocalCaps();
-                comp.InitLocalPool();
+                comp.InitLocalStockpile();
 
                 double share = totalProduction > 0 ? productionShares[settlement] / totalProduction : 1.0 / faction.settlements.Count;
 
@@ -521,7 +521,7 @@ namespace FactionColonies.SupplyChain
                 {
                     double amount = kv.Value * share;
                     if (amount > 0)
-                        comp.GetPool().Credit(kv.Key, amount);
+                        comp.GetStockpile().Credit(kv.Key, amount);
                 }
             }
 
@@ -566,9 +566,9 @@ namespace FactionColonies.SupplyChain
             dormantRoutes.AddRange(supplyRoutes);
             supplyRoutes.Clear();
 
-            // 3. Reconstruct faction pool and recalculate caps
+            // 3. Reconstruct faction stockpile and recalculate caps
             RecalculateCaps();
-            pool = new DictionaryStockpilePool(factionStockpile, factionCaps);
+            stockpile = new DictionaryStockpile(factionStockpile, factionCaps);
         }
 
         // --- ITaxTickParticipant ---
@@ -602,7 +602,7 @@ namespace FactionColonies.SupplyChain
                     double allocated = comp.GetAllocation(resource.def);
                     if (allocated <= 0) continue;
 
-                    double excess = pool.Credit(resource.def, allocated);
+                    double excess = stockpile.Credit(resource.def, allocated);
 
                     Dictionary<WorldSettlementFC, double> contribMap;
                     if (!contributions.TryGetValue(resource.def, out contribMap))
@@ -621,16 +621,16 @@ namespace FactionColonies.SupplyChain
                 }
             }
 
-            // 2. RESOLVE TITHE INJECTIONS (draw from shared pool, set externalTitheBudget)
+            // 2. RESOLVE TITHE INJECTIONS (draw from shared stockpile, set externalTitheBudget)
             foreach (WorldSettlementFC settlement in faction.settlements)
             {
                 WorldObjectComp_SupplyChain comp = GetComp(settlement);
                 if (comp != null)
-                    comp.ResolveTitheInjections(pool);
+                    comp.ResolveTitheInjections(stockpile);
             }
 
-            // 3. RESOLVE NEEDS (fair distribution from shared pool)
-            NeedResolver.ResolveSettlementNeedsFair(faction, pool);
+            // 3. RESOLVE NEEDS (fair distribution from shared stockpile)
+            NeedResolver.ResolveSettlementNeedsFair(faction, stockpile);
             DirtyFlowCache();
 
             // 4. OVERFLOW
@@ -648,7 +648,7 @@ namespace FactionColonies.SupplyChain
             // 5. SELL ORDERS
             foreach (SellOrder order in globalSellOrders)
             {
-                float silver = order.Execute(pool);
+                float silver = order.Execute(stockpile);
                 if (silver > 0)
                 {
                     DistributeSilverEvenly(silver, faction);
@@ -656,7 +656,7 @@ namespace FactionColonies.SupplyChain
                         + " -> " + silver.ToString("F0") + " silver");
                 }
             }
-            capsAndPoolsDirty = false;
+            capsAndStockpilesDirty = false;
         }
 
         private void PreTaxResolution_Complex(FactionFC faction)
@@ -669,14 +669,14 @@ namespace FactionColonies.SupplyChain
                     comp.RecalculateLocalCapsIfDirty();
             }
 
-            // 2. ACCUMULATE to local pools
+            // 2. ACCUMULATE to local stockpiles
             foreach (WorldSettlementFC settlement in faction.settlements)
             {
                 WorldObjectComp_SupplyChain comp = GetComp(settlement);
                 if (comp == null) continue;
 
-                IStockpilePool localPool = comp.GetPool();
-                if (localPool == null) continue;
+                IStockpile localStockpile = comp.GetStockpile();
+                if (localStockpile == null) continue;
 
                 foreach (ResourceFC resource in settlement.Resources)
                 {
@@ -685,7 +685,7 @@ namespace FactionColonies.SupplyChain
                     double allocated = comp.GetAllocation(resource.def);
                     if (allocated <= 0) continue;
 
-                    double excess = localPool.Credit(resource.def, allocated);
+                    double excess = localStockpile.Credit(resource.def, allocated);
 
                     // Overflow: auto-sell excess at penalty rate
                     if (excess > 0)
@@ -719,12 +719,12 @@ namespace FactionColonies.SupplyChain
 
                 if (sourceComp == null || destComp == null) continue;
 
-                IStockpilePool sourcePool = sourceComp.GetPool();
-                IStockpilePool destPool = destComp.GetPool();
+                IStockpile sourceStockpile = sourceComp.GetStockpile();
+                IStockpile destStockpile = destComp.GetStockpile();
 
-                if (sourcePool == null || destPool == null) continue;
+                if (sourceStockpile == null || destStockpile == null) continue;
 
-                double transferred = route.Execute(sourcePool, destPool);
+                double transferred = route.Execute(sourceStockpile, destStockpile);
                 if (transferred > 0)
                 {
                     LogUtil.Message("Route " + route.source.Name + " -> " + route.destination.Name
@@ -740,28 +740,28 @@ namespace FactionColonies.SupplyChain
                 DirtyFlowCache();
             }
 
-            // 4. RESOLVE TITHE INJECTIONS (draw from local pools, set externalTitheBudget)
+            // 4. RESOLVE TITHE INJECTIONS (draw from local stockpiles, set externalTitheBudget)
             foreach (WorldSettlementFC settlement in faction.settlements)
             {
                 WorldObjectComp_SupplyChain titheComp = GetComp(settlement);
                 if (titheComp == null) continue;
 
-                IStockpilePool tithePool = titheComp.GetPool();
-                if (tithePool == null) continue;
+                IStockpile titheStockpile = titheComp.GetStockpile();
+                if (titheStockpile == null) continue;
 
-                titheComp.ResolveTitheInjections(tithePool);
+                titheComp.ResolveTitheInjections(titheStockpile);
             }
 
-            // 5. RESOLVE NEEDS (per-settlement, from local pools)
+            // 5. RESOLVE NEEDS (per-settlement, from local stockpiles)
             foreach (WorldSettlementFC settlement in faction.settlements)
             {
                 WorldObjectComp_SupplyChain needComp = GetComp(settlement);
                 if (needComp == null) continue;
 
-                IStockpilePool needPool = needComp.GetPool();
-                if (needPool == null) continue;
+                IStockpile needStockpile = needComp.GetStockpile();
+                if (needStockpile == null) continue;
 
-                NeedResolver.ResolveSettlementNeeds(settlement, needPool, needComp);
+                NeedResolver.ResolveSettlementNeeds(settlement, needStockpile, needComp);
             }
             DirtyFlowCache();
 
@@ -771,20 +771,20 @@ namespace FactionColonies.SupplyChain
                 WorldObjectComp_SupplyChain comp = GetComp(settlement);
                 if (comp == null) continue;
 
-                IStockpilePool localPool = comp.GetPool();
-                if (localPool == null) continue;
+                IStockpile localStockpile = comp.GetStockpile();
+                if (localStockpile == null) continue;
 
                 foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
                 {
                     if (def.isPoolResource) continue;
 
-                    double amount = localPool.GetAmount(def);
-                    double cap = localPool.GetCap(def);
+                    double amount = localStockpile.GetAmount(def);
+                    double cap = localStockpile.GetCap(def);
                     if (amount > cap && cap > 0)
                     {
                         double excess = amount - cap;
                         double drawn;
-                        localPool.TryDraw(def, excess, out drawn);
+                        localStockpile.TryDraw(def, excess, out drawn);
 
                         if (drawn > 0)
                         {
@@ -801,12 +801,12 @@ namespace FactionColonies.SupplyChain
                 WorldObjectComp_SupplyChain comp = GetComp(settlement);
                 if (comp == null) continue;
 
-                IStockpilePool localPool = comp.GetPool();
-                if (localPool == null) continue;
+                IStockpile localStockpile = comp.GetStockpile();
+                if (localStockpile == null) continue;
 
                 foreach (SellOrder order in comp.LocalSellOrders)
                 {
-                    float silver = order.Execute(localPool, settlement);
+                    float silver = order.Execute(localStockpile, settlement);
                     if (silver > 0)
                     {
                         settlement.AddOneTimeSilverIncome(silver);
@@ -816,7 +816,7 @@ namespace FactionColonies.SupplyChain
                     }
                 }
             }
-            capsAndPoolsDirty = false;
+            capsAndStockpilesDirty = false;
         }
 
         public void PostTaxResolution(FactionFC faction)
@@ -902,7 +902,7 @@ namespace FactionColonies.SupplyChain
         {
             SupplyChainCache.ClearCompCache();
             InvalidateAllRoutes();
-            capsAndPoolsDirty = true;
+            capsAndStockpilesDirty = true;
             DirtyFlowCache();
             resourceColumnsDirty = true;
         }
@@ -914,7 +914,7 @@ namespace FactionColonies.SupplyChain
             supplyRoutes.RemoveAll(r => r.source == settlement || r.destination == settlement);
             dormantRoutes.RemoveAll(r => r.source == settlement || r.destination == settlement);
             InvalidateAllRoutes();
-            capsAndPoolsDirty = true;
+            capsAndStockpilesDirty = true;
             DirtyFlowCache();
             resourceColumnsDirty = true;
         }
@@ -926,14 +926,14 @@ namespace FactionColonies.SupplyChain
 
         public void OnSettlementTypeChanged(WorldSettlementFC settlement, WorldSettlementDef oldDef, WorldSettlementDef newDef)
         {
-            capsAndPoolsDirty = true;
+            capsAndStockpilesDirty = true;
             DirtyFlowCache();
             resourceColumnsDirty = true;
         }
 
         public void OnBuildingConstructed(WorldSettlementFC settlement, BuildingFCDef building, int slot)
         {
-            capsAndPoolsDirty = true;
+            capsAndStockpilesDirty = true;
             DirtyFlowCache();
             resourceColumnsDirty = true;
             WorldObjectComp_SupplyChain comp = GetComp(settlement);
@@ -943,7 +943,7 @@ namespace FactionColonies.SupplyChain
 
         public void OnBuildingDeconstructed(WorldSettlementFC settlement, BuildingFCDef building, int slot)
         {
-            capsAndPoolsDirty = true;
+            capsAndStockpilesDirty = true;
             DirtyFlowCache();
             resourceColumnsDirty = true;
             WorldObjectComp_SupplyChain comp = GetComp(settlement);
@@ -1011,7 +1011,7 @@ namespace FactionColonies.SupplyChain
             Rect inner = boundingBox.ContractedBy(10f);
             float curY = inner.y;
 
-            EnsureCapsAndPools();
+            EnsureCapsAndStockpiles();
 
             // Header
             Text.Font = GameFont.Medium;
@@ -1039,8 +1039,8 @@ namespace FactionColonies.SupplyChain
             {
                 if (def.isPoolResource) continue;
 
-                double amount = pool.GetAmount(def);
-                double cap = pool.GetCap(def);
+                double amount = stockpile.GetAmount(def);
+                double cap = stockpile.GetCap(def);
                 if (cap <= 0) continue;
 
                 float fillPct = cap > 0 ? (float)(amount / cap) : 0f;
@@ -1194,7 +1194,7 @@ namespace FactionColonies.SupplyChain
         {
             Rect inner = boundingBox.ContractedBy(10f);
 
-            EnsureCapsAndPools();
+            EnsureCapsAndStockpiles();
 
             // Header
             Text.Font = GameFont.Medium;
@@ -1259,7 +1259,7 @@ namespace FactionColonies.SupplyChain
             FactionFC faction = FactionCache.FactionComp;
             if (faction == null) return;
 
-            // Resource columns cache (non-pool with cap > 0 in any settlement)
+            // Resource columns cache (non-poolResource with cap > 0 in any settlement)
             if (resourceColumnsDirty || cachedResourceColumns == null)
             {
                 cachedResourceColumns = new List<ResourceTypeDef>();
@@ -1270,7 +1270,7 @@ namespace FactionColonies.SupplyChain
                     foreach (WorldSettlementFC s in faction.settlements)
                     {
                         WorldObjectComp_SupplyChain c = GetComp(s);
-                        IStockpilePool p = c != null ? c.GetPool() : null;
+                        IStockpile p = c != null ? c.GetStockpile() : null;
                         if (p != null && p.GetCap(def) > 0)
                         {
                             anyHasCap = true;
@@ -1338,8 +1338,8 @@ namespace FactionColonies.SupplyChain
                     bool hasSurplus = false;
                     foreach (ResourceTypeDef flowDef in columns)
                     {
-                        IStockpilePool checkPool = comp.GetPool();
-                        if (checkPool == null || checkPool.GetCap(flowDef) <= 0) continue;
+                        IStockpile checkStockpile = comp.GetStockpile();
+                        if (checkStockpile == null || checkStockpile.GetCap(flowDef) <= 0) continue;
                         FlowBreakdown flow = GetCachedFlow(settlement, comp, flowDef);
                         if (flow.Net < -0.01)
                             hasDeficit = true;
@@ -1367,15 +1367,15 @@ namespace FactionColonies.SupplyChain
                     Find.WindowStack.Add(new SettlementWindowFc(settlement));
 
                 // Resource cells
-                IStockpilePool sPool = comp != null ? comp.GetPool() : null;
+                IStockpile sStockpile = comp != null ? comp.GetStockpile() : null;
                 for (int i = 0; i < resCount; i++)
                 {
                     ResourceTypeDef def = columns[i];
                     float cellX = nameColW + colW * i;
                     Rect cellRect = new Rect(cellX, curY, colW, settRowH);
 
-                    double amt = sPool != null ? sPool.GetAmount(def) : 0;
-                    double cap = sPool != null ? sPool.GetCap(def) : 0;
+                    double amt = sStockpile != null ? sStockpile.GetAmount(def) : 0;
+                    double cap = sStockpile != null ? sStockpile.GetCap(def) : 0;
 
                     if (cap <= 0)
                     {

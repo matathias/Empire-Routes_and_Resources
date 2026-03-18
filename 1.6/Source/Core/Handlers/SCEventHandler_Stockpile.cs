@@ -5,7 +5,7 @@ using Verse;
 namespace FactionColonies.SupplyChain
 {
     /// <summary>
-    /// Event handler that manipulates stockpile pools when an event triggers.
+    /// Event handler that manipulates stockpiles when an event triggers.
     /// All fields are XML-configurable via DefModExtension on FCEventDef.
     /// <para><c>mult</c>: multiplier on current stock. &lt;1 = loss, &gt;1 = gain, 1 = no effect.</para>
     /// <para><c>baseAmount</c>/<c>perWorkerAmount</c>: flat credit/draw. Positive = gain, negative = loss.</para>
@@ -31,8 +31,8 @@ namespace FactionColonies.SupplyChain
             {
                 if (settlement == null) continue;
 
-                IStockpilePool pool = GetPool(wc, settlement);
-                if (pool == null) continue;
+                IStockpile stockpile = GetStockpile(wc, settlement);
+                if (stockpile == null) continue;
 
                 float silverAccum = 0f;
 
@@ -41,7 +41,7 @@ namespace FactionColonies.SupplyChain
                     // Mult phase
                     if (Math.Abs(mult - 1f) > 0.001f)
                     {
-                        double current = pool.GetAmount(r);
+                        double current = stockpile.GetAmount(r);
                         if (current > 0.01)
                         {
                             double target = current * mult;
@@ -49,7 +49,7 @@ namespace FactionColonies.SupplyChain
                             {
                                 double loss = current - target;
                                 double drawn;
-                                pool.TryDraw(r, loss, out drawn);
+                                stockpile.TryDraw(r, loss, out drawn);
                                 if (convertToSilver && drawn > 0)
                                     silverAccum += (float)(drawn * FCSettings.silverPerResource
                                         * SupplyChainSettings.overflowPenaltyRate);
@@ -61,7 +61,7 @@ namespace FactionColonies.SupplyChain
                             else if (target > current)
                             {
                                 double gain = target - current;
-                                pool.Credit(r, gain);
+                                stockpile.Credit(r, gain);
                                 if (debug)
                                     LogUtil.Message("[Empire-SupplyChain] Stockpile event: "
                                         + settlement.Name + " " + r.label
@@ -76,7 +76,7 @@ namespace FactionColonies.SupplyChain
                     {
                         if (delta > 0)
                         {
-                            pool.Credit(r, delta);
+                            stockpile.Credit(r, delta);
                             if (debug)
                                 LogUtil.Message("[Empire-SupplyChain] Stockpile event: "
                                     + settlement.Name + " " + r.label
@@ -85,7 +85,7 @@ namespace FactionColonies.SupplyChain
                         else
                         {
                             double drawn;
-                            pool.TryDraw(r, -delta, out drawn);
+                            stockpile.TryDraw(r, -delta, out drawn);
                             if (debug)
                                 LogUtil.Message("[Empire-SupplyChain] Stockpile event: "
                                     + settlement.Name + " " + r.label
@@ -111,14 +111,14 @@ namespace FactionColonies.SupplyChain
             return new List<ResourceTypeDef>(DefDatabase<ResourceTypeDef>.AllDefsListForReading);
         }
 
-        private IStockpilePool GetPool(WorldComponent_SupplyChain wc, WorldSettlementFC settlement)
+        private IStockpile GetStockpile(WorldComponent_SupplyChain wc, WorldSettlementFC settlement)
         {
             if (wc.Mode == SupplyChainMode.Simple)
-                return wc.Pool;
+                return wc.Stockpile;
 
             WorldObjectComp_SupplyChain comp = SupplyChainCache.GetSettlementComp(settlement);
             if (comp == null) return null;
-            return comp.GetPool();
+            return comp.GetStockpile();
         }
     }
 }

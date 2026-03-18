@@ -4,15 +4,15 @@ using System.Collections.Generic;
 namespace FactionColonies.SupplyChain
 {
     /// <summary>
-    /// IStockpilePool backed by a pair of dictionaries (amounts + caps).
+    /// IStockpile backed by a pair of dictionaries (amounts + caps).
     /// Used by both Simple mode (faction-level) and Complex mode (per-settlement).
     /// </summary>
-    public class DictionaryStockpilePool : IStockpilePool
+    public class DictionaryStockpile : IStockpile
     {
         private readonly Dictionary<ResourceTypeDef, double> stockpile;
         private readonly Dictionary<ResourceTypeDef, double> caps;
 
-        public DictionaryStockpilePool(Dictionary<ResourceTypeDef, double> stockpile, Dictionary<ResourceTypeDef, double> caps)
+        public DictionaryStockpile(Dictionary<ResourceTypeDef, double> stockpile, Dictionary<ResourceTypeDef, double> caps)
         {
             this.stockpile = stockpile;
             this.caps = caps;

@@ -5,17 +5,17 @@ using Verse;
 namespace FactionColonies.SupplyChain
 {
     /// <summary>
-    /// Static utility for resolving settlement needs by drawing from stockpile pools.
+    /// Static utility for resolving settlement needs by drawing from stockpiles.
     /// </summary>
     public static class NeedResolver
     {
         /// <summary>
-        /// Resolves needs for a single settlement by drawing from the given pool.
-        /// Used in Complex mode (each settlement draws from its own local pool).
+        /// Resolves needs for a single settlement by drawing from the given stockpile.
+        /// Used in Complex mode (each settlement draws from its own local stockpile).
         /// </summary>
-        public static void ResolveSettlementNeeds(WorldSettlementFC settlement, IStockpilePool pool, WorldObjectComp_SupplyChain comp)
+        public static void ResolveSettlementNeeds(WorldSettlementFC settlement, IStockpile stockpile, WorldObjectComp_SupplyChain comp)
         {
-            if (pool == null || comp == null) return;
+            if (stockpile == null || comp == null) return;
 
             List<NeedState> states = new List<NeedState>();
 
@@ -28,26 +28,26 @@ namespace FactionColonies.SupplyChain
                 double demand = needDef.CalculateDemand(settlement);
 
                 double drawn;
-                pool.TryDraw(needDef.resource, demand, out drawn);
+                stockpile.TryDraw(needDef.resource, demand, out drawn);
 
                 states.Add(new NeedState(needDef.defName, needDef.resource, demand, drawn));
             }
 
             // 2. Building needs
-            ResolveBuildingNeeds(settlement, pool, states);
+            ResolveBuildingNeeds(settlement, stockpile, states);
 
             comp.SetNeedStates(states);
             settlement.InvalidateStatCache();
         }
 
         /// <summary>
-        /// Resolves needs for all settlements drawing from a shared faction pool.
+        /// Resolves needs for all settlements drawing from a shared faction stockpile.
         /// Distributes proportionally when supply is scarce.
         /// Used in Simple mode.
         /// </summary>
-        public static void ResolveSettlementNeedsFair(FactionFC faction, IStockpilePool pool)
+        public static void ResolveSettlementNeedsFair(FactionFC faction, IStockpile stockpile)
         {
-            if (pool == null) return;
+            if (stockpile == null) return;
 
             // Gather all demand per resource across all settlements
             // Key: resource, Value: list of (settlement, comp, needId, demand)
@@ -115,7 +115,7 @@ namespace FactionColonies.SupplyChain
             Dictionary<ResourceTypeDef, double> fillRates = new Dictionary<ResourceTypeDef, double>();
             foreach (KeyValuePair<ResourceTypeDef, double> kv in totalDemandPerResource)
             {
-                double available = pool.GetAmount(kv.Key);
+                double available = stockpile.GetAmount(kv.Key);
                 fillRates[kv.Key] = kv.Value > 0 ? Math.Min(1.0, available / kv.Value) : 1.0;
             }
 
@@ -131,7 +131,7 @@ namespace FactionColonies.SupplyChain
 
                 double toDraw = entry.demand * fillRate;
                 double drawn;
-                pool.TryDraw(entry.resource, toDraw, out drawn);
+                stockpile.TryDraw(entry.resource, toDraw, out drawn);
 
                 List<NeedState> states;
                 if (!compStates.TryGetValue(entry.comp, out states))
@@ -164,8 +164,7 @@ namespace FactionColonies.SupplyChain
             }
         }
 
-        private static void ResolveBuildingNeeds(WorldSettlementFC settlement,
-            IStockpilePool pool, List<NeedState> states)
+        private static void ResolveBuildingNeeds(WorldSettlementFC settlement, IStockpile stockpile, List<NeedState> states)
         {
             if (settlement.BuildingsComp == null) return;
 
@@ -182,7 +181,7 @@ namespace FactionColonies.SupplyChain
                     if (input.resource == null || input.amount <= 0) continue;
 
                     double drawn;
-                    pool.TryDraw(input.resource, input.amount, out drawn);
+                    stockpile.TryDraw(input.resource, input.amount, out drawn);
 
                     string needId = "bldg." + building.def.defName + "." + input.resource.defName;
                     states.Add(new NeedState(needId, input.resource, input.amount, drawn));

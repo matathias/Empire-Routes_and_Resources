@@ -8,19 +8,19 @@ namespace FactionColonies.SupplyChain
     public static class SCDebugActions
     {
         /// <summary>
-        /// Iterates all stockpile pools (one in Simple mode, per-settlement in Complex mode).
-        /// Calls action with (pool, label) for each.
+        /// Iterates all stockpiles (one in Simple mode, per-settlement in Complex mode).
+        /// Calls action with (stockpile, label) for each.
         /// </summary>
-        private static void ForEachPool(Action<IStockpilePool, string> action)
+        private static void ForEachStockpile(Action<IStockpile, string> action)
         {
             WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
             if (comp == null) return;
 
             if (comp.Mode == SupplyChainMode.Simple)
             {
-                IStockpilePool pool = comp.Pool;
-                if (pool != null)
-                    action(pool, "Faction");
+                IStockpile stockpile = comp.Stockpile;
+                if (stockpile != null)
+                    action(stockpile, "Faction");
             }
             else
             {
@@ -30,9 +30,9 @@ namespace FactionColonies.SupplyChain
                 {
                     WorldObjectComp_SupplyChain sc = SupplyChainCache.GetSettlementComp(settlement);
                     if (sc == null) continue;
-                    IStockpilePool pool = sc.GetPool();
-                    if (pool != null)
-                        action(pool, settlement.Name);
+                    IStockpile stockpile = sc.GetStockpile();
+                    if (stockpile != null)
+                        action(stockpile, settlement.Name);
                 }
             }
         }
@@ -40,14 +40,14 @@ namespace FactionColonies.SupplyChain
         [DebugAction("Empire - Supply Chain", "Fill all stockpiles", allowedGameStates = AllowedGameStates.Playing)]
         private static void FillAllStockpiles()
         {
-            ForEachPool((pool, label) =>
+            ForEachStockpile((stockpile, label) =>
             {
                 foreach (ResourceTypeDef rtd in DefDatabase<ResourceTypeDef>.AllDefs)
                 {
-                    double cap = pool.GetCap(rtd);
-                    double current = pool.GetAmount(rtd);
+                    double cap = stockpile.GetCap(rtd);
+                    double current = stockpile.GetAmount(rtd);
                     if (cap > current)
-                        pool.Credit(rtd, cap - current);
+                        stockpile.Credit(rtd, cap - current);
                 }
             });
             Log.Message("[Empire-SupplyChain] Debug: All stockpiles filled to cap.");
@@ -56,15 +56,15 @@ namespace FactionColonies.SupplyChain
         [DebugAction("Empire - Supply Chain", "Empty all stockpiles", allowedGameStates = AllowedGameStates.Playing)]
         private static void EmptyAllStockpiles()
         {
-            ForEachPool((pool, label) =>
+            ForEachStockpile((stockpile, label) =>
             {
                 foreach (ResourceTypeDef rtd in DefDatabase<ResourceTypeDef>.AllDefs)
                 {
-                    double current = pool.GetAmount(rtd);
+                    double current = stockpile.GetAmount(rtd);
                     if (current > 0)
                     {
                         double drawn;
-                        pool.TryDraw(rtd, current, out drawn);
+                        stockpile.TryDraw(rtd, current, out drawn);
                     }
                 }
             });
@@ -82,9 +82,9 @@ namespace FactionColonies.SupplyChain
 
             if (comp.Mode == SupplyChainMode.Simple)
             {
-                IStockpilePool pool = comp.Pool;
-                if (pool == null) return;
-                NeedResolver.ResolveSettlementNeedsFair(faction, pool);
+                IStockpile stockpile = comp.Stockpile;
+                if (stockpile == null) return;
+                NeedResolver.ResolveSettlementNeedsFair(faction, stockpile);
             }
             else
             {
@@ -92,9 +92,9 @@ namespace FactionColonies.SupplyChain
                 {
                     WorldObjectComp_SupplyChain sc = SupplyChainCache.GetSettlementComp(settlement);
                     if (sc == null) continue;
-                    IStockpilePool pool = sc.GetPool();
-                    if (pool == null) continue;
-                    NeedResolver.ResolveSettlementNeeds(settlement, pool, sc);
+                    IStockpile stockpile = sc.GetStockpile();
+                    if (stockpile == null) continue;
+                    NeedResolver.ResolveSettlementNeeds(settlement, stockpile, sc);
                 }
             }
             Log.Message("[Empire-SupplyChain] Debug: Needs resolved.");
@@ -116,11 +116,11 @@ namespace FactionColonies.SupplyChain
                 WorldObjectComp_SupplyChain destComp = SupplyChainCache.GetSettlementComp(route.destination);
                 if (srcComp == null || destComp == null) continue;
 
-                IStockpilePool srcPool = srcComp.GetPool();
-                IStockpilePool destPool = destComp.GetPool();
-                if (srcPool == null || destPool == null) continue;
+                IStockpile srcStockpile = srcComp.GetStockpile();
+                IStockpile destStockpile = destComp.GetStockpile();
+                if (srcStockpile == null || destStockpile == null) continue;
 
-                double transferred = route.Execute(srcPool, destPool);
+                double transferred = route.Execute(srcStockpile, destStockpile);
                 Log.Message("[Empire-SupplyChain] Debug: Route " + route.source.Name + " -> " + route.destination.Name
                     + " (" + route.resource.label + "): transferred " + transferred.ToString("F1"));
                 count++;
@@ -163,13 +163,13 @@ namespace FactionColonies.SupplyChain
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("[Empire-SupplyChain] === Stockpile State (" + comp.Mode + " mode) ===");
 
-            ForEachPool((pool, label) =>
+            ForEachStockpile((stockpile, label) =>
             {
                 sb.AppendLine("  " + label + ":");
                 foreach (ResourceTypeDef rtd in DefDatabase<ResourceTypeDef>.AllDefs)
                 {
-                    double amount = pool.GetAmount(rtd);
-                    double cap = pool.GetCap(rtd);
+                    double amount = stockpile.GetAmount(rtd);
+                    double cap = stockpile.GetCap(rtd);
                     if (cap > 0 || amount > 0)
                         sb.AppendLine("    " + rtd.label + ": " + amount.ToString("F1") + " / " + cap.ToString("F1"));
                 }

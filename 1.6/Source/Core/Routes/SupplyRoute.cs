@@ -91,20 +91,20 @@ namespace FactionColonies.SupplyChain
         }
 
         /// <summary>
-        /// Execute this route: draw from source pool, credit dest pool with efficiency loss.
+        /// Execute this route: draw from source stockpile, credit dest stockpile with efficiency loss.
         /// Returns the actual amount credited to destination.
         /// </summary>
-        public double Execute(IStockpilePool sourcePool, IStockpilePool destPool)
+        public double Execute(IStockpile sourceStockpile, IStockpile destStockpile)
         {
             if (!IsValid() || amountPerPeriod <= 0 || cachedEfficiency <= 0)
                 return 0.0;
 
             double drawn;
-            if (!sourcePool.TryDraw(resource, amountPerPeriod, out drawn) || drawn <= 0)
+            if (!sourceStockpile.TryDraw(resource, amountPerPeriod, out drawn) || drawn <= 0)
                 return 0.0;
 
             double transferred = drawn * cachedEfficiency;
-            double excess = destPool.Credit(resource, transferred);
+            double excess = destStockpile.Credit(resource, transferred);
 
             // If destination is full, the excess is lost (efficiency loss + overflow)
             if (excess > 0)

@@ -28,10 +28,10 @@ namespace FactionColonies.SupplyChain
         private bool isTaxTime;
 
         // Complex mode fields
-        private Dictionary<ResourceTypeDef, double> localStockpile = new Dictionary<ResourceTypeDef, double>();
+        private Dictionary<ResourceTypeDef, double> localStockpiles = new Dictionary<ResourceTypeDef, double>();
         private Dictionary<ResourceTypeDef, double> localCaps = new Dictionary<ResourceTypeDef, double>();
         private List<SellOrder> localSellOrders = new List<SellOrder>();
-        private DictionaryStockpilePool localPool;
+        private DictionaryStockpile localStockpileDict;
 
         private bool localCapsDirty = true;
 
@@ -79,14 +79,14 @@ namespace FactionColonies.SupplyChain
             }
         }
 
-        // --- Pool Access ---
+        // --- Stockpile Access ---
 
         /// <summary>
-        /// Returns the local stockpile pool for Complex mode. Null in Simple mode.
+        /// Returns the local stockpile for Complex mode. Null in Simple mode.
         /// </summary>
-        public IStockpilePool GetPool()
+        public IStockpile GetStockpile()
         {
-            return localPool;
+            return localStockpileDict;
         }
 
         public List<SellOrder> LocalSellOrders
@@ -100,25 +100,25 @@ namespace FactionColonies.SupplyChain
         }
 
         /// <summary>
-        /// Initializes the local pool wrapper. Called by WorldComponent after mode switch or FinalizeInit.
+        /// Initializes the local stockpile wrapper. Called by WorldComponent after mode switch or FinalizeInit.
         /// </summary>
-        public void InitLocalPool()
+        public void InitLocalStockpile()
         {
-            if (localStockpile == null)
-                localStockpile = new Dictionary<ResourceTypeDef, double>();
+            if (localStockpiles == null)
+                localStockpiles = new Dictionary<ResourceTypeDef, double>();
             if (localCaps == null)
                 localCaps = new Dictionary<ResourceTypeDef, double>();
-            localPool = new DictionaryStockpilePool(localStockpile, localCaps);
+            localStockpileDict = new DictionaryStockpile(localStockpiles, localCaps);
         }
 
         /// <summary>
-        /// Clears local pool and stockpile data (used when switching to Simple mode).
+        /// Clears local stockpile data (used when switching to Simple mode).
         /// </summary>
         public void ClearLocalData()
         {
-            localStockpile.Clear();
+            localStockpiles.Clear();
             localCaps.Clear();
-            localPool = null;
+            localStockpileDict = null;
         }
 
         /// <summary>
@@ -127,17 +127,17 @@ namespace FactionColonies.SupplyChain
         public double TotalLocalStockpileValue()
         {
             double total = 0;
-            foreach (double v in localStockpile.Values)
+            foreach (double v in localStockpiles.Values)
                 total += v;
             return total;
         }
 
         /// <summary>
-        /// Direct access to local stockpile dict for mode-switching (distributing faction pool).
+        /// Direct access to local stockpile dict for mode-switching (distributing faction stockpile).
         /// </summary>
         public Dictionary<ResourceTypeDef, double> LocalStockpile
         {
-            get { return localStockpile; }
+            get { return localStockpiles; }
         }
 
         public void RecalculateLocalCaps()
@@ -373,9 +373,9 @@ namespace FactionColonies.SupplyChain
 
         /// <summary>
         /// Called by WorldComponent_SupplyChain during PreTaxResolution.
-        /// Draws from the pool and records actual amounts for GetExternalTitheBudget.
+        /// Draws from the stockpile and records actual amounts for GetExternalTitheBudget.
         /// </summary>
-        public void ResolveTitheInjections(IStockpilePool pool)
+        public void ResolveTitheInjections(IStockpile stockpile)
         {
             actualTitheDrawn.Clear();
             isTaxTime = true;
@@ -386,7 +386,7 @@ namespace FactionColonies.SupplyChain
                 if (kv.Key == null || kv.Key.isPoolResource || kv.Value <= 0) continue;
 
                 double drawn;
-                pool.TryDraw(kv.Key, kv.Value, out drawn);
+                stockpile.TryDraw(kv.Key, kv.Value, out drawn);
 
                 if (drawn > 0)
                     actualTitheDrawn[kv.Key] = drawn;
@@ -564,9 +564,9 @@ namespace FactionColonies.SupplyChain
             if (allocations == null)
                 allocations = new Dictionary<ResourceTypeDef, double>();
 
-            Scribe_Collections.Look(ref localStockpile, "localStockpile", LookMode.Def, LookMode.Value);
-            if (localStockpile == null)
-                localStockpile = new Dictionary<ResourceTypeDef, double>();
+            Scribe_Collections.Look(ref localStockpiles, "localStockpile", LookMode.Def, LookMode.Value);
+            if (localStockpiles == null)
+                localStockpiles = new Dictionary<ResourceTypeDef, double>();
 
             Scribe_Collections.Look(ref localCaps, "localCaps", LookMode.Def, LookMode.Value);
             if (localCaps == null)
@@ -658,7 +658,7 @@ namespace FactionColonies.SupplyChain
 
             WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
             if (wc != null)
-                wc.EnsureCapsAndPools();
+                wc.EnsureCapsAndStockpiles();
             bool isComplex = wc != null && wc.Mode == SupplyChainMode.Complex;
 
             if (isComplex)
@@ -728,7 +728,7 @@ namespace FactionColonies.SupplyChain
 
         private float MeasureStockpileStatusBar(float width)
         {
-            if (localPool == null) return 0f;
+            if (localStockpileDict == null) return 0f;
 
             Text.Font = GameFont.Tiny;
             int rowCount = 0;
@@ -738,7 +738,7 @@ namespace FactionColonies.SupplyChain
             foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
             {
                 if (def.isPoolResource) continue;
-                double cap = localPool.GetCap(def);
+                double cap = localStockpileDict.GetCap(def);
                 if (cap <= 0) continue;
 
                 if (!any)
@@ -747,7 +747,7 @@ namespace FactionColonies.SupplyChain
                     any = true;
                 }
 
-                double amount = localPool.GetAmount(def);
+                double amount = localStockpileDict.GetAmount(def);
                 WorldComponent_SupplyChain.FlowBreakdown flow = default(WorldComponent_SupplyChain.FlowBreakdown);
                 WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
                 WorldSettlementFC ws = WorldSettlement;
@@ -772,7 +772,7 @@ namespace FactionColonies.SupplyChain
 
         private void DrawStockpileStatusBar(Rect rect)
         {
-            if (localPool == null) return;
+            if (localStockpileDict == null) return;
 
             // Separator line
             Widgets.DrawBoxSolid(new Rect(rect.x, rect.y, rect.width, 1f), new Color(0.3f, 0.3f, 0.3f));
@@ -793,10 +793,10 @@ namespace FactionColonies.SupplyChain
             foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
             {
                 if (def.isPoolResource) continue;
-                double cap = localPool.GetCap(def);
+                double cap = localStockpileDict.GetCap(def);
                 if (cap <= 0) continue;
 
-                double amount = localPool.GetAmount(def);
+                double amount = localStockpileDict.GetAmount(def);
                 WorldComponent_SupplyChain.FlowBreakdown flow = default(WorldComponent_SupplyChain.FlowBreakdown);
                 if (wc != null && ws != null)
                     flow = wc.GetCachedFlow(ws, this, def);
@@ -916,7 +916,7 @@ namespace FactionColonies.SupplyChain
             foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
             {
                 if (def.isPoolResource) continue;
-                double cap = localPool != null ? localPool.GetCap(def) : 0;
+                double cap = localStockpileDict != null ? localStockpileDict.GetCap(def) : 0;
                 if (cap > 0) resourceCount++;
             }
 
@@ -944,8 +944,8 @@ namespace FactionColonies.SupplyChain
             {
                 if (def.isPoolResource) continue;
 
-                double amount = localPool != null ? localPool.GetAmount(def) : 0;
-                double cap = localPool != null ? localPool.GetCap(def) : 0;
+                double amount = localStockpileDict != null ? localStockpileDict.GetAmount(def) : 0;
+                double cap = localStockpileDict != null ? localStockpileDict.GetCap(def) : 0;
                 if (cap <= 0) continue;
 
                 float fillPct = cap > 0 ? (float)(amount / cap) : 0f;

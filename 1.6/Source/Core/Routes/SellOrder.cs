@@ -18,25 +18,25 @@ namespace FactionColonies.SupplyChain
         }
 
         /// <summary>
-        /// Execute this sell order against the given pool.
+        /// Execute this sell order against the given stockpile.
         /// Returns the silver value generated.
         /// </summary>
-        public float Execute(IStockpilePool pool)
+        public float Execute(IStockpile stockpile)
         {
-            return Execute(pool, null);
+            return Execute(stockpile, null);
         }
 
         /// <summary>
-        /// Execute this sell order against the given pool, optionally applying the sell rate
+        /// Execute this sell order against the given stockpile, optionally applying the sell rate
         /// multiplier stat from the settlement context.
         /// </summary>
-        public float Execute(IStockpilePool pool, WorldSettlementFC settlement)
+        public float Execute(IStockpile stockpile, WorldSettlementFC settlement)
         {
             if (resource == null || amountPerPeriod <= 0)
                 return 0f;
 
             double drawn;
-            if (!pool.TryDraw(resource, amountPerPeriod, out drawn) || drawn <= 0)
+            if (!stockpile.TryDraw(resource, amountPerPeriod, out drawn) || drawn <= 0)
                 return 0f;
 
             double sellRate = SupplyChainSettings.overflowPenaltyRate;
