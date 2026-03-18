@@ -133,6 +133,7 @@ namespace FactionColonies.SupplyChain
         {
             if (!showRouteLabels) return;
             if (!showAllRoutes && !showSelectedRoutes) return;
+            if (!RouteOverlayUtil.ShouldDrawLabels()) return;
 
             WorldGrid grid = Find.WorldGrid;
             GameFont prev = Text.Font;

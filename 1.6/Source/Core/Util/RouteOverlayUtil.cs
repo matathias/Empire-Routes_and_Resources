@@ -9,6 +9,9 @@ namespace FactionColonies.SupplyChain
         private const float PlanetRadius = 100f;
         private const float LineAlt = 0.08f;
         private const float ArrowAlt = 0.09f;
+        private const int MaxSegments = 25;
+        private const float ArrowAltitudeCutoff = 800f;
+        private const float LabelAltitudeCutoff = 500f;
 
         // --- Lazy-init materials (must not load resources in static ctor) ---
 
@@ -43,7 +46,6 @@ namespace FactionColonies.SupplyChain
         /// <summary>
         /// Draw a line between two world positions that curves along the planet surface.
         /// Subdivides into short segments to prevent clipping through the globe.
-        /// Pattern from DebugWorldLine.Draw().
         /// </summary>
         public static void DrawWorldLineOnSurface(Vector3 a, Vector3 b, Material mat, float widthFactor)
         {
@@ -51,7 +53,7 @@ namespace FactionColonies.SupplyChain
             if (dist < 0.001f) return;
 
             float tileSize = Find.WorldGrid.AverageTileSize;
-            int segments = Mathf.Max(Mathf.RoundToInt(dist / tileSize), 1);
+            int segments = Mathf.Min(Mathf.Max(Mathf.RoundToInt(dist / (tileSize * 2f)), 1), MaxSegments);
 
             for (int i = 0; i < segments; i++)
             {
@@ -65,7 +67,6 @@ namespace FactionColonies.SupplyChain
 
         /// <summary>
         /// Draw a direction arrow at 60% along the route (closer to destination).
-        /// Uses DrawQuadTangentialToPlanet with rotation to face source→dest direction.
         /// </summary>
         public static void DrawDirectionArrow(Vector3 source, Vector3 dest)
         {
@@ -86,19 +87,25 @@ namespace FactionColonies.SupplyChain
 
         /// <summary>
         /// Draw a complete route: surface-following line + direction arrow.
+        /// Culls routes where both endpoints are behind the globe.
         /// </summary>
         public static void DrawRoute(SupplyRoute route, WorldGrid grid)
         {
             Vector3 posA = grid.GetTileCenter(route.source.Tile);
             Vector3 posB = grid.GetTileCenter(route.destination.Tile);
 
+            // Cull routes entirely behind the globe
+            if (!IsVisibleToCamera(posA) && !IsVisibleToCamera(posB)) return;
+
             DrawWorldLineOnSurface(posA, posB, RouteLineMat, 1.2f);
-            DrawDirectionArrow(posA, posB);
+
+            if (Find.WorldCameraDriver.altitude < ArrowAltitudeCutoff)
+                DrawDirectionArrow(posA, posB);
         }
 
         /// <summary>
-        /// Draw a GUI text label for a route at its midpoint (call during OnGUI).
-        /// Returns false if the label is not visible (behind globe or off-screen).
+        /// Draw a GUI text label for a route at its arrow position (call during OnGUI).
+        /// Returns false if not visible or camera is too far away.
         /// </summary>
         public static bool DrawRouteLabel(SupplyRoute route, WorldGrid grid)
         {
@@ -113,7 +120,9 @@ namespace FactionColonies.SupplyChain
             Rect screen = new Rect(0f, 0f, UI.screenWidth, UI.screenHeight);
             if (!screen.Contains(screenPos)) return false;
 
-            string label = route.amountPerPeriod.ToString("F0") + " " + route.resource.label;
+            string label = route.OverlayLabel;
+            if (label == null) return false;
+
             Vector2 labelSize = Text.CalcSize(label);
             Rect labelRect = new Rect(
                 screenPos.x - labelSize.x / 2f,
@@ -126,12 +135,20 @@ namespace FactionColonies.SupplyChain
         }
 
         /// <summary>
-        /// Check if a world position is on the visible side of the globe (not behind the planet).
+        /// Check if a world position is on the visible side of the globe.
         /// </summary>
         public static bool IsVisibleToCamera(Vector3 worldPos)
         {
             Vector3 camFwd = Find.WorldCamera.transform.forward;
             return Vector3.Dot(worldPos.normalized, -camFwd) >= 0f;
+        }
+
+        /// <summary>
+        /// Returns true if the camera is close enough to render labels.
+        /// </summary>
+        public static bool ShouldDrawLabels()
+        {
+            return Find.WorldCameraDriver.altitude < LabelAltitudeCutoff;
         }
     }
 }
