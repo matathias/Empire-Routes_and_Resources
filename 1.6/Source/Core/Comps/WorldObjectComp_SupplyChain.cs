@@ -1075,7 +1075,7 @@ namespace FactionColonies.SupplyChain
                     "SC_ExpectedSilver".Translate(expectedSilver.ToString("F0")));
                 GUI.color = Color.white;
 
-                if (Widgets.ButtonText(new Rect(cx + 390f, curY, 60f, 24f), "SC_Remove".Translate()))
+                if (Widgets.ButtonText(new Rect(sellRow.xMax - 28f, curY + 1f, 24f, 24f), "X"))
                 {
                     if (toRemove == null) toRemove = new List<SellOrder>();
                     toRemove.Add(order);
@@ -1588,32 +1588,41 @@ namespace FactionColonies.SupplyChain
                 Text.Anchor = TextAnchor.MiddleLeft;
                 Widgets.Label(new Rect(cx + 28f, curY, 120f, rowHeight),
                     def.label.CapitalizeFirst());
-                Widgets.Label(new Rect(cx + 150f, curY, 80f, rowHeight),
-                    "SC_ProdLabel".Translate(rawProd.ToString("F1")));
 
-                float sliderVal = (float)currentAlloc;
-                float newVal = Widgets.HorizontalSlider(
-                    new Rect(cx + 235f, curY + 8f, 200f, rowHeight - 16f),
-                    sliderVal, 0f, (float)maxAlloc, false,
-                    null, null, null, 0.5f);
-
-                if (Math.Abs(newVal - sliderVal) > 0.01f)
+                if (rawProd > 0)
                 {
-                    SetAllocation(def, newVal);
+                    float sliderVal = (float)currentAlloc;
+                    float newVal = Widgets.HorizontalSlider(
+                        new Rect(cx + 150f, curY + 8f, 240f, rowHeight - 16f),
+                        sliderVal, 0f, (float)maxAlloc, false,
+                        null, null, null, 0.5f);
+
+                    if (Math.Abs(newVal - sliderVal) > 0.01f)
+                    {
+                        SetAllocation(def, newVal);
+                    }
+
+                    Widgets.Label(new Rect(cx + 400f, curY, 100f, rowHeight),
+                        currentAlloc.ToString("F1") + " / " + rawProd.ToString("F1"));
+
+                    float silverDiverted = (float)(currentAlloc * FCSettings.silverPerResource);
+                    if (silverDiverted >= 0.5f)
+                    {
+                        Text.Font = GameFont.Tiny;
+                        GUI.color = new Color(1f, 0.7f, 0.3f);
+                        Widgets.Label(new Rect(cx + 505f, curY, 100f, rowHeight),
+                            "SC_SilverDiverted".Translate(silverDiverted.ToString("F0")));
+                        GUI.color = Color.white;
+                        Text.Font = GameFont.Small;
+                    }
                 }
-
-                Widgets.Label(new Rect(cx + 445f, curY, 80f, rowHeight),
-                    "SC_Units".Translate(currentAlloc.ToString("F1")));
-
-                float silverDiverted = (float)(currentAlloc * FCSettings.silverPerResource);
-                if (silverDiverted >= 0.5f)
+                else
                 {
-                    Text.Font = GameFont.Tiny;
-                    GUI.color = new Color(1f, 0.7f, 0.3f);
-                    Widgets.Label(new Rect(cx + 530f, curY, 100f, rowHeight),
-                        "SC_SilverDiverted".Translate(silverDiverted.ToString("F0")));
+                    GUI.color = Color.gray;
+                    Text.Anchor = TextAnchor.MiddleCenter;
+                    Widgets.Label(new Rect(cx + 150f, curY, 240f, rowHeight), "SC_NoProduction".Translate());
+                    Text.Anchor = TextAnchor.MiddleLeft;
                     GUI.color = Color.white;
-                    Text.Font = GameFont.Small;
                 }
 
                 Text.Anchor = TextAnchor.UpperLeft;
@@ -1777,11 +1786,15 @@ namespace FactionColonies.SupplyChain
 
         private void DrawAddLocalSellOrderRow(Rect viewRect, ref float curY)
         {
+            // Center the add-row widgets: Add: [picker] [amount] [Add]
+            const float groupW = 40f + 4f + 130f + 6f + 80f + 8f + 60f; // 328
+            float sx = (viewRect.width - groupW) / 2f;
+
             Text.Anchor = TextAnchor.MiddleLeft;
-            Widgets.Label(new Rect(0f, curY, 40f, 26f), "SC_AddColon".Translate());
+            Widgets.Label(new Rect(sx, curY, 40f, 26f), "SC_AddColon".Translate());
 
             string resLabel = newLocalSellResource != null ? newLocalSellResource.label.CapitalizeFirst() : (string)"SC_PickResource".Translate();
-            if (Widgets.ButtonText(new Rect(44f, curY, 130f, 24f), resLabel))
+            if (Widgets.ButtonText(new Rect(sx + 44f, curY, 130f, 24f), resLabel))
             {
                 List<FloatMenuOption> options = new List<FloatMenuOption>();
                 foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
@@ -1796,10 +1809,10 @@ namespace FactionColonies.SupplyChain
                 Find.WindowStack.Add(new FloatMenu(options));
             }
 
-            Widgets.TextFieldNumeric(new Rect(180f, curY, 80f, 24f),
+            Widgets.TextFieldNumeric(new Rect(sx + 180f, curY, 80f, 24f),
                 ref newLocalSellAmount, ref newLocalSellAmountBuffer, 0f, 9999f);
 
-            if (Widgets.ButtonText(new Rect(268f, curY, 60f, 24f), "SC_Add".Translate()))
+            if (Widgets.ButtonText(new Rect(sx + 268f, curY, 60f, 24f), "SC_Add".Translate()))
             {
                 if (newLocalSellResource != null && newLocalSellAmount > 0)
                 {
@@ -1817,11 +1830,15 @@ namespace FactionColonies.SupplyChain
 
         private void DrawAddTitheInjectionRow(Rect viewRect, ref float curY)
         {
+            // Center the add-row widgets: Add: [picker] [amount] [Add]
+            const float groupW = 40f + 4f + 130f + 6f + 80f + 8f + 60f; // 328
+            float sx = (viewRect.width - groupW) / 2f;
+
             Text.Anchor = TextAnchor.MiddleLeft;
-            Widgets.Label(new Rect(0f, curY, 40f, 26f), "SC_AddColon".Translate());
+            Widgets.Label(new Rect(sx, curY, 40f, 26f), "SC_AddColon".Translate());
 
             string resLabel = newTitheInjResource != null ? newTitheInjResource.label.CapitalizeFirst() : (string)"SC_PickResource".Translate();
-            if (Widgets.ButtonText(new Rect(44f, curY, 130f, 24f), resLabel))
+            if (Widgets.ButtonText(new Rect(sx + 44f, curY, 130f, 24f), resLabel))
             {
                 List<FloatMenuOption> options = new List<FloatMenuOption>();
                 foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
@@ -1836,10 +1853,10 @@ namespace FactionColonies.SupplyChain
                 Find.WindowStack.Add(new FloatMenu(options));
             }
 
-            Widgets.TextFieldNumeric(new Rect(180f, curY, 80f, 24f),
+            Widgets.TextFieldNumeric(new Rect(sx + 180f, curY, 80f, 24f),
                 ref newTitheInjAmount, ref newTitheInjAmountBuffer, 0f, 9999f);
 
-            if (Widgets.ButtonText(new Rect(268f, curY, 60f, 24f), "SC_Add".Translate()))
+            if (Widgets.ButtonText(new Rect(sx + 268f, curY, 60f, 24f), "SC_Add".Translate()))
             {
                 if (newTitheInjResource != null && newTitheInjAmount > 0)
                 {
