@@ -12,6 +12,10 @@
     <SC_SettingsRouteDecay>Route efficiency decay per travel day: {0}\nFormula: efficiency = 1 / (1 + days × decay)\nExample: 5-day route → 1 / (1 + 5 × {0}) = {1}%</SC_SettingsRouteDecay>
     <SC_SettingsLocalCap>Local stockpile cap per resource (Complex mode): {0}</SC_SettingsLocalCap>
 
+    <!-- Building Filters -->
+    <SC_FilterStockpileCap>Stockpile Cap</SC_FilterStockpileCap>
+    <SC_FilterBuildingNeeds>Building Needs</SC_FilterBuildingNeeds>
+
     <!-- Shared UI -->
     <SC_TabName>Supply Chain</SC_TabName>
     <SC_Add>Add</SC_Add>

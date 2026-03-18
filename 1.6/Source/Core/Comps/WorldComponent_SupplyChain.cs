@@ -106,6 +106,25 @@ namespace FactionColonies.SupplyChain
             MainTableRegistry.Register(this);
             LifecycleRegistry.Register(this);
 
+            BuildingFilterRegistry.Register(new BuildingFilter(
+                "SC_FilterStockpileCap".Translate(),
+                null,
+                def =>
+                {
+                    BuildingNeedExtension ext = def.GetModExtension<BuildingNeedExtension>();
+                    return ext != null && ext.capBonuses != null && ext.capBonuses.Count > 0;
+                }
+            ));
+            BuildingFilterRegistry.Register(new BuildingFilter(
+                "SC_FilterBuildingNeeds".Translate(),
+                null,
+                def =>
+                {
+                    BuildingNeedExtension ext = def.GetModExtension<BuildingNeedExtension>();
+                    return ext != null && ext.inputs != null && ext.inputs.Count > 0;
+                }
+            ));
+
             SupplyChainCache.ClearCompCache();
             capsAndStockpilesDirty = true;
 
