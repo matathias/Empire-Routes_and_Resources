@@ -10,8 +10,10 @@ namespace FactionColonies.SupplyChain
         private const float LineAlt = 0.08f;
         private const float ArrowAlt = 0.09f;
         private const int MaxSegments = 25;
-        private const float ArrowAltitudeCutoff = 800f;
+        private const float ArrowAltitudeCutoff = 500f;
         private const float LabelAltitudeCutoff = 500f;
+        private const int FlowArrowCount = 3;
+        private const float FlowSpeed = 0.4f;
 
         // --- Lazy-init materials (must not load resources in static ctor) ---
 
@@ -86,7 +88,35 @@ namespace FactionColonies.SupplyChain
         }
 
         /// <summary>
-        /// Draw a complete route: surface-following line + direction arrow.
+        /// Draw multiple arrows flowing from source to destination.
+        /// </summary>
+        public static void DrawFlowArrows(Vector3 source, Vector3 dest)
+        {
+            float time = Time.time * FlowSpeed;
+            float arrowSize = Find.WorldGrid.AverageTileSize * 0.5f;
+
+            for (int i = 0; i < FlowArrowCount; i++)
+            {
+                float t = (time + (float)i / FlowArrowCount) % 1.0f;
+                float tClamped = 0.1f + t * 0.8f;
+
+                Vector3 arrowPos = Vector3.Lerp(source, dest, tClamped);
+                arrowPos = arrowPos.normalized * (PlanetRadius + ArrowAlt);
+
+                Vector3 normal = arrowPos.normalized;
+                Vector3 defaultFwd = Vector3.Cross(normal, Vector3.up).normalized;
+                if (defaultFwd.sqrMagnitude < 0.01f)
+                    defaultFwd = Vector3.Cross(normal, Vector3.right).normalized;
+
+                WorldRendererUtility.GetTangentialVectorFacing(arrowPos, dest, out Vector3 fwd, out Vector3 _);
+                float angle = Vector3.SignedAngle(defaultFwd, fwd, normal) - 90f;
+
+                WorldRendererUtility.DrawQuadTangentialToPlanet(arrowPos, arrowSize, 0.01f, RouteArrowMat, angle);
+            }
+        }
+
+        /// <summary>
+        /// Draw a complete route: surface-following line + direction arrow(s).
         /// Culls routes where both endpoints are behind the globe.
         /// </summary>
         public static void DrawRoute(SupplyRoute route, WorldGrid grid)
@@ -100,7 +130,12 @@ namespace FactionColonies.SupplyChain
             DrawWorldLineOnSurface(posA, posB, RouteLineMat, 1.2f);
 
             if (Find.WorldCameraDriver.altitude < ArrowAltitudeCutoff)
-                DrawDirectionArrow(posA, posB);
+            {
+                if (SupplyChainSettings.animateRouteArrows)
+                    DrawFlowArrows(posA, posB);
+                else
+                    DrawDirectionArrow(posA, posB);
+            }
         }
 
         /// <summary>
@@ -120,7 +155,8 @@ namespace FactionColonies.SupplyChain
             Rect screen = new Rect(0f, 0f, UI.screenWidth, UI.screenHeight);
             if (!screen.Contains(screenPos)) return false;
 
-            string label = route.OverlayLabel;
+            string label = route.amountPerPeriod.ToString("F0") + " " + route.resource.label
+                + " \u2192 " + route.destination.Name;
             if (label == null) return false;
 
             Vector2 labelSize = Text.CalcSize(label);
