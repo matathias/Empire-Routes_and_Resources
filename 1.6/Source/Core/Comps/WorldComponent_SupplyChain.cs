@@ -20,6 +20,24 @@ namespace FactionColonies.SupplyChain
         private List<SupplyRoute> supplyRoutes = new List<SupplyRoute>();
         private List<SupplyRoute> dormantRoutes = new List<SupplyRoute>();
 
+        // Route visualization (transient, not saved)
+        public bool showAllRoutes;
+        public bool showSelectedRoutes;
+        private HashSet<long> drawnPairSet = new HashSet<long>();
+
+        private static Material routeMatActive;
+        private static Material RouteMatActive
+        {
+            get
+            {
+                if (routeMatActive == null)
+                    routeMatActive = MaterialPool.MatFrom(
+                        GenDraw.LineTexPath, ShaderDatabase.WorldOverlayTransparent,
+                        new Color(0.2f, 0.8f, 0.2f, 0.7f), 3590);
+                return routeMatActive;
+            }
+        }
+
         private bool capsAndPoolsDirty = true;
         private DictionaryStockpilePool pool;
 
@@ -107,6 +125,59 @@ namespace FactionColonies.SupplyChain
             }
 
             LogUtil.Message("WorldComponent_SupplyChain initialized (mode=" + mode + ", fromLoad=" + fromLoad + ")");
+        }
+
+        // --- World Map Route Visualization ---
+
+        public override void WorldComponentUpdate()
+        {
+            base.WorldComponentUpdate();
+            if (!showAllRoutes) return;
+            DrawAllRoutes();
+        }
+
+        private void DrawAllRoutes()
+        {
+            WorldGrid grid = Find.WorldGrid;
+            drawnPairSet.Clear();
+
+            foreach (SupplyRoute route in supplyRoutes)
+            {
+                if (!route.IsValid()) continue;
+
+                // Deduplicate: if A->B and B->A both exist, only draw one line
+                int lo = Math.Min(route.source.Tile.tileId, route.destination.Tile.tileId);
+                int hi = Math.Max(route.source.Tile.tileId, route.destination.Tile.tileId);
+                long key = ((long)lo << 32) | (long)hi;
+                if (!drawnPairSet.Add(key)) continue;
+
+                Vector3 posA = grid.GetTileCenter(route.source.Tile);
+                Vector3 posB = grid.GetTileCenter(route.destination.Tile);
+                posA += posA.normalized * 0.08f;
+                posB += posB.normalized * 0.08f;
+
+                GenDraw.DrawWorldLineBetween(posA, posB, RouteMatActive, 1.2f);
+            }
+        }
+
+        public static void DrawRoutesForSettlement(WorldComponent_SupplyChain wc, WorldSettlementFC ws)
+        {
+            if (ws == null || wc == null) return;
+            WorldGrid grid = Find.WorldGrid;
+
+            foreach (SupplyRoute route in wc.SupplyRoutes)
+            {
+                if (!route.IsValid()) continue;
+                if (route.source != ws && route.destination != ws) continue;
+
+                WorldSettlementFC other = (route.source == ws) ? route.destination : route.source;
+                Vector3 posA = grid.GetTileCenter(ws.Tile);
+                Vector3 posB = grid.GetTileCenter(other.Tile);
+                posA += posA.normalized * 0.08f;
+                posB += posB.normalized * 0.08f;
+
+                GenDraw.DrawWorldLineBetween(posA, posB, RouteMatActive, 1.2f);
+            }
         }
 
         // --- Save/Load ---

@@ -101,6 +101,12 @@
     <SC_TitheInjectionDesc>Supply chain tithe injection: +{0} silver</SC_TitheInjectionDesc>
     <SC_BarFlowTitheInjection>  Tithe injection: -{0}</SC_BarFlowTitheInjection>
 
+    <!-- Route Visualization Gizmos -->
+    <SC_ShowSettlementRoutes>Show Routes</SC_ShowSettlementRoutes>
+    <SC_ShowSettlementRoutesDesc>Toggle display of supply route lines for this settlement on the world map.</SC_ShowSettlementRoutesDesc>
+    <SC_ShowAllRoutes>Show All Routes</SC_ShowAllRoutes>
+    <SC_ShowAllRoutesDesc>Toggle display of all supply route lines across the empire on the world map.</SC_ShowAllRoutesDesc>
+
     <!-- Stat Descriptions -->
     <SC_Stat_SellRateMultiplier>Multiplier applied to sell order silver rates. Higher values mean more silver per unit sold.</SC_Stat_SellRateMultiplier>
     <SC_Stat_RouteEfficiencyBonus>Bonus added to supply route efficiency for routes originating from this settlement. Reduces losses in transit.</SC_Stat_RouteEfficiencyBonus>

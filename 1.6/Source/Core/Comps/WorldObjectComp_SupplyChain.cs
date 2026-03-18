@@ -508,6 +508,42 @@ namespace FactionColonies.SupplyChain
             }
         }
 
+        // --- Gizmos & World Map Overlay ---
+
+        public override IEnumerable<Gizmo> GetGizmos()
+        {
+            foreach (Gizmo g in base.GetGizmos())
+                yield return g;
+
+            WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
+            if (wc == null) yield break;
+
+            yield return new Command_Toggle
+            {
+                defaultLabel = "SC_ShowSettlementRoutes".Translate(),
+                defaultDesc = "SC_ShowSettlementRoutesDesc".Translate(),
+                icon = TexLoad.iconTrade,
+                isActive = () => wc.showSelectedRoutes,
+                toggleAction = () => { wc.showSelectedRoutes = !wc.showSelectedRoutes; }
+            };
+
+            yield return new Command_Toggle
+            {
+                defaultLabel = "SC_ShowAllRoutes".Translate(),
+                defaultDesc = "SC_ShowAllRoutesDesc".Translate(),
+                icon = TexLoad.iconTrade,
+                isActive = () => wc.showAllRoutes,
+                toggleAction = () => { wc.showAllRoutes = !wc.showAllRoutes; }
+            };
+        }
+
+        public override void PostDrawExtraSelectionOverlays()
+        {
+            WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
+            if (wc == null || !wc.showSelectedRoutes) return;
+            WorldComponent_SupplyChain.DrawRoutesForSettlement(wc, WorldSettlement);
+        }
+
         // --- Save/Load ---
 
         public override void PostExposeData()
