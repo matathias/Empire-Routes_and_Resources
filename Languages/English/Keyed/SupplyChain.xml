@@ -106,6 +106,8 @@
     <SC_ShowSettlementRoutesDesc>Toggle display of supply route lines for this settlement on the world map.</SC_ShowSettlementRoutesDesc>
     <SC_ShowAllRoutes>Show All Routes</SC_ShowAllRoutes>
     <SC_ShowAllRoutesDesc>Toggle display of all supply route lines across the empire on the world map.</SC_ShowAllRoutesDesc>
+    <SC_ShowRouteLabels>Show Labels</SC_ShowRouteLabels>
+    <SC_ShowRouteLabelsDesc>Toggle display of resource type and amount labels on visible supply route lines.</SC_ShowRouteLabelsDesc>
 
     <!-- Stat Descriptions -->
     <SC_Stat_SellRateMultiplier>Multiplier applied to sell order silver rates. Higher values mean more silver per unit sold.</SC_Stat_SellRateMultiplier>

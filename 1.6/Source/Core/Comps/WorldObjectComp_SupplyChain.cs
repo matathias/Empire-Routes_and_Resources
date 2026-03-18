@@ -535,6 +535,15 @@ namespace FactionColonies.SupplyChain
                 isActive = () => wc.showAllRoutes,
                 toggleAction = () => { wc.showAllRoutes = !wc.showAllRoutes; }
             };
+
+            yield return new Command_Toggle
+            {
+                defaultLabel = "SC_ShowRouteLabels".Translate(),
+                defaultDesc = "SC_ShowRouteLabelsDesc".Translate(),
+                icon = TexLoad.iconTrade,
+                isActive = () => wc.showRouteLabels,
+                toggleAction = () => { wc.showRouteLabels = !wc.showRouteLabels; }
+            };
         }
 
         public override void PostDrawExtraSelectionOverlays()
