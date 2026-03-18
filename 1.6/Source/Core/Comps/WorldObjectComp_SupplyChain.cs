@@ -537,8 +537,29 @@ namespace FactionColonies.SupplyChain
             if (needStates == null)
                 needStates = new List<NeedState>();
 
-            if (Scribe.mode == LoadSaveMode.PostLoadInit && allocations.Count > 0)
-                ReRegisterAllocations();
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                if (allocations.Count > 0)
+                    ReRegisterAllocations();
+
+                // Ensure any newly added SettlementNeedDefs have placeholder NeedStates
+                WorldSettlementFC ws = WorldSettlement;
+                if (ws != null)
+                {
+                    HashSet<string> existingIds = new HashSet<string>();
+                    for (int i = 0; i < needStates.Count; i++)
+                        existingIds.Add(needStates[i].needId);
+
+                    foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
+                    {
+                        if (!existingIds.Contains(needDef.defName))
+                        {
+                            double demand = needDef.CalculateDemand(ws);
+                            needStates.Add(new NeedState(needDef.defName, needDef.resource, demand, 0));
+                        }
+                    }
+                }
+            }
         }
 
         // --- ISettlementWindowOverview ---

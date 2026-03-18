@@ -24,7 +24,6 @@ namespace FactionColonies.SupplyChain
             foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
             {
                 double demand = needDef.CalculateDemand(settlement);
-                if (demand <= 0) continue;
 
                 double drawn;
                 pool.TryDraw(needDef.resource, demand, out drawn);
@@ -62,7 +61,6 @@ namespace FactionColonies.SupplyChain
                 foreach (SettlementNeedDef needDef in DefDatabase<SettlementNeedDef>.AllDefs)
                 {
                     double demand = needDef.CalculateDemand(settlement);
-                    if (demand <= 0) continue;
 
                     allDemands.Add(new NeedDemandEntry
                     {
