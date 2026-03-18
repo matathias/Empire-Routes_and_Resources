@@ -17,22 +17,9 @@ namespace FactionColonies.SupplyChain
         private int cachedTravelTicks;
         private double cachedEfficiency;
         private bool dirty = true;
-        private string cachedOverlayLabel;
 
         public int CachedTravelTicks { get { return cachedTravelTicks; } }
         public double CachedEfficiency { get { return cachedEfficiency; } }
-
-        public string OverlayLabel
-        {
-            get
-            {
-                if (cachedOverlayLabel == null && resource != null)
-                    cachedOverlayLabel = amountPerPeriod.ToString("F0") + " " + resource.label;
-                return cachedOverlayLabel;
-            }
-        }
-
-        public void InvalidateLabel() { cachedOverlayLabel = null; }
 
         public SupplyRoute()
         {

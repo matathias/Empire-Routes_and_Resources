@@ -140,10 +140,12 @@ namespace FactionColonies.SupplyChain
 
         /// <summary>
         /// Draw a GUI text label for a route at its arrow position (call during OnGUI).
-        /// Returns false if not visible or camera is too far away.
+        /// Label text is provided by the caller (pre-built combined label per settlement pair).
         /// </summary>
-        public static bool DrawRouteLabel(SupplyRoute route, WorldGrid grid)
+        public static bool DrawRouteLabel(SupplyRoute route, WorldGrid grid, string label)
         {
+            if (label == null) return false;
+
             Vector3 mid = Vector3.Lerp(
                 grid.GetTileCenter(route.source.Tile),
                 grid.GetTileCenter(route.destination.Tile), 0.6f);
@@ -154,10 +156,6 @@ namespace FactionColonies.SupplyChain
             Vector2 screenPos = GenWorldUI.WorldToUIPosition(mid);
             Rect screen = new Rect(0f, 0f, UI.screenWidth, UI.screenHeight);
             if (!screen.Contains(screenPos)) return false;
-
-            string label = route.amountPerPeriod.ToString("F0") + " " + route.resource.label
-                + " \u2192 " + route.destination.Name;
-            if (label == null) return false;
 
             Vector2 labelSize = Text.CalcSize(label);
             Rect labelRect = new Rect(

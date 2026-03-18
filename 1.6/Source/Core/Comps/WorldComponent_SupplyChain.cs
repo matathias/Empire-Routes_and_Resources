@@ -25,6 +25,11 @@ namespace FactionColonies.SupplyChain
         public bool showSelectedRoutes;
         public bool showRouteLabels;
 
+        // Pair caches: one representative route + one combined label per directed settlement pair
+        private Dictionary<long, SupplyRoute> pairRouteCache = new Dictionary<long, SupplyRoute>();
+        private Dictionary<long, string> pairLabelCache = new Dictionary<long, string>();
+        private bool pairCacheDirty = true;
+
         private bool capsAndPoolsDirty = true;
         private DictionaryStockpilePool pool;
 
@@ -116,15 +121,51 @@ namespace FactionColonies.SupplyChain
 
         // --- World Map Route Visualization ---
 
+        private static long MakePairKey(SupplyRoute route)
+        {
+            return ((long)route.source.Tile.tileId << 32) | ((long)route.destination.Tile.tileId & 0xFFFFFFFFL);
+        }
+
+        internal void EnsurePairCaches()
+        {
+            if (!pairCacheDirty) return;
+            pairCacheDirty = false;
+            pairRouteCache.Clear();
+            pairLabelCache.Clear();
+
+            foreach (SupplyRoute route in supplyRoutes)
+            {
+                if (!route.IsValid()) continue;
+                long key = MakePairKey(route);
+
+                if (!pairRouteCache.ContainsKey(key))
+                    pairRouteCache[key] = route;
+
+                string line = route.amountPerPeriod.ToString("F0") + " " + route.resource.label;
+                string existing;
+                if (pairLabelCache.TryGetValue(key, out existing))
+                    pairLabelCache[key] = existing + "\n" + line;
+                else
+                    pairLabelCache[key] = line;
+            }
+
+            // Append destination name to each label
+            foreach (long key in new List<long>(pairLabelCache.Keys))
+            {
+                SupplyRoute rep = pairRouteCache[key];
+                pairLabelCache[key] = pairLabelCache[key] + "\n\u2192 " + rep.destination.Name;
+            }
+        }
+
         public override void WorldComponentUpdate()
         {
             base.WorldComponentUpdate();
             if (!showAllRoutes) return;
+            EnsurePairCaches();
 
             WorldGrid grid = Find.WorldGrid;
-            foreach (SupplyRoute route in supplyRoutes)
+            foreach (SupplyRoute route in pairRouteCache.Values)
             {
-                if (!route.IsValid()) continue;
                 RouteOverlayUtil.DrawRoute(route, grid);
             }
         }
@@ -134,14 +175,15 @@ namespace FactionColonies.SupplyChain
             if (!showRouteLabels) return;
             if (!showAllRoutes && !showSelectedRoutes) return;
             if (!RouteOverlayUtil.ShouldDrawLabels()) return;
+            EnsurePairCaches();
 
             WorldGrid grid = Find.WorldGrid;
             GameFont prev = Text.Font;
             Text.Font = GameFont.Tiny;
 
-            foreach (SupplyRoute route in supplyRoutes)
+            foreach (KeyValuePair<long, SupplyRoute> kvp in pairRouteCache)
             {
-                if (!route.IsValid()) continue;
+                SupplyRoute route = kvp.Value;
 
                 if (!showAllRoutes && showSelectedRoutes)
                 {
@@ -154,7 +196,10 @@ namespace FactionColonies.SupplyChain
                     if (!relevant) continue;
                 }
 
-                RouteOverlayUtil.DrawRouteLabel(route, grid);
+                string label;
+                pairLabelCache.TryGetValue(kvp.Key, out label);
+                if (label != null)
+                    RouteOverlayUtil.DrawRouteLabel(route, grid, label);
             }
 
             GUI.color = Color.white;
@@ -164,11 +209,11 @@ namespace FactionColonies.SupplyChain
         public static void DrawRoutesForSettlement(WorldComponent_SupplyChain wc, WorldSettlementFC ws)
         {
             if (ws == null || wc == null) return;
+            wc.EnsurePairCaches();
             WorldGrid grid = Find.WorldGrid;
 
-            foreach (SupplyRoute route in wc.SupplyRoutes)
+            foreach (SupplyRoute route in wc.pairRouteCache.Values)
             {
-                if (!route.IsValid()) continue;
                 if (route.source != ws && route.destination != ws) continue;
                 RouteOverlayUtil.DrawRoute(route, grid);
             }
@@ -325,6 +370,7 @@ namespace FactionColonies.SupplyChain
         internal void DirtyFlowCache()
         {
             flowCacheDirty = true;
+            pairCacheDirty = true;
         }
 
         internal FlowBreakdown CalculateFlow(WorldSettlementFC settlement, WorldObjectComp_SupplyChain comp, ResourceTypeDef def)
