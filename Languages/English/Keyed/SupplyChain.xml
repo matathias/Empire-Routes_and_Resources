@@ -112,8 +112,17 @@
     <SC_ShowRouteLabelsDesc>Toggle display of resource type and amount labels on visible supply route lines.</SC_ShowRouteLabelsDesc>
     <SC_SettingsAnimateArrows>Animate route arrows on world map</SC_SettingsAnimateArrows>
 
+    <!-- Building Detail Section -->
+    <SC_BuildingNeeds>Building Needs</SC_BuildingNeeds>
+    <SC_BuildingStockpileBonuses>Stockpile Bonuses</SC_BuildingStockpileBonuses>
+    <SC_BuildingSupplyChain>Supply Chain</SC_BuildingSupplyChain>
+    <SC_BuildingNeedInput>{0}× {1} per tax period</SC_BuildingNeedInput>
+    <SC_BuildingCapBonus>+{0} {1} stockpile cap</SC_BuildingCapBonus>
+    <SC_BuildingNeedCardNeeds>Needs: {0}</SC_BuildingNeedCardNeeds>
+    <SC_BuildingNeedCardCap>Cap: {0}</SC_BuildingNeedCardCap>
+
     <!-- Stat Descriptions -->
-    <SC_Stat_SellRateMultiplier>Multiplier applied to sell order silver rates. Higher values mean more silver per unit sold.</SC_Stat_SellRateMultiplier>
-    <SC_Stat_RouteEfficiencyBonus>Bonus added to supply route efficiency for routes originating from this settlement. Reduces losses in transit.</SC_Stat_RouteEfficiencyBonus>
+    <SC_Stat_SellRateMultiplier>Improves the silver earned when selling surplus resources from the stockpile.</SC_Stat_SellRateMultiplier>
+    <SC_Stat_RouteEfficiencyBonus>Reduces resource losses on supply routes originating from this settlement.</SC_Stat_RouteEfficiencyBonus>
 
 </LanguageData>

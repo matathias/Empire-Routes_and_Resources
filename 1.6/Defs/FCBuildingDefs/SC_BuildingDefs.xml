@@ -9,7 +9,7 @@
 		<cost>800</cost>
 		<constructionDuration>90000</constructionDuration>
 		<upkeep>100</upkeep>
-		<iconPath>SupplyChain/Buildings/Warehouse</iconPath>
+		<iconPath>Buildings/Warehouse</iconPath>
 		<modExtensions>
 			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
 				<capBonuses>
@@ -27,21 +27,6 @@
 		</modExtensions>
 	</FactionColonies.BuildingFCDef>
 
-	<!-- Trade Post — improves sell order rates, small happiness bonus -->
-	<FactionColonies.BuildingFCDef ParentName="BuildingFCDef_Surface_Medieval">
-		<defName>SC_TradePost</defName>
-		<label>Trade Post</label>
-		<desc>A trading outpost that improves the rates your settlements get when selling goods on the market.</desc>
-		<cost>600</cost>
-		<constructionDuration>60000</constructionDuration>
-		<upkeep>75</upkeep>
-		<statModifiers>
-			<li><stat>SC_SellRateMultiplier</stat><value>1.15</value></li>
-			<li><stat>happinessGainedBase</stat><value>0.2</value></li>
-		</statModifiers>
-		<iconPath>SupplyChain/Buildings/TradePost</iconPath>
-	</FactionColonies.BuildingFCDef>
-
 	<!-- Distribution Center — improves supply route efficiency -->
 	<FactionColonies.BuildingFCDef ParentName="BuildingFCDef_Surface_Industrial">
 		<defName>SC_DistributionCenter</defName>
@@ -53,7 +38,7 @@
 		<statModifiers>
 			<li><stat>SC_RouteEfficiencyBonus</stat><value>0.1</value></li>
 		</statModifiers>
-		<iconPath>SupplyChain/Buildings/DistributionCenter</iconPath>
+		<iconPath>Buildings/DistributionCenter</iconPath>
 	</FactionColonies.BuildingFCDef>
 
 	<!-- Cold Storage — large food stockpile bonus, requires Power -->
@@ -64,7 +49,7 @@
 		<cost>1000</cost>
 		<constructionDuration>90000</constructionDuration>
 		<upkeep>150</upkeep>
-		<iconPath>SupplyChain/Buildings/ColdStorage</iconPath>
+		<iconPath>Buildings/ColdStorage</iconPath>
 		<modExtensions>
 			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
 				<inputs>
