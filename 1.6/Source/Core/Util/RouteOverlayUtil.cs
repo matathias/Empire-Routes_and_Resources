@@ -20,7 +20,7 @@ namespace FactionColonies.SupplyChain
                 if (routeLineMat == null)
                     routeLineMat = MaterialPool.MatFrom(
                         GenDraw.LineTexPath, ShaderDatabase.WorldOverlayTransparent,
-                        new Color(0.2f, 0.8f, 0.2f, 0.7f), 3590);
+                        new Color(0.4f, 1f, 0.4f, 1f), 3590);
                 return routeLineMat;
             }
         }
@@ -78,7 +78,7 @@ namespace FactionColonies.SupplyChain
                 defaultFwd = Vector3.Cross(normal, Vector3.right).normalized;
 
             WorldRendererUtility.GetTangentialVectorFacing(arrowPos, dest, out Vector3 desiredFwd, out Vector3 _);
-            float angle = Vector3.SignedAngle(defaultFwd, desiredFwd, normal);
+            float angle = Vector3.SignedAngle(defaultFwd, desiredFwd, normal) - 90f;
 
             float size = Find.WorldGrid.AverageTileSize * 0.6f;
             WorldRendererUtility.DrawQuadTangentialToPlanet(arrowPos, size, 0.01f, RouteArrowMat, angle);
@@ -104,7 +104,7 @@ namespace FactionColonies.SupplyChain
         {
             Vector3 mid = Vector3.Lerp(
                 grid.GetTileCenter(route.source.Tile),
-                grid.GetTileCenter(route.destination.Tile), 0.4f);
+                grid.GetTileCenter(route.destination.Tile), 0.6f);
             mid = mid.normalized * PlanetRadius;
 
             if (!IsVisibleToCamera(mid)) return false;
