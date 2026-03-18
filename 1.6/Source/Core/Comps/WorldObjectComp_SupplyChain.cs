@@ -1202,10 +1202,9 @@ namespace FactionColonies.SupplyChain
                 bool active = routeFilterResource == filterDef;
                 ResourceTypeDef captured = filterDef;
                 string btnLabel = filterDef.label.CapitalizeFirst();
-                float btnW = Text.CalcSize(btnLabel).x + 28f;
-                if (filterDef.Icon != null)
-                    GUI.DrawTexture(new Rect(fbX + 4f, filterY + 3f, 16f, 16f), filterDef.Icon);
-                if (UIUtil.ButtonFlat(new Rect(fbX, filterY, btnW, fbH), "   " + btnLabel, labelColor: filterDef.color, highlighted: active))
+                float btnW = (filterDef.Icon != null ? 20f : 0f) + Text.CalcSize(btnLabel).x + 10f;
+                if (UIUtil.ButtonFlatIcon(new Rect(fbX, filterY, btnW, fbH), btnLabel,
+                    filterDef.Icon, labelColor: filterDef.color, highlighted: active))
                     routeFilterResource = captured;
                 fbX += btnW + 4f;
             }
@@ -1284,22 +1283,46 @@ namespace FactionColonies.SupplyChain
                 string resName = route.resource != null ? route.resource.label.CapitalizeFirst() : "?";
                 Widgets.Label(new Rect(cx + 58f, curY, 90f, 26f), resName);
 
-                Rect efficiencyRect = new Rect(viewRect.width - 130f, curY, 66f, 26f);
-                Rect otherLabel = new Rect(cx + 152f, curY, efficiencyRect.x - (cx + 152f) - 3f, 26f);
-                // Other settlement + amount (wider column)
-                string otherName = isOutgoing ? route.destination.Name : route.source.Name;
-                string detail = isOutgoing
-                    ? (string)"SC_RouteOutDetail".Translate(otherName, route.amountPerPeriod.ToString("F1"))
-                    : (string)"SC_RouteInDetail".Translate(otherName, route.amountPerPeriod.ToString("F1"));
-                Widgets.Label(otherLabel, detail);
+                // Direction arrow + other settlement name
+                string dirArrow = isOutgoing ? "\u2192" : "\u2190";
+                GUI.color = isOutgoing ? new Color(1f, 0.85f, 0.6f) : new Color(0.6f, 0.85f, 1f);
+                Widgets.Label(new Rect(cx + 150f, curY, 16f, 26f), dirArrow);
+                GUI.color = Color.white;
 
-                // Efficiency (right-aligned, color matches accent)
+                // Calculation pipeline: qty → eff% → net
+                float pipeX = viewRect.width - 190f;
+                float netVal = (float)(route.amountPerPeriod * route.CachedEfficiency);
+
+                string otherName = isOutgoing ? route.destination.Name : route.source.Name;
+                float nameW = pipeX - (cx + 168f) - 4f;
+                Widgets.Label(new Rect(cx + 168f, curY, nameW, 26f), otherName);
+
+                Text.Anchor = TextAnchor.MiddleCenter;
+                // Base quantity
+                Widgets.Label(new Rect(pipeX, curY, 34f, 26f), route.amountPerPeriod.ToString("F1"));
+                pipeX += 34f;
+                Widgets.Label(new Rect(pipeX, curY, 16f, 26f), "\u2192");
+                pipeX += 16f;
+
+                // Efficiency
+                Rect efficiencyRect = new Rect(pipeX, curY, 52f, 26f);
                 GUI.color = effAccent;
                 Widgets.Label(efficiencyRect, "SC_EffLabel".Translate((eff * 100).ToString("F0")));
                 GUI.color = Color.white;
+                TooltipHandler.TipRegion(efficiencyRect, "SC_EffTooltip_Route".Translate());
+                pipeX += 52f;
+
+                // Arrow to net
+                Widgets.Label(new Rect(pipeX, curY, 16f, 26f), "\u2192");
+                pipeX += 16f;
+
+                // Net value
+                GUI.color = effAccent;
+                Widgets.Label(new Rect(pipeX, curY, 34f, 26f), netVal.ToString("F1"));
+                GUI.color = Color.white;
 
                 // Remove button
-                if (Widgets.ButtonText(new Rect(viewRect.width - 60f, curY + 1f, 56f, 24f), "SC_Remove".Translate()))
+                if (Widgets.ButtonText(new Rect(viewRect.width - 24f, curY + 1f, 22f, 24f), "X"))
                     routeToRemove = route;
 
                 Text.Anchor = TextAnchor.UpperLeft;
@@ -1748,95 +1771,6 @@ namespace FactionColonies.SupplyChain
             }
 
             return null;
-        }
-
-        // --- Complex Mode: Routes Summary ---
-
-        private void DrawRoutesSummary(Rect viewRect, ref float curY)
-        {
-            WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
-            if (wc == null) return;
-
-            WorldSettlementFC ws = WorldSettlement;
-            if (ws == null) return;
-
-            Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0f, curY, viewRect.width, 30f), "SC_SupplyRoutes".Translate());
-            Text.Font = GameFont.Small;
-            curY += 34f;
-
-            bool hasRoutes = false;
-
-            // Outgoing
-            foreach (SupplyRoute route in wc.SupplyRoutes)
-            {
-                if (route.source != ws) continue;
-                if (!route.IsValid()) continue;
-
-                hasRoutes = true;
-                route.RecacheIfDirty();
-
-                Text.Anchor = TextAnchor.MiddleLeft;
-                GUI.color = new Color(1f, 0.85f, 0.6f);
-                Widgets.Label(new Rect(0f, curY, 30f, 24f), "SC_RouteOut".Translate());
-                GUI.color = Color.white;
-
-                if (route.resource != null && route.resource.Icon != null)
-                    GUI.DrawTexture(new Rect(34f, curY + 2f, 20f, 20f), route.resource.Icon);
-
-                string resName = route.resource != null ? route.resource.label.CapitalizeFirst() : "?";
-                Widgets.Label(new Rect(58f, curY, 100f, 24f), resName);
-                Widgets.Label(new Rect(162f, curY, 160f, 24f),
-                    "SC_RouteOutDetail".Translate(route.destination.Name, route.amountPerPeriod.ToString("F1")));
-
-                GUI.color = new Color(0.7f, 1f, 0.7f);
-                Widgets.Label(new Rect(326f, curY, 80f, 24f),
-                    "SC_EffLabel".Translate((route.CachedEfficiency * 100).ToString("F0")));
-                GUI.color = Color.white;
-                Text.Anchor = TextAnchor.UpperLeft;
-                curY += 26f;
-            }
-
-            // Incoming
-            foreach (SupplyRoute route in wc.SupplyRoutes)
-            {
-                if (route.destination != ws) continue;
-                if (!route.IsValid()) continue;
-
-                hasRoutes = true;
-                route.RecacheIfDirty();
-
-                Text.Anchor = TextAnchor.MiddleLeft;
-                GUI.color = new Color(0.6f, 0.85f, 1f);
-                Widgets.Label(new Rect(0f, curY, 30f, 24f), "SC_RouteIn".Translate());
-                GUI.color = Color.white;
-
-                if (route.resource != null && route.resource.Icon != null)
-                    GUI.DrawTexture(new Rect(34f, curY + 2f, 20f, 20f), route.resource.Icon);
-
-                string resName = route.resource != null ? route.resource.label.CapitalizeFirst() : "?";
-                Widgets.Label(new Rect(58f, curY, 100f, 24f), resName);
-                Widgets.Label(new Rect(162f, curY, 160f, 24f),
-                    "SC_RouteInDetail".Translate(route.source.Name, route.amountPerPeriod.ToString("F1")));
-
-                GUI.color = new Color(0.7f, 1f, 0.7f);
-                Widgets.Label(new Rect(326f, curY, 80f, 24f),
-                    "SC_EffLabel".Translate((route.CachedEfficiency * 100).ToString("F0")));
-                GUI.color = Color.white;
-                Text.Anchor = TextAnchor.UpperLeft;
-                curY += 26f;
-            }
-
-            if (!hasRoutes)
-            {
-                Text.Font = GameFont.Tiny;
-                GUI.color = Color.gray;
-                Widgets.Label(new Rect(0f, curY, viewRect.width, 24f),
-                    "SC_NoRoutes".Translate());
-                GUI.color = Color.white;
-                Text.Font = GameFont.Small;
-                curY += 26f;
-            }
         }
 
         // --- Complex Mode: Add Local Sell Order ---

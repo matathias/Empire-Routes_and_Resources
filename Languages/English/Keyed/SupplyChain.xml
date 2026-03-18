@@ -78,11 +78,9 @@
     <SC_StockpileAmount>{0} / {1}</SC_StockpileAmount>
     <SC_LocalSellOrders>Local Sell Orders</SC_LocalSellOrders>
     <SC_RouteOut>OUT</SC_RouteOut>
-    <SC_RouteOutDetail>-> {0} ({1})</SC_RouteOutDetail>
     <SC_EffLabel>{0}% eff.</SC_EffLabel>
+    <SC_EffTooltip_Route>Efficiency represents the proportion of shipped resources that arrive at the destination.\n\nLonger routes lose more in transit due to distance decay.\nNet delivered = base amount × efficiency</SC_EffTooltip_Route>
     <SC_RouteIn>IN</SC_RouteIn>
-    <SC_RouteInDetail>&lt;- {0} ({1})</SC_RouteInDetail>
-    <SC_NoRoutes>No supply routes. Manage routes from the faction Supply Chain tab.</SC_NoRoutes>
 
     <!-- Settlement Tab - Shared -->
     <SC_ProdLabel>Prod: {0}</SC_ProdLabel>
