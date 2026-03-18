@@ -647,6 +647,132 @@ namespace FactionColonies.SupplyChain
         private static readonly Color AccentNeutral = new Color(0.5f, 0.5f, 0.5f);
         private const float AccentW = 4f;
 
+        // Status bar constants
+        private const float StatusRowH = 22f;
+        private const float StatusIconSize = 16f;
+        private const float StatusCellPad = 8f;
+        private const float StatusBarGap = 4f;
+        private static readonly Color StatusNetStable = new Color(0.5f, 0.5f, 0.5f);
+
+        private float MeasureStockpileStatusBar(float width)
+        {
+            if (localPool == null) return 0f;
+
+            Text.Font = GameFont.Tiny;
+            int rowCount = 0;
+            float curX = 0f;
+            bool any = false;
+
+            foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+            {
+                if (def.isPoolResource) continue;
+                double cap = localPool.GetCap(def);
+                if (cap <= 0) continue;
+
+                if (!any)
+                {
+                    rowCount = 1;
+                    any = true;
+                }
+
+                double amount = localPool.GetAmount(def);
+                WorldComponent_SupplyChain.FlowBreakdown flow = default(WorldComponent_SupplyChain.FlowBreakdown);
+                WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
+                WorldSettlementFC ws = WorldSettlement;
+                if (wc != null && ws != null)
+                    flow = wc.GetCachedFlow(ws, this, def);
+
+                string netStr = flow.Net >= 0 ? "(+" + flow.Net.ToString("F1") + ")" : "(" + flow.Net.ToString("F1") + ")";
+                string label = amount.ToString("F1") + netStr;
+                float cellW = StatusIconSize + 2f + Text.CalcSize(label).x + StatusCellPad;
+
+                if (curX + cellW > width && curX > 0f)
+                {
+                    rowCount++;
+                    curX = 0f;
+                }
+                curX += cellW;
+            }
+
+            Text.Font = GameFont.Small;
+            return any ? rowCount * StatusRowH : 0f;
+        }
+
+        private void DrawStockpileStatusBar(Rect rect)
+        {
+            if (localPool == null) return;
+
+            // Separator line
+            Widgets.DrawBoxSolid(new Rect(rect.x, rect.y, rect.width, 1f), new Color(0.3f, 0.3f, 0.3f));
+
+            WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
+            WorldSettlementFC ws = WorldSettlement;
+
+            GameFont prevFont = Text.Font;
+            TextAnchor prevAnchor = Text.Anchor;
+            Color prevColor = GUI.color;
+
+            Text.Font = GameFont.Tiny;
+            Text.Anchor = TextAnchor.MiddleLeft;
+
+            float curX = rect.x;
+            float curY = rect.y + 2f;
+
+            foreach (ResourceTypeDef def in DefDatabase<ResourceTypeDef>.AllDefs)
+            {
+                if (def.isPoolResource) continue;
+                double cap = localPool.GetCap(def);
+                if (cap <= 0) continue;
+
+                double amount = localPool.GetAmount(def);
+                WorldComponent_SupplyChain.FlowBreakdown flow = default(WorldComponent_SupplyChain.FlowBreakdown);
+                if (wc != null && ws != null)
+                    flow = wc.GetCachedFlow(ws, this, def);
+
+                string amtStr = amount.ToString("F1");
+                string netStr = flow.Net >= 0 ? "(+" + flow.Net.ToString("F1") + ")" : "(" + flow.Net.ToString("F1") + ")";
+                float amtW = Text.CalcSize(amtStr).x;
+                float netW = Text.CalcSize(netStr).x;
+                float cellW = StatusIconSize + 2f + amtW + netW + StatusCellPad;
+
+                // Wrap to next row if needed
+                if (curX + cellW > rect.xMax && curX > rect.x)
+                {
+                    curX = rect.x;
+                    curY += StatusRowH;
+                }
+
+                // Icon
+                float iconY = curY + (StatusRowH - StatusIconSize) / 2f;
+                if (def.Icon != null)
+                    GUI.DrawTexture(new Rect(curX, iconY, StatusIconSize, StatusIconSize), def.Icon);
+
+                // Amount text (white)
+                GUI.color = Color.white;
+                Rect amtRect = new Rect(curX + StatusIconSize + 2f, curY, amtW, StatusRowH);
+                Widgets.Label(amtRect, amtStr);
+
+                // Net change text (colored)
+                Color netColor = flow.Net > 0.01 ? AccentUtil.Income
+                    : flow.Net < -0.01 ? AccentUtil.Expense
+                    : StatusNetStable;
+                GUI.color = netColor;
+                Rect netRect = new Rect(amtRect.xMax, curY, netW, StatusRowH);
+                Widgets.Label(netRect, netStr);
+                GUI.color = prevColor;
+
+                // Tooltip
+                Rect cellRect = new Rect(curX, curY, cellW - StatusCellPad, StatusRowH);
+                TooltipHandler.TipRegion(cellRect, UIUtilSC.BuildFlowTooltip(def, amount, cap, flow));
+
+                curX += cellW;
+            }
+
+            Text.Font = prevFont;
+            Text.Anchor = prevAnchor;
+            GUI.color = prevColor;
+        }
+
         private void DrawComplexModeTab(Rect boundingBox)
         {
             Rect inner = boundingBox.ContractedBy(5f);
@@ -673,9 +799,14 @@ namespace FactionColonies.SupplyChain
 
             UIUtil.DrawTabDecoratorHorizontalTop(chosenRect, inner, Color.gray);
 
-            // Content area below tabs
+            // Measure status bar (dynamic height based on row wrapping)
+            float statusBarH = MeasureStockpileStatusBar(inner.width);
+            float statusGap = statusBarH > 0f ? StatusBarGap : 0f;
+
+            // Content area below tabs, above status bar
             float contentY = inner.y + tabH;
-            Rect contentRect = new Rect(inner.x, contentY, inner.width, inner.yMax - contentY);
+            float contentH = inner.yMax - contentY - statusBarH - statusGap;
+            Rect contentRect = new Rect(inner.x, contentY, inner.width, contentH);
 
             if (complexSubTab == 0)
                 DrawComplexOverview(contentRect);
@@ -683,6 +814,13 @@ namespace FactionColonies.SupplyChain
                 DrawComplexProduction(contentRect);
             else
                 DrawComplexRoutes(contentRect);
+
+            // Bottom status bar
+            if (statusBarH > 0f)
+            {
+                Rect statusRect = new Rect(inner.x, inner.yMax - statusBarH, inner.width, statusBarH);
+                DrawStockpileStatusBar(statusRect);
+            }
         }
 
         // --- Complex Sub-Tab 0: Overview (stockpile + needs) ---
