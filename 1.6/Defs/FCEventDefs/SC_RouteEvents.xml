@@ -10,19 +10,128 @@
 		<label>Supply Route Ambush</label>
 		<desc>Bandits have been hitting supply caravans along your trade routes. Goods are disappearing before reaching their destinations.</desc>
 		<category>EC_SupplyChain</category>
-		<timeTillTrigger>300000</timeTillTrigger>
+		<timeTillTrigger>0</timeTillTrigger>
 		<isRandomEvent>true</isRandomEvent>
 		<weight>12</weight>
 		<rangeSettlementsAffected>1~3</rangeSettlementsAffected>
 		<settlementsCarryOver>true</settlementsCarryOver>
-		<statModifiers>
-			<li><stat>SC_RouteEfficiencyBonus</stat><value>-0.15</value></li>
-			<li><stat>unrestGainedBase</stat><value>1</value></li>
-		</statModifiers>
+		<activateAtStart>true</activateAtStart>
+		<options>
+			<li>sc_banditAmbush_opt1</li>
+			<li>sc_banditAmbush_opt2</li>
+			<li>sc_banditAmbush_opt3</li>
+			<li>sc_banditAmbush_opt4</li>
+		</options>
+		<optionDescription>Bandits have been ambushing supply caravans along your trade routes. Goods are vanishing before they reach their destinations. How do you respond?</optionDescription>
 		<incompatibleEvents>
 			<li>sc_banditAmbush</li>
 			<li>sc_securedRoutes</li>
 		</incompatibleEvents>
+	</FactionColonies.FCEventDef>
+
+	<!-- Bandit Ambush Options -->
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_banditAmbush_opt1</defName>
+		<label>Hire mercenaries to guard the routes.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>500</silverCost>
+		<parentEvent>sc_banditAmbush</parentEvent>
+		<successEvent>sc_banditAmbush_mercs</successEvent>
+	</FactionColonies.FCOptionDef>
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_banditAmbush_opt2</defName>
+		<label>Set a trap. Ambush the ambushers.</label>
+		<baseChanceOfSuccess>55</baseChanceOfSuccess>
+		<silverCost>0</silverCost>
+		<parentEvent>sc_banditAmbush</parentEvent>
+		<successEvent>sc_banditAmbush_trapped</successEvent>
+		<failEvent>sc_banditAmbush_trapFailed</failEvent>
+	</FactionColonies.FCOptionDef>
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_banditAmbush_opt3</defName>
+		<label>Pay them off. Tribute is cheaper than war.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>300</silverCost>
+		<parentEvent>sc_banditAmbush</parentEvent>
+		<successEvent>sc_banditAmbush_tribute</successEvent>
+	</FactionColonies.FCOptionDef>
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_banditAmbush_opt4</defName>
+		<label>Deploy garrison patrols to sweep the area.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>0</silverCost>
+		<parentEvent>sc_banditAmbush</parentEvent>
+		<successEvent>sc_banditAmbush_patrols</successEvent>
+		<requiredPolicies>
+			<li>militaristic</li>
+		</requiredPolicies>
+	</FactionColonies.FCOptionDef>
+
+	<!-- Bandit Ambush Outcomes -->
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_banditAmbush_mercs</defName>
+		<label>Mercenary Escort</label>
+		<desc>Hired swords ride alongside your caravans. The bandits still lurk, but losses have been cut drastically.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>120000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>SC_RouteEfficiencyBonus</stat><value>-0.05</value></li>
+		</statModifiers>
+	</FactionColonies.FCEventDef>
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_banditAmbush_trapped</defName>
+		<label>Bandits Routed</label>
+		<desc>Your ambush worked perfectly. The bandits scattered into the wilderness, and the roads are safer than ever.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>300000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>SC_RouteEfficiencyBonus</stat><value>0.05</value></li>
+		</statModifiers>
+	</FactionColonies.FCEventDef>
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_banditAmbush_trapFailed</defName>
+		<label>Ambush Backfired</label>
+		<desc>The trap failed spectacularly. The bandits were ready for it, and your forces took heavy losses. Routes are in worse shape than before.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>300000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>SC_RouteEfficiencyBonus</stat><value>-0.2</value></li>
+			<li><stat>unrestGainedBase</stat><value>2</value></li>
+		</statModifiers>
+	</FactionColonies.FCEventDef>
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_banditAmbush_tribute</defName>
+		<label>Uneasy Peace</label>
+		<desc>The bandits took your silver and left the caravans alone. Your people aren't happy about paying off criminals.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>300000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>loyaltyLostBase</stat><value>1</value></li>
+		</statModifiers>
+	</FactionColonies.FCEventDef>
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_banditAmbush_patrols</defName>
+		<label>Garrison Patrols</label>
+		<desc>Your standing forces made quick work of the bandit camps. The roads are clear, and your military reputation keeps new threats at bay.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>300000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>SC_RouteEfficiencyBonus</stat><value>0.1</value></li>
+		</statModifiers>
 	</FactionColonies.FCEventDef>
 
 	<!-- ==================== -->
@@ -34,19 +143,92 @@
 		<label>Secured Trade Routes</label>
 		<desc>Local militias have cleared the roads and fair weather has made for smooth caravan travel. Supply routes are running at peak efficiency.</desc>
 		<category>EC_SupplyChain</category>
-		<timeTillTrigger>300000</timeTillTrigger>
+		<timeTillTrigger>0</timeTillTrigger>
 		<isRandomEvent>true</isRandomEvent>
 		<weight>8</weight>
 		<rangeSettlementsAffected>1~3</rangeSettlementsAffected>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<activateAtStart>true</activateAtStart>
+		<options>
+			<li>sc_securedRoutes_opt1</li>
+			<li>sc_securedRoutes_opt2</li>
+			<li>sc_securedRoutes_opt3</li>
+		</options>
+		<optionDescription>The roads are clear and caravans are moving freely. Your supply routes are running at peak efficiency. How do you capitalize on the good conditions?</optionDescription>
+		<incompatibleEvents>
+			<li>sc_banditAmbush</li>
+			<li>sc_securedRoutes</li>
+		</incompatibleEvents>
+	</FactionColonies.FCEventDef>
+
+	<!-- Secured Routes Options -->
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_securedRoutes_opt1</defName>
+		<label>Invest in road improvements while conditions are good.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>600</silverCost>
+		<parentEvent>sc_securedRoutes</parentEvent>
+		<successEvent>sc_securedRoutes_invested</successEvent>
+	</FactionColonies.FCOptionDef>
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_securedRoutes_opt2</defName>
+		<label>Business as usual. Enjoy the smooth sailing.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>0</silverCost>
+		<parentEvent>sc_securedRoutes</parentEvent>
+		<successEvent>sc_securedRoutes_standard</successEvent>
+	</FactionColonies.FCOptionDef>
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_securedRoutes_opt3</defName>
+		<label>Give the caravan crews some rest. They've earned it.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>0</silverCost>
+		<parentEvent>sc_securedRoutes</parentEvent>
+		<successEvent>sc_securedRoutes_rested</successEvent>
+	</FactionColonies.FCOptionDef>
+
+	<!-- Secured Routes Outcomes -->
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_securedRoutes_invested</defName>
+		<label>Road Improvements</label>
+		<desc>Workers are reinforcing bridges and widening paths. The investment will keep routes efficient long after the good weather fades.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>600000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>SC_RouteEfficiencyBonus</stat><value>0.1</value></li>
+			<li><stat>SC_SellRateMultiplier</stat><value>0.05</value></li>
+		</statModifiers>
+	</FactionColonies.FCEventDef>
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_securedRoutes_standard</defName>
+		<label>Smooth Operations</label>
+		<desc>Caravans move swiftly along safe roads. A welcome reprieve from the usual hazards of overland trade.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>300000</timeTillTrigger>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
 			<li><stat>SC_RouteEfficiencyBonus</stat><value>0.1</value></li>
 			<li><stat>happinessGainedBase</stat><value>0.5</value></li>
 		</statModifiers>
-		<incompatibleEvents>
-			<li>sc_banditAmbush</li>
-			<li>sc_securedRoutes</li>
-		</incompatibleEvents>
+	</FactionColonies.FCEventDef>
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_securedRoutes_rested</defName>
+		<label>Well-Rested Crews</label>
+		<desc>The caravan crews are rotating shifts and catching up on sleep. Morale is high, even if the routes run a bit slower.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>300000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>SC_RouteEfficiencyBonus</stat><value>0.05</value></li>
+			<li><stat>happinessGainedBase</stat><value>1.5</value></li>
+		</statModifiers>
 	</FactionColonies.FCEventDef>
 
 	<!-- ==================== -->
@@ -191,20 +373,117 @@
 		<label>Infrastructure Decay</label>
 		<desc>Bridges are rotting, roads washing out, and nobody has maintained the supply depots in months. Everything moves slower.</desc>
 		<category>EC_SupplyChain</category>
-		<timeTillTrigger>600000</timeTillTrigger>
+		<timeTillTrigger>0</timeTillTrigger>
 		<isRandomEvent>true</isRandomEvent>
 		<weight>10</weight>
 		<rangeSettlementsAffected>2~3</rangeSettlementsAffected>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<minimumProsperity>30</minimumProsperity>
+		<activateAtStart>true</activateAtStart>
+		<options>
+			<li>sc_infraDecay_opt1</li>
+			<li>sc_infraDecay_opt2</li>
+			<li>sc_infraDecay_opt3</li>
+			<li>sc_infraDecay_opt4</li>
+		</options>
+		<optionDescription>Bridges are rotting, roads are washing out, and supply depots have gone unmaintained for months. Your trade infrastructure is crumbling. What do you do?</optionDescription>
+		<incompatibleEvents>
+			<li>sc_infraDecay</li>
+		</incompatibleEvents>
+	</FactionColonies.FCEventDef>
+
+	<!-- Infrastructure Decay Options -->
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_infraDecay_opt1</defName>
+		<label>Fund emergency repairs.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>800</silverCost>
+		<parentEvent>sc_infraDecay</parentEvent>
+		<successEvent>sc_infraDecay_repaired</successEvent>
+	</FactionColonies.FCOptionDef>
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_infraDecay_opt2</defName>
+		<label>Conscript workers to fix the roads.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>0</silverCost>
+		<parentEvent>sc_infraDecay</parentEvent>
+		<successEvent>sc_infraDecay_conscripted</successEvent>
+	</FactionColonies.FCOptionDef>
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_infraDecay_opt3</defName>
+		<label>Ignore it. We'll manage.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>0</silverCost>
+		<parentEvent>sc_infraDecay</parentEvent>
+		<successEvent>sc_infraDecay_ignored</successEvent>
+	</FactionColonies.FCOptionDef>
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_infraDecay_opt4</defName>
+		<label>Mobilize the settlement labor corps.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>0</silverCost>
+		<parentEvent>sc_infraDecay</parentEvent>
+		<successEvent>sc_infraDecay_laborCorps</successEvent>
+		<requiredPolicies>
+			<li>expansionist</li>
+		</requiredPolicies>
+	</FactionColonies.FCOptionDef>
+
+	<!-- Infrastructure Decay Outcomes -->
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_infraDecay_repaired</defName>
+		<label>Emergency Repairs</label>
+		<desc>Silver buys speed. Repair crews are patching the worst sections, though some degradation remains.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>300000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>SC_RouteEfficiencyBonus</stat><value>-0.05</value></li>
+			<li><stat>SC_SellRateMultiplier</stat><value>-0.05</value></li>
+		</statModifiers>
+	</FactionColonies.FCEventDef>
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_infraDecay_conscripted</defName>
+		<label>Forced Labor</label>
+		<desc>Workers pulled from their regular duties are filling potholes and shoring up bridges. The roads are holding, but people are exhausted and resentful.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>600000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>happinessLostBase</stat><value>2</value></li>
+		</statModifiers>
+	</FactionColonies.FCEventDef>
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_infraDecay_ignored</defName>
+		<label>Crumbling Roads</label>
+		<desc>The infrastructure continues to deteriorate. Caravans crawl along rutted paths and merchants avoid the worst stretches entirely.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>600000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
 			<li><stat>SC_RouteEfficiencyBonus</stat><value>-0.1</value></li>
 			<li><stat>SC_SellRateMultiplier</stat><value>-0.1</value></li>
 			<li><stat>prosperityBaseRecovery</stat><value>-1</value></li>
 		</statModifiers>
-		<incompatibleEvents>
-			<li>sc_infraDecay</li>
-		</incompatibleEvents>
+	</FactionColonies.FCEventDef>
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_infraDecay_laborCorps</defName>
+		<label>Rapid Reconstruction</label>
+		<desc>Your expansionist infrastructure corps mobilized within hours. Roads are being rebuilt to a higher standard than before.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>180000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>SC_RouteEfficiencyBonus</stat><value>-0.05</value></li>
+		</statModifiers>
 	</FactionColonies.FCEventDef>
 
 </Defs>

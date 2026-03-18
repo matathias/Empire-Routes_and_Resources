@@ -10,26 +10,128 @@
 		<label>Famine Season</label>
 		<desc>A prolonged dry spell has withered crops across the region. Food demand spikes as settlers grow restless.</desc>
 		<category>EC_SupplyChain</category>
-		<timeTillTrigger>600000</timeTillTrigger>
+		<timeTillTrigger>0</timeTillTrigger>
 		<isRandomEvent>true</isRandomEvent>
 		<weight>6</weight>
 		<rangeSettlementsAffected>1~3</rangeSettlementsAffected>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<requiredResource>RTD_Food</requiredResource>
+		<activateAtStart>true</activateAtStart>
+		<options>
+			<li>sc_famineCrisis_opt1</li>
+			<li>sc_famineCrisis_opt2</li>
+			<li>sc_famineCrisis_opt3</li>
+			<li>sc_famineCrisis_opt4</li>
+		</options>
+		<optionDescription>A prolonged drought has devastated crops across the region. Food stores are dwindling and settlers are growing desperate. How do you respond to the crisis?</optionDescription>
 		<restrictedBiomes>
 			<li>IceSheet</li>
 			<li>SeaIce</li>
 		</restrictedBiomes>
-		<statModifiers>
-			<li><stat>RTD_Food_ProductionMultiplier</stat><value>-0.2</value></li>
-			<li><stat>happinessLostBase</stat><value>2</value></li>
-			<li><stat>unrestGainedBase</stat><value>1</value></li>
-		</statModifiers>
 		<incompatibleEvents>
 			<li>sc_famineCrisis</li>
 			<li>sc_merchantSurplus</li>
 			<li>sc_windfallHarvest</li>
 		</incompatibleEvents>
+	</FactionColonies.FCEventDef>
+
+	<!-- Famine Crisis Options -->
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_famineCrisis_opt1</defName>
+		<label>Import emergency food supplies from outside.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>1000</silverCost>
+		<parentEvent>sc_famineCrisis</parentEvent>
+		<successEvent>sc_famineCrisis_imported</successEvent>
+	</FactionColonies.FCOptionDef>
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_famineCrisis_opt2</defName>
+		<label>Enforce strict rationing. Nobody starves, nobody feasts.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>0</silverCost>
+		<parentEvent>sc_famineCrisis</parentEvent>
+		<successEvent>sc_famineCrisis_rationed</successEvent>
+	</FactionColonies.FCOptionDef>
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_famineCrisis_opt3</defName>
+		<label>Redirect all production toward food.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>0</silverCost>
+		<parentEvent>sc_famineCrisis</parentEvent>
+		<successEvent>sc_famineCrisis_redirected</successEvent>
+	</FactionColonies.FCOptionDef>
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_famineCrisis_opt4</defName>
+		<label>Seize private food stores for redistribution.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>0</silverCost>
+		<parentEvent>sc_famineCrisis</parentEvent>
+		<successEvent>sc_famineCrisis_seized</successEvent>
+		<requiredPolicies>
+			<li>authoritarian</li>
+		</requiredPolicies>
+	</FactionColonies.FCOptionDef>
+
+	<!-- Famine Crisis Outcomes -->
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_famineCrisis_imported</defName>
+		<label>Emergency Food Imports</label>
+		<desc>Caravans loaded with grain and preserved meats have arrived. The drought still hurts production, but nobody goes hungry.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>300000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>RTD_Food_ProductionMultiplier</stat><value>-0.1</value></li>
+		</statModifiers>
+	</FactionColonies.FCEventDef>
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_famineCrisis_rationed</defName>
+		<label>Strict Rationing</label>
+		<desc>Every morsel is counted and divided. The settlers hate it, but there's no unrest — everyone knows the rules are fair.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>600000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>RTD_Food_ProductionMultiplier</stat><value>-0.15</value></li>
+			<li><stat>happinessLostBase</stat><value>3</value></li>
+		</statModifiers>
+	</FactionColonies.FCEventDef>
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_famineCrisis_redirected</defName>
+		<label>All Hands to the Fields</label>
+		<desc>Miners, weavers, and smiths have been reassigned to food production. Crops are recovering, but everything else has ground to a halt.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>600000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>RTD_Weapons_ProductionMultiplier</stat><value>-0.15</value></li>
+			<li><stat>RTD_Apparel_ProductionMultiplier</stat><value>-0.15</value></li>
+			<li><stat>RTD_Logging_ProductionMultiplier</stat><value>-0.15</value></li>
+			<li><stat>RTD_Mining_ProductionMultiplier</stat><value>-0.15</value></li>
+			<li><stat>RTD_Research_ProductionMultiplier</stat><value>-0.15</value></li>
+			<li><stat>RTD_Power_ProductionMultiplier</stat><value>-0.15</value></li>
+			<li><stat>RTD_Medicine_ProductionMultiplier</stat><value>-0.15</value></li>
+			<li><stat>RTD_Animals_ProductionMultiplier</stat><value>-0.15</value></li>
+		</statModifiers>
+	</FactionColonies.FCEventDef>
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_famineCrisis_seized</defName>
+		<label>Requisitioned Stores</label>
+		<desc>Soldiers went door to door, collecting private food caches. The people are fed but furious. Whispers of resistance spread.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>600000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>loyaltyLostBase</stat><value>2</value></li>
+		</statModifiers>
 	</FactionColonies.FCEventDef>
 
 	<!-- ======================== -->
@@ -161,19 +263,106 @@
 		<label>Power Surplus</label>
 		<desc>Favorable conditions have generated a surge in power output. Factories hum with extra energy and settlers enjoy well-lit nights.</desc>
 		<category>EC_SupplyChain</category>
-		<timeTillTrigger>300000</timeTillTrigger>
+		<timeTillTrigger>0</timeTillTrigger>
 		<isRandomEvent>true</isRandomEvent>
 		<weight>6</weight>
 		<rangeSettlementsAffected>1~2</rangeSettlementsAffected>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<requiredResource>RTD_Power</requiredResource>
+		<activateAtStart>true</activateAtStart>
+		<options>
+			<li>sc_powerSurplus_opt1</li>
+			<li>sc_powerSurplus_opt2</li>
+			<li>sc_powerSurplus_opt3</li>
+		</options>
+		<optionDescription>A surge in power output has your generators running hot. Extra energy is flowing through the grid. How do you use it?</optionDescription>
+		<incompatibleEvents>
+			<li>sc_powerSurplus</li>
+		</incompatibleEvents>
+	</FactionColonies.FCEventDef>
+
+	<!-- Power Surplus Options -->
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_powerSurplus_opt1</defName>
+		<label>Overcharge the factories. Push production to the limit.</label>
+		<baseChanceOfSuccess>60</baseChanceOfSuccess>
+		<silverCost>0</silverCost>
+		<parentEvent>sc_powerSurplus</parentEvent>
+		<successEvent>sc_powerSurplus_overcharged</successEvent>
+		<failEvent>sc_powerSurplus_overloaded</failEvent>
+	</FactionColonies.FCOptionDef>
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_powerSurplus_opt2</defName>
+		<label>Store the excess. Enjoy the steady supply.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>0</silverCost>
+		<parentEvent>sc_powerSurplus</parentEvent>
+		<successEvent>sc_powerSurplus_stored</successEvent>
+	</FactionColonies.FCOptionDef>
+
+	<FactionColonies.FCOptionDef>
+		<defName>sc_powerSurplus_opt3</defName>
+		<label>Sell excess power to neighboring settlements.</label>
+		<baseChanceOfSuccess>100</baseChanceOfSuccess>
+		<silverCost>0</silverCost>
+		<parentEvent>sc_powerSurplus</parentEvent>
+		<successEvent>sc_powerSurplus_sold</successEvent>
+	</FactionColonies.FCOptionDef>
+
+	<!-- Power Surplus Outcomes -->
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_powerSurplus_overcharged</defName>
+		<label>Factories Overcharged</label>
+		<desc>The extra power is driving production lines at double speed. Sparks fly, but the output is impressive.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>300000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>RTD_Power_ProductionAdditive</stat><value>4</value></li>
+			<li><stat>happinessGainedBase</stat><value>0.5</value></li>
+		</statModifiers>
+	</FactionColonies.FCEventDef>
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_powerSurplus_overloaded</defName>
+		<label>Grid Overload</label>
+		<desc>The power grid couldn't handle the strain. Rolling blackouts swept through before engineers stabilized things. At least some extra power got through.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>300000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>RTD_Power_ProductionAdditive</stat><value>1</value></li>
+			<li><stat>happinessLostBase</stat><value>0.5</value></li>
+		</statModifiers>
+	</FactionColonies.FCEventDef>
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_powerSurplus_stored</defName>
+		<label>Steady Power</label>
+		<desc>The extra power hums quietly through the grid. Lights stay on, machines run smoothly, and settlers sleep soundly.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>300000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
 			<li><stat>RTD_Power_ProductionAdditive</stat><value>2</value></li>
 			<li><stat>happinessGainedBase</stat><value>0.5</value></li>
 		</statModifiers>
-		<incompatibleEvents>
-			<li>sc_powerSurplus</li>
-		</incompatibleEvents>
+	</FactionColonies.FCEventDef>
+
+	<FactionColonies.FCEventDef>
+		<defName>sc_powerSurplus_sold</defName>
+		<label>Power Exports</label>
+		<desc>Neighboring settlements are paying well for your excess power. Less energy for you, but the trade connections are valuable.</desc>
+		<category>EC_SupplyChain</category>
+		<timeTillTrigger>300000</timeTillTrigger>
+		<settlementsCarryOver>true</settlementsCarryOver>
+		<statModifiers>
+			<li><stat>RTD_Power_ProductionAdditive</stat><value>1</value></li>
+			<li><stat>SC_SellRateMultiplier</stat><value>0.1</value></li>
+		</statModifiers>
 	</FactionColonies.FCEventDef>
 
 </Defs>
