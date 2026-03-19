@@ -6,7 +6,10 @@
 	<!-- (most base mod buildings don't have one)                     -->
 	<!-- ============================================================ -->
 
-	<!-- Smithy — needs Mining (ore/metal) -->
+	<!-- Smithy — needs Mining (ore/metal) + remove x0.95 Mining multiplier -->
+	<Operation Class="PatchOperationRemove">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="Smithy"]/statModifiers/li[stat="RTD_Mining_ProductionMultiplier"]</xpath>
+	</Operation>
 	<Operation Class="PatchOperationSequence">
 		<success>Always</success>
 		<operations>
@@ -367,6 +370,391 @@
 				</inputs>
 				<penalties>
 					<li><stat>happinessLostBase</stat><penaltyPerUnit>2.0</penaltyPerUnit><label>reconstruction offline</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- ============================================================ -->
+	<!-- Multiplier-to-Need conversions: remove negative production   -->
+	<!-- multipliers from base mod buildings, replace with needs      -->
+	<!-- ============================================================ -->
+
+	<!-- fletcher — remove x0.85 Animals multiplier, add Animals need -->
+	<Operation Class="PatchOperationRemove">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="fletcher"]/statModifiers/li[stat="RTD_Animals_ProductionMultiplier"]</xpath>
+	</Operation>
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="fletcher"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="fletcher"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="fletcher"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Animals</resource><amount>0.3</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>prosperityLostBase</stat><penaltyPerUnit>1.7</penaltyPerUnit><label>hide shortage</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- furrier — remove x0.85 Animals multiplier, add Animals need -->
+	<Operation Class="PatchOperationRemove">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="furrier"]/statModifiers/li[stat="RTD_Animals_ProductionMultiplier"]</xpath>
+	</Operation>
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="furrier"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="furrier"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="furrier"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Animals</resource><amount>0.3</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>prosperityLostBase</stat><penaltyPerUnit>1.7</penaltyPerUnit><label>hide shortage</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- huntersHut — remove x0.75 Animals multiplier, add Animals need -->
+	<Operation Class="PatchOperationRemove">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="huntersHut"]/statModifiers/li[stat="RTD_Animals_ProductionMultiplier"]</xpath>
+	</Operation>
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="huntersHut"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="huntersHut"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="huntersHut"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Animals</resource><amount>0.5</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>prosperityLostBase</stat><penaltyPerUnit>2.0</penaltyPerUnit><label>overhunting</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- brewer — remove x0.95 Food multiplier, add Food need -->
+	<Operation Class="PatchOperationRemove">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="brewer"]/statModifiers/li[stat="RTD_Food_ProductionMultiplier"]</xpath>
+	</Operation>
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="brewer"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="brewer"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="brewer"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Food</resource><amount>0.2</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>happinessLostBase</stat><penaltyPerUnit>1.3</penaltyPerUnit><label>grain shortage</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- carpenter — remove x0.8 Logging multiplier, add Logging need -->
+	<Operation Class="PatchOperationRemove">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="carpenter"]/statModifiers/li[stat="RTD_Logging_ProductionMultiplier"]</xpath>
+	</Operation>
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="carpenter"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="carpenter"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="carpenter"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Logging</resource><amount>0.1</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>prosperityLostBase</stat><penaltyPerUnit>1</penaltyPerUnit><label>lumber shortage</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- alchemist — remove x0.85 Mining multiplier, add Mining need -->
+	<Operation Class="PatchOperationRemove">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="alchemist"]/statModifiers/li[stat="RTD_Mining_ProductionMultiplier"]</xpath>
+	</Operation>
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="alchemist"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="alchemist"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="alchemist"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Mining</resource><amount>0.3</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>prosperityLostBase</stat><penaltyPerUnit>1.7</penaltyPerUnit><label>ore shortage</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- adventurersGuild — remove x0.85 Food/Weapons/Apparel multipliers, add needs -->
+	<Operation Class="PatchOperationRemove">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="adventurersGuild"]/statModifiers/li[stat="RTD_Food_ProductionMultiplier"]</xpath>
+	</Operation>
+	<Operation Class="PatchOperationRemove">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="adventurersGuild"]/statModifiers/li[stat="RTD_Weapons_ProductionMultiplier"]</xpath>
+	</Operation>
+	<Operation Class="PatchOperationRemove">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="adventurersGuild"]/statModifiers/li[stat="RTD_Apparel_ProductionMultiplier"]</xpath>
+	</Operation>
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="adventurersGuild"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="adventurersGuild"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="adventurersGuild"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Food</resource><amount>0.3</amount></li>
+					<li><resource>RTD_Weapons</resource><amount>0.3</amount></li>
+					<li><resource>RTD_Apparel</resource><amount>0.3</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>happinessLostBase</stat><penaltyPerUnit>1.5</penaltyPerUnit><label>provisioning</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- UndergroundMine — remove x0.95 Logging multiplier, add Logging need -->
+	<Operation Class="PatchOperationRemove">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="UndergroundMine"]/statModifiers/li[stat="RTD_Logging_ProductionMultiplier"]</xpath>
+	</Operation>
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="UndergroundMine"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="UndergroundMine"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="UndergroundMine"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Logging</resource><amount>0.2</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>prosperityLostBase</stat><penaltyPerUnit>1.3</penaltyPerUnit><label>timber shortage</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- SyntheticWoodFactory — remove x0.5 Logging multiplier, add Logging need -->
+	<Operation Class="PatchOperationRemove">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="SyntheticWoodFactory"]/statModifiers/li[stat="RTD_Logging_ProductionMultiplier"]</xpath>
+	</Operation>
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="SyntheticWoodFactory"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="SyntheticWoodFactory"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="SyntheticWoodFactory"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Logging</resource><amount>1.0</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>prosperityLostBase</stat><penaltyPerUnit>2.5</penaltyPerUnit><label>raw material crisis</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- AmmunitionMines — remove x0.85 Mining multiplier, add Mining need -->
+	<Operation Class="PatchOperationRemove">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="AmmunitionMines"]/statModifiers/li[stat="RTD_Mining_ProductionMultiplier"]</xpath>
+	</Operation>
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="AmmunitionMines"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="AmmunitionMines"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="AmmunitionMines"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Mining</resource><amount>0.3</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>prosperityLostBase</stat><penaltyPerUnit>1.7</penaltyPerUnit><label>ore shortage</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- TanningWorkshop — remove x0.85 Animals multiplier, add Animals need -->
+	<Operation Class="PatchOperationRemove">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="TanningWorkshop"]/statModifiers/li[stat="RTD_Animals_ProductionMultiplier"]</xpath>
+	</Operation>
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="TanningWorkshop"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="TanningWorkshop"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="TanningWorkshop"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Animals</resource><amount>0.3</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>prosperityLostBase</stat><penaltyPerUnit>1.7</penaltyPerUnit><label>hide shortage</label></li>
+				</penalties>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- DrugDen — remove x0.95 Medicine multiplier, add Medicine need -->
+	<Operation Class="PatchOperationRemove">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="DrugDen"]/statModifiers/li[stat="RTD_Medicine_ProductionMultiplier"]</xpath>
+	</Operation>
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="DrugDen"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="DrugDen"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="DrugDen"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<inputs>
+					<li><resource>RTD_Medicine</resource><amount>0.2</amount></li>
+				</inputs>
+				<penalties>
+					<li><stat>prosperityLostBase</stat><penaltyPerUnit>1.3</penaltyPerUnit><label>chemical shortage</label></li>
 				</penalties>
 			</li>
 		</value>
