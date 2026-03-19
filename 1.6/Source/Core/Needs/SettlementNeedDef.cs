@@ -28,11 +28,21 @@ namespace FactionColonies.SupplyChain
         public double baseAmount;
         public NeedScaling scaling = NeedScaling.Flat;
         public TechLevel minTechLevel = TechLevel.Undefined;
+        public List<WorldSettlementDef> allowedSettlementTypes;
+        public List<WorldSettlementDef> blockedSettlementTypes;
         public List<NeedPenalty> penalties;
 
         public bool IsActiveForFaction(FactionFC faction)
         {
             return minTechLevel == TechLevel.Undefined || faction.techLevel >= minTechLevel;
+        }
+
+        public bool IsActiveForSettlement(WorldSettlementFC settlement)
+        {
+            bool allowed = settlement.settlementDef.IsInList(allowedSettlementTypes);
+            bool blocked = settlement.settlementDef.IsInList(blockedSettlementTypes);
+
+            return allowed && !blocked;
         }
 
         public double CalculateDemand(WorldSettlementFC settlement)

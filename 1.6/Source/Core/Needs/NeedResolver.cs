@@ -24,6 +24,7 @@ namespace FactionColonies.SupplyChain
             foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
             {
                 if (faction != null && !needDef.IsActiveForFaction(faction)) continue;
+                if (!needDef.IsActiveForSettlement(settlement)) continue;
 
                 double demand = needDef.CalculateDemand(settlement);
 
@@ -62,6 +63,7 @@ namespace FactionColonies.SupplyChain
                 foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
                 {
                     if (!needDef.IsActiveForFaction(faction)) continue;
+                    if (!needDef.IsActiveForSettlement(settlement)) continue;
 
                     double demand = needDef.CalculateDemand(settlement);
 
