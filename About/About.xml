@@ -15,7 +15,7 @@
 			<downloadUrl>https://github.com/pardeike/HarmonyRimWorld/releases/latest</downloadUrl>
 		</li>
 		<li>
-			<packageId>Saakra.Empire</packageId>
+			<packageId>Matathias.Empire</packageId>
 			<displayName>Empire</displayName>
 		</li>
 	</modDependencies>
