@@ -283,6 +283,21 @@ namespace FactionColonies.SupplyChain
                 }
             }
 
+            // Comp-provided needs (e.g., specialist needs via INeedProvider)
+            if (needStates != null)
+            {
+                foreach (NeedState state in needStates)
+                {
+                    if (state.penalties == null || state.demanded <= 0 || state.fulfilled >= state.demanded) continue;
+                    double shortfall = state.demanded - state.fulfilled;
+                    foreach (NeedPenalty penalty in state.penalties)
+                    {
+                        if (penalty.stat == stat)
+                            total += penalty.penaltyPerUnit * shortfall;
+                    }
+                }
+            }
+
             return total != 0.0 ? total : stat.IdentityValue;
         }
 
@@ -306,6 +321,26 @@ namespace FactionColonies.SupplyChain
 
                     string line = "SC_UnmetNeedPenalty".Translate(needDef.label, val.ToString("F1"));
                     desc = desc == null ? line : desc + "\n" + line;
+                }
+            }
+
+            // Comp-provided needs (e.g., specialist needs via INeedProvider)
+            if (needStates != null)
+            {
+                foreach (NeedState state in needStates)
+                {
+                    if (state.penalties == null || state.demanded <= 0 || state.fulfilled >= state.demanded) continue;
+                    double shortfall = state.demanded - state.fulfilled;
+                    foreach (NeedPenalty penalty in state.penalties)
+                    {
+                        if (penalty.stat != stat) continue;
+                        double val = penalty.penaltyPerUnit * shortfall;
+                        if (val <= 0) continue;
+
+                        string needLabel = state.label ?? state.needId;
+                        string line = "SC_UnmetNeedPenalty".Translate(needLabel, val.ToString("F1"));
+                        desc = desc == null ? line : desc + "\n" + line;
+                    }
                 }
             }
 

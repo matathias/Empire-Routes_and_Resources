@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Verse;
 
 namespace FactionColonies.SupplyChain
@@ -12,6 +13,19 @@ namespace FactionColonies.SupplyChain
         public ResourceTypeDef resource;
         public double demanded;
         public double fulfilled;
+
+        /// <summary>
+        /// Penalties for comp-provided needs (via INeedProvider). Null for def-based needs
+        /// (which get penalties from the SettlementNeedDef itself).
+        /// Not serialized — recomputed each tax resolution.
+        /// </summary>
+        public List<NeedPenalty> penalties;
+
+        /// <summary>
+        /// Display label for comp-provided needs. Null for def-based needs
+        /// (which use SettlementNeedDef.label). Not serialized.
+        /// </summary>
+        public string label;
 
         public float Satisfaction
         {

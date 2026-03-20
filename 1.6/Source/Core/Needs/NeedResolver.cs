@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using RimWorld.Planet;
 using Verse;
 
 namespace FactionColonies.SupplyChain
@@ -36,6 +37,9 @@ namespace FactionColonies.SupplyChain
 
             // 2. Building needs
             ResolveBuildingNeeds(settlement, stockpile, states);
+
+            // 3. Comp-provided needs (e.g., specialist needs via INeedProvider)
+            ResolveCompNeeds(settlement, stockpile, states);
 
             comp.SetNeedStates(states);
             settlement.InvalidateStatCache();
@@ -103,6 +107,33 @@ namespace FactionColonies.SupplyChain
                         }
                     }
                 }
+
+                // Comp-provided needs (e.g., specialist needs via INeedProvider)
+                foreach (WorldObjectComp woc in settlement.AllComps)
+                {
+                    INeedProvider provider = woc as INeedProvider;
+                    if (provider == null) continue;
+
+                    List<NeedEntry> compNeeds = new List<NeedEntry>();
+                    provider.CollectNeeds(settlement, compNeeds);
+
+                    foreach (NeedEntry entry in compNeeds)
+                    {
+                        if (entry.resource == null || entry.amount <= 0) continue;
+
+                        allDemands.Add(new NeedDemandEntry
+                        {
+                            settlement = settlement,
+                            comp = comp,
+                            needId = entry.needId,
+                            resource = entry.resource,
+                            demand = entry.amount,
+                            penalties = entry.penalties,
+                            label = entry.label,
+                            provider = provider
+                        });
+                    }
+                }
             }
 
             // Calculate fill rate per resource
@@ -126,6 +157,10 @@ namespace FactionColonies.SupplyChain
             Dictionary<WorldObjectComp_SupplyChain, List<NeedState>> compStates =
                 new Dictionary<WorldObjectComp_SupplyChain, List<NeedState>>();
 
+            // Track provider resolutions for OnNeedsResolved callbacks
+            Dictionary<INeedProvider, List<NeedResolution>> providerResolutions =
+                new Dictionary<INeedProvider, List<NeedResolution>>();
+
             foreach (NeedDemandEntry entry in allDemands)
             {
                 double fillRate;
@@ -141,7 +176,28 @@ namespace FactionColonies.SupplyChain
                     states = new List<NeedState>();
                     compStates[entry.comp] = states;
                 }
-                states.Add(new NeedState(entry.needId, entry.resource, entry.demand, drawn));
+
+                NeedState ns = new NeedState(entry.needId, entry.resource, entry.demand, drawn);
+                ns.penalties = entry.penalties;
+                ns.label = entry.label;
+                states.Add(ns);
+
+                // Track provider resolutions
+                if (entry.provider != null)
+                {
+                    List<NeedResolution> resolutions;
+                    if (!providerResolutions.TryGetValue(entry.provider, out resolutions))
+                    {
+                        resolutions = new List<NeedResolution>();
+                        providerResolutions[entry.provider] = resolutions;
+                    }
+                    resolutions.Add(new NeedResolution
+                    {
+                        needId = entry.needId,
+                        demanded = entry.demand,
+                        fulfilled = drawn
+                    });
+                }
             }
 
             // Apply results
@@ -151,6 +207,12 @@ namespace FactionColonies.SupplyChain
                 WorldSettlementFC ws = kv.Key.WorldSettlement;
                 if (ws != null)
                     ws.InvalidateStatCache();
+            }
+
+            // Notify providers of their resolution results
+            foreach (KeyValuePair<INeedProvider, List<NeedResolution>> kv in providerResolutions)
+            {
+                kv.Key.OnNeedsResolved(kv.Value);
             }
 
             // Settlements with no demands still need cleared states
@@ -191,6 +253,41 @@ namespace FactionColonies.SupplyChain
             }
         }
 
+        private static void ResolveCompNeeds(WorldSettlementFC settlement, IStockpile stockpile, List<NeedState> states)
+        {
+            foreach (WorldObjectComp comp in settlement.AllComps)
+            {
+                INeedProvider provider = comp as INeedProvider;
+                if (provider == null) continue;
+
+                List<NeedEntry> compNeeds = new List<NeedEntry>();
+                provider.CollectNeeds(settlement, compNeeds);
+
+                List<NeedResolution> resolutions = new List<NeedResolution>();
+                foreach (NeedEntry entry in compNeeds)
+                {
+                    if (entry.resource == null || entry.amount <= 0) continue;
+
+                    double drawn;
+                    stockpile.TryDraw(entry.resource, entry.amount, out drawn);
+
+                    NeedState ns = new NeedState(entry.needId, entry.resource, entry.amount, drawn);
+                    ns.penalties = entry.penalties;
+                    ns.label = entry.label;
+                    states.Add(ns);
+
+                    resolutions.Add(new NeedResolution
+                    {
+                        needId = entry.needId,
+                        demanded = entry.amount,
+                        fulfilled = drawn
+                    });
+                }
+
+                provider.OnNeedsResolved(resolutions);
+            }
+        }
+
         private struct NeedDemandEntry
         {
             public WorldSettlementFC settlement;
@@ -198,6 +295,9 @@ namespace FactionColonies.SupplyChain
             public string needId;
             public ResourceTypeDef resource;
             public double demand;
+            public List<NeedPenalty> penalties;
+            public string label;
+            public INeedProvider provider;
         }
     }
 }
