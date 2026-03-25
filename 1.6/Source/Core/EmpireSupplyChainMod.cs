@@ -95,6 +95,19 @@ namespace FactionColonies.SupplyChain
         }
     }
 
+    [StaticConstructorOnStartup]
+    public static class SupplyChainStartup
+    {
+        static SupplyChainStartup()
+        {
+            EmpireCacheUtil.RegisterCacheInvalidator("SupplyChain", () =>
+            {
+                SupplyChainCache.InvalidateCache();
+                SupplyRouteModifierRegistry.ClearAll();
+            });
+        }
+    }
+
     public class EmpireSupplyChainMod : Mod
     {
         public SupplyChainSettings settings;
