@@ -973,6 +973,8 @@ namespace FactionColonies.SupplyChain
         public void OnSquadDeployed(WorldSettlementFC settlement, MilitaryJobDef job, bool isExtraSquad) { }
         public void OnSquadRecalled(WorldSettlementFC settlement) { }
         public void OnBattleResolved(WorldSettlementFC settlement, MilitaryJobDef job, bool victory, BattleResult result) { }
+        public void OnMercenaryDeath(MercenaryDeathEvent evt) { }
+
         public void OnResearchCompleted(ResearchProjectDef project) { }
 
         private void InvalidateAllRoutes()
