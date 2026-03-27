@@ -44,6 +44,18 @@ namespace FactionColonies.SupplyChain
                 tip += "\n" + (string)"SC_BarFlowBaseNeeds".Translate(flow.baseNeeds.ToString("F1"));
             if (flow.buildingNeeds > 0)
                 tip += "\n" + (string)"SC_BarFlowBuildingNeeds".Translate(flow.buildingNeeds.ToString("F1"));
+            if (flow.compNeedLines != null)
+            {
+                foreach (CompNeedLine line in flow.compNeedLines)
+                {
+                    if (line.amount > 0)
+                        tip += "\n" + (string)"SC_BarFlowCompNeedLine".Translate(line.label, line.amount.ToString("F1"));
+                }
+            }
+            else if (flow.compNeeds > 0)
+            {
+                tip += "\n" + (string)"SC_BarFlowCompNeedLine".Translate("Other", flow.compNeeds.ToString("F1"));
+            }
             if (flow.routeOut > 0)
                 tip += "\n" + (string)"SC_BarFlowRouteOut".Translate(flow.routeOut.ToString("F1"));
             if (flow.sellOrders > 0)

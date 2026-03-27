@@ -57,6 +57,7 @@
     <SC_BarFlowRouteIn>  Route in: +{0}</SC_BarFlowRouteIn>
     <SC_BarFlowBaseNeeds>  Base needs: -{0}</SC_BarFlowBaseNeeds>
     <SC_BarFlowBuildingNeeds>  Building needs: -{0}</SC_BarFlowBuildingNeeds>
+    <SC_BarFlowCompNeedLine>  {0}: -{1}</SC_BarFlowCompNeedLine>
     <SC_BarFlowRouteOut>  Routes out: -{0}</SC_BarFlowRouteOut>
     <SC_BarFlowSellOrders>  Sell orders: -{0}</SC_BarFlowSellOrders>
     <SC_BarCapBreakdown>Cap: {0} settlements × {1} = {2}</SC_BarCapBreakdown>
@@ -96,8 +97,11 @@
     <SC_NoProduction>No Production</SC_NoProduction>
     <SC_SettlementNeeds>Settlement Needs</SC_SettlementNeeds>
     <SC_SatisfactionDisplay>{0}% ({1} / {2})</SC_SatisfactionDisplay>
+    <SC_SatisfactionProjected>{0}% projected (last: {1}%)</SC_SatisfactionProjected>
     <SC_PenaltyLine>-{0} {1}</SC_PenaltyLine>
     <SC_UnmetNeedPenalty>Unmet {0} need: -{1}</SC_UnmetNeedPenalty>
+    <SC_NeedProjectionExplain>Projected satisfaction: {0}% (based on current stockpile and flow)</SC_NeedProjectionExplain>
+    <SC_NeedActualLast>Last tax cycle: {0}%</SC_NeedActualLast>
 
     <!-- Tithe Injection -->
     <SC_TitheInjection>Tithe Injection</SC_TitheInjection>

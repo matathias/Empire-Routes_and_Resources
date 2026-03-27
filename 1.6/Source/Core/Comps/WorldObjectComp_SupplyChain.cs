@@ -1682,6 +1682,27 @@ namespace FactionColonies.SupplyChain
         {
             if (needStates.Count == 0) return;
 
+            // Pre-compute projected fill rates per resource
+            WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
+            bool isComplex = wc != null && wc.Mode == SupplyChainMode.Complex;
+            FactionFC faction = FactionCache.FactionComp;
+            WorldSettlementFC ws = WorldSettlement;
+
+            Dictionary<ResourceTypeDef, float> projectedRates = new Dictionary<ResourceTypeDef, float>();
+            foreach (NeedState state in needStates)
+            {
+                if (state.resource == null || projectedRates.ContainsKey(state.resource))
+                    continue;
+
+                float rate;
+                if (isComplex)
+                    rate = NeedProjection.ProjectedFillRate(wc, ws, this, state.resource);
+                else
+                    rate = NeedProjection.ProjectedFillRateSimple(wc, faction, state.resource);
+
+                projectedRates[state.resource] = rate;
+            }
+
             Text.Font = GameFont.Medium;
             Text.Anchor = TextAnchor.MiddleCenter;
             Widgets.Label(new Rect(AccentW + 6f, curY, viewRect.width, 30f), "SC_SettlementNeeds".Translate());
@@ -1693,12 +1714,18 @@ namespace FactionColonies.SupplyChain
             {
                 if (state.resource == null) continue;
 
-                float satisfaction = state.Satisfaction;
+                float projected;
+                if (!projectedRates.TryGetValue(state.resource, out projected))
+                    projected = state.Satisfaction;
+                float actual = state.Satisfaction;
+
+                // Use projected satisfaction for bar display
+                float satisfaction = projected;
 
                 Rect rowRect = new Rect(0f, curY, viewRect.width, 24f);
                 if (idx % 2 == 0) Widgets.DrawHighlight(rowRect);
 
-                // Left accent bar colored by satisfaction
+                // Left accent bar colored by projected satisfaction
                 Color needAccent = satisfaction > 0.8f ? AccentPositive
                     : satisfaction > 0.4f ? new Color(0.9f, 0.8f, 0.2f)
                     : AccentNegative;
@@ -1723,26 +1750,38 @@ namespace FactionColonies.SupplyChain
                 Widgets.FillableBar(barRect, satisfaction);
                 GUI.color = Color.white;
 
-                Widgets.Label(new Rect(cx + 314f, curY, 110f, 24f),
-                    "SC_SatisfactionDisplay".Translate(
+                // Show projected % with last-cycle comparison when they differ
+                string displayText;
+                if (state.demanded > 0 && Math.Abs(satisfaction - actual) > 0.005f)
+                {
+                    displayText = (string)"SC_SatisfactionProjected".Translate(
+                        (satisfaction * 100f).ToString("F0"),
+                        (actual * 100f).ToString("F0"));
+                }
+                else
+                {
+                    displayText = (string)"SC_SatisfactionDisplay".Translate(
                         (satisfaction * 100f).ToString("F0"),
                         state.fulfilled.ToString("F1"),
-                        state.demanded.ToString("F1")));
+                        state.demanded.ToString("F1"));
+                }
+                Widgets.Label(new Rect(cx + 314f, curY, 130f, 24f), displayText);
 
                 if (satisfaction < 1f)
                 {
                     Text.Font = GameFont.Tiny;
                     GUI.color = new Color(1f, 0.5f, 0.5f);
-                    string penaltyText = GetPenaltySummary(state);
-                    Rect penaltyRect = new Rect(cx + 430f, curY, 200f, 24f);
+                    double projectedShortfall = state.demanded * (1.0 - satisfaction);
+                    string penaltyText = GetProjectedPenaltySummary(state, projectedShortfall);
+                    Rect penaltyRect = new Rect(cx + 450f, curY, 200f, 24f);
                     if (penaltyText != null)
                         Widgets.Label(penaltyRect, Text.ClampTextWithEllipsis(penaltyRect, penaltyText));
                     GUI.color = Color.white;
                     Text.Font = GameFont.Small;
                 }
 
-                // Tooltip explaining demand source
-                string tooltip = BuildNeedTooltip(state);
+                // Tooltip explaining demand source + projection
+                string tooltip = BuildNeedTooltip(state, satisfaction, actual);
                 if (tooltip != null)
                     TooltipHandler.TipRegion(rowRect, tooltip);
 
@@ -1752,60 +1791,73 @@ namespace FactionColonies.SupplyChain
             }
         }
 
-        private string BuildNeedTooltip(NeedState state)
+        private string BuildNeedTooltip(NeedState state, float projected, float actual)
         {
             WorldSettlementFC ws = WorldSettlement;
             if (ws == null) return null;
 
             string displayLabel = state.label ?? state.needId;
 
-            if (state.category == NeedCategory.Building)
-                return displayLabel + ": " + state.demanded.ToString("F1") + " " + state.resource.label;
-
-            // Base/comp needs: show scaling breakdown if a SettlementNeedDef exists
-            SettlementNeedDef needDef = DefDatabase<SettlementNeedDef>.GetNamedSilentFail(state.needId);
             string tip;
-            if (needDef != null)
-            {
-                string scalingDesc;
-                switch (needDef.scaling)
-                {
-                    case NeedScaling.PerWorker:
-                        scalingDesc = needDef.baseAmount.ToString("F1") + " per worker x " + ws.workers + " = " + state.demanded.ToString("F1");
-                        break;
-                    case NeedScaling.PerLevel:
-                        scalingDesc = needDef.baseAmount.ToString("F1") + " per level x " + ws.settlementLevel + " = " + state.demanded.ToString("F1");
-                        break;
-                    default:
-                        scalingDesc = needDef.baseAmount.ToString("F1") + " (flat)";
-                        break;
-                }
-                tip = displayLabel + "\n" + scalingDesc;
-            }
-            else
+            if (state.category == NeedCategory.Building)
             {
                 tip = displayLabel + ": " + state.demanded.ToString("F1") + " " + state.resource.label;
             }
-
-            if (state.Satisfaction < 1f && state.penalties != null)
+            else
             {
-                tip += "\n\nPenalties:";
-                double shortfall = state.demanded - state.fulfilled;
+                // Base/comp needs: show scaling breakdown if a SettlementNeedDef exists
+                SettlementNeedDef needDef = DefDatabase<SettlementNeedDef>.GetNamedSilentFail(state.needId);
+                if (needDef != null)
+                {
+                    string scalingDesc;
+                    switch (needDef.scaling)
+                    {
+                        case NeedScaling.PerWorker:
+                            scalingDesc = needDef.baseAmount.ToString("F1") + " per worker x " + ws.workers + " = " + state.demanded.ToString("F1");
+                            break;
+                        case NeedScaling.PerLevel:
+                            scalingDesc = needDef.baseAmount.ToString("F1") + " per level x " + ws.settlementLevel + " = " + state.demanded.ToString("F1");
+                            break;
+                        default:
+                            scalingDesc = needDef.baseAmount.ToString("F1") + " (flat)";
+                            break;
+                    }
+                    tip = displayLabel + "\n" + scalingDesc;
+                }
+                else
+                {
+                    tip = displayLabel + ": " + state.demanded.ToString("F1") + " " + state.resource.label;
+                }
+            }
+
+            // Projected penalties
+            if (projected < 1f && state.penalties != null && state.demanded > 0)
+            {
+                tip += "\n\n" + (string)"SC_NeedProjectionExplain".Translate(
+                    (projected * 100f).ToString("F0"));
+                double projectedShortfall = state.demanded * (1.0 - projected);
+                tip += "\n\nProjected penalties:";
                 foreach (NeedPenalty penalty in state.penalties)
                 {
-                    double penaltyVal = penalty.penaltyPerUnit * shortfall;
+                    double penaltyVal = penalty.penaltyPerUnit * projectedShortfall;
                     tip += "\n  " + (penalty.label ?? penalty.stat.label) + ": -" + penaltyVal.ToString("F1");
                 }
+            }
+
+            // Show last-cycle actual if it differs
+            if (state.demanded > 0 && Math.Abs(projected - actual) > 0.005f)
+            {
+                tip += "\n\n" + (string)"SC_NeedActualLast".Translate(
+                    (actual * 100f).ToString("F0"));
             }
 
             return tip;
         }
 
-        private string GetPenaltySummary(NeedState state)
+        private string GetProjectedPenaltySummary(NeedState state, double shortfall)
         {
-            if (state.penalties == null || state.demanded <= 0 || state.fulfilled >= state.demanded)
+            if (state.penalties == null || shortfall <= 0)
                 return null;
-            double shortfall = state.demanded - state.fulfilled;
             string result = null;
             foreach (NeedPenalty penalty in state.penalties)
             {

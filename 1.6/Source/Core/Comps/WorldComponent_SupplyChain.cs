@@ -356,16 +356,24 @@ namespace FactionColonies.SupplyChain
 
         // --- Flow Calculation & Cache ---
 
+        internal struct CompNeedLine
+        {
+            public string label;
+            public double amount;
+        }
+
         internal struct FlowBreakdown
         {
             public double production;
             public double routeIn;
             public double baseNeeds;
             public double buildingNeeds;
+            public double compNeeds;
+            public List<CompNeedLine> compNeedLines;
             public double routeOut;
             public double sellOrders;
             public double titheInjection;
-            public double needs { get { return baseNeeds + buildingNeeds; } }
+            public double needs { get { return baseNeeds + buildingNeeds + compNeeds; } }
             public double Net { get { return production + routeIn - needs - routeOut - sellOrders - titheInjection; } }
         }
 
@@ -503,6 +511,45 @@ namespace FactionColonies.SupplyChain
                     {
                         if (input.resource == def)
                             flow.buildingNeeds += input.amount;
+                    }
+                }
+            }
+
+            foreach (WorldObjectComp woc in settlement.AllComps)
+            {
+                INeedProvider provider = woc as INeedProvider;
+                if (provider == null) continue;
+                List<NeedEntry> entries = new List<NeedEntry>();
+                provider.CollectNeeds(settlement, entries);
+                foreach (NeedEntry entry in entries)
+                {
+                    if (entry.resource != def) continue;
+                    flow.compNeeds += entry.amount;
+
+                    // Store labeled line for tooltip display
+                    string lineLabel = entry.label ?? entry.needId;
+                    if (flow.compNeedLines == null)
+                    {
+                        flow.compNeedLines = new List<CompNeedLine>();
+                        flow.compNeedLines.Add(new CompNeedLine { label = lineLabel, amount = entry.amount });
+                    }
+                    else
+                    {
+                        // Merge entries with the same label
+                        bool merged = false;
+                        for (int i = 0; i < flow.compNeedLines.Count; i++)
+                        {
+                            if (flow.compNeedLines[i].label == lineLabel)
+                            {
+                                CompNeedLine line = flow.compNeedLines[i];
+                                line.amount += entry.amount;
+                                flow.compNeedLines[i] = line;
+                                merged = true;
+                                break;
+                            }
+                        }
+                        if (!merged)
+                            flow.compNeedLines.Add(new CompNeedLine { label = lineLabel, amount = entry.amount });
                     }
                 }
             }
