@@ -2,7 +2,7 @@
 <LanguageData>
 
     <!-- Settings -->
-    <SC_SettingsCategory>Empire - Supply Chain</SC_SettingsCategory>
+    <SC_SettingsCategory>Empire Refactored: Routes &amp; Resources</SC_SettingsCategory>
     <SC_SettingsMode>Supply chain mode: {0}</SC_SettingsMode>
     <SC_SettingsSwitchComplex>Switch to Complex</SC_SettingsSwitchComplex>
     <SC_SettingsSwitchSimple>Switch to Simple</SC_SettingsSwitchSimple>

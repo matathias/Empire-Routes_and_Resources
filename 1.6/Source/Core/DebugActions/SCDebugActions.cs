@@ -37,7 +37,7 @@ namespace FactionColonies.SupplyChain
             }
         }
 
-        [DebugAction("Empire - Supply Chain", "Fill all stockpiles", allowedGameStates = AllowedGameStates.Playing)]
+        [DebugAction("Empire Refactored: Routes & Resources", "Fill all stockpiles", allowedGameStates = AllowedGameStates.Playing)]
         private static void FillAllStockpiles()
         {
             ForEachStockpile((stockpile, label) =>
@@ -53,7 +53,7 @@ namespace FactionColonies.SupplyChain
             Log.Message("[Empire-SupplyChain] Debug: All stockpiles filled to cap.");
         }
 
-        [DebugAction("Empire - Supply Chain", "Empty all stockpiles", allowedGameStates = AllowedGameStates.Playing)]
+        [DebugAction("Empire Refactored: Routes & Resources", "Empty all stockpiles", allowedGameStates = AllowedGameStates.Playing)]
         private static void EmptyAllStockpiles()
         {
             ForEachStockpile((stockpile, label) =>
@@ -71,7 +71,7 @@ namespace FactionColonies.SupplyChain
             Log.Message("[Empire-SupplyChain] Debug: All stockpiles emptied.");
         }
 
-        [DebugAction("Empire - Supply Chain", "Force resolve needs", allowedGameStates = AllowedGameStates.Playing)]
+        [DebugAction("Empire Refactored: Routes & Resources", "Force resolve needs", allowedGameStates = AllowedGameStates.Playing)]
         private static void ForceResolveNeeds()
         {
             WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
@@ -100,7 +100,7 @@ namespace FactionColonies.SupplyChain
             Log.Message("[Empire-SupplyChain] Debug: Needs resolved.");
         }
 
-        [DebugAction("Empire - Supply Chain", "Force execute routes", allowedGameStates = AllowedGameStates.Playing)]
+        [DebugAction("Empire Refactored: Routes & Resources", "Force execute routes", allowedGameStates = AllowedGameStates.Playing)]
         private static void ForceExecuteRoutes()
         {
             WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
@@ -128,7 +128,7 @@ namespace FactionColonies.SupplyChain
             Log.Message("[Empire-SupplyChain] Debug: Executed " + count + " routes.");
         }
 
-        [DebugAction("Empire - Supply Chain", "Force execute sell orders", allowedGameStates = AllowedGameStates.Playing)]
+        [DebugAction("Empire Refactored: Routes & Resources", "Force execute sell orders", allowedGameStates = AllowedGameStates.Playing)]
         private static void ForceExecuteSellOrders()
         {
             WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
@@ -141,7 +141,7 @@ namespace FactionColonies.SupplyChain
             Log.Message("[Empire-SupplyChain] Debug: PreTaxResolution executed (includes sell orders).");
         }
 
-        [DebugAction("Empire - Supply Chain", "Force post-tax cleanup", allowedGameStates = AllowedGameStates.Playing)]
+        [DebugAction("Empire Refactored: Routes & Resources", "Force post-tax cleanup", allowedGameStates = AllowedGameStates.Playing)]
         private static void ForcePostTaxCleanup()
         {
             WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
@@ -154,7 +154,7 @@ namespace FactionColonies.SupplyChain
             Log.Message("[Empire-SupplyChain] Debug: PostTaxResolution executed (tithe injection cleanup).");
         }
 
-        [DebugAction("Empire - Supply Chain", "Print stockpile state", allowedGameStates = AllowedGameStates.Playing)]
+        [DebugAction("Empire Refactored: Routes & Resources", "Print stockpile state", allowedGameStates = AllowedGameStates.Playing)]
         private static void PrintStockpileState()
         {
             WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
@@ -191,7 +191,7 @@ namespace FactionColonies.SupplyChain
             Log.Message(sb.ToString());
         }
 
-        [DebugAction("Empire - Supply Chain", "Force full tax cycle", allowedGameStates = AllowedGameStates.Playing)]
+        [DebugAction("Empire Refactored: Routes & Resources", "Force full tax cycle", allowedGameStates = AllowedGameStates.Playing)]
         private static void ForceFullTaxCycle()
         {
             WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
