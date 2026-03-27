@@ -689,7 +689,7 @@ namespace FactionColonies.SupplyChain
             }
 
             float totalHeight = resourceCount * rowHeight + 40f
-                + needStates.Count * 26f + 50f;
+                + needStates.Count * NeedRowStep + 50f;
             Rect viewRect = new Rect(0f, 0f, inner.width - 16f, totalHeight);
             Rect scrollRect = new Rect(inner.x, y, inner.width, inner.height - (y - inner.y));
 
@@ -1020,7 +1020,7 @@ namespace FactionColonies.SupplyChain
                 return;
             }
 
-            float totalHeight = 36f + needStates.Count * 26f + 16f;
+            float totalHeight = 36f + needStates.Count * NeedRowStep + 16f;
             float scrollMargin = totalHeight > rect.height ? 16f : 0f;
 
             Rect viewRect = new Rect(0f, 0f, rect.width - scrollMargin, totalHeight);
@@ -1678,6 +1678,11 @@ namespace FactionColonies.SupplyChain
 
         // --- Shared: Needs Display ---
 
+        internal const float NeedRowH = 40f;
+        internal const float NeedRowStep = 42f;
+        private const float NeedTopLineH = 22f;
+        private const float NeedBotLineH = 16f;
+
         private void DrawNeedsSection(Rect viewRect, ref float curY)
         {
             if (needStates.Count == 0) return;
@@ -1718,29 +1723,33 @@ namespace FactionColonies.SupplyChain
                 if (!projectedRates.TryGetValue(state.resource, out projected))
                     projected = state.Satisfaction;
                 float actual = state.Satisfaction;
-
-                // Use projected satisfaction for bar display
                 float satisfaction = projected;
 
-                Rect rowRect = new Rect(0f, curY, viewRect.width, 24f);
+                Rect rowRect = new Rect(0f, curY, viewRect.width, NeedRowH);
                 if (idx % 2 == 0) Widgets.DrawHighlight(rowRect);
 
-                // Left accent bar colored by projected satisfaction
+                // Left accent bar spans full row height
                 Color needAccent = satisfaction > 0.8f ? AccentPositive
                     : satisfaction > 0.4f ? new Color(0.9f, 0.8f, 0.2f)
                     : AccentNegative;
-                Widgets.DrawBoxSolid(new Rect(0f, curY, AccentW, 24f), needAccent);
+                Widgets.DrawBoxSolid(new Rect(0f, curY, AccentW, NeedRowH), needAccent);
 
                 float cx = AccentW + 4f;
 
+                // --- Top line: icon + label + bar + percentage ---
+                float topY = curY + 1f;
+
                 if (state.resource.Icon != null)
-                    GUI.DrawTexture(new Rect(cx, curY + 2f, 20f, 20f), state.resource.Icon);
+                    GUI.DrawTexture(new Rect(cx, topY + 1f, 20f, 20f), state.resource.Icon);
 
                 Text.Anchor = TextAnchor.MiddleLeft;
-                Rect labelRect = new Rect(cx + 24f, curY, 130f, 24f);
+                Rect labelRect = new Rect(cx + 24f, topY, 140f, NeedTopLineH);
                 Widgets.Label(labelRect, Text.ClampTextWithEllipsis(labelRect, state.label ?? state.needId));
 
-                Rect barRect = new Rect(cx + 158f, curY + 4f, 150f, 16f);
+                float barX = cx + 168f;
+                float barW = viewRect.width - barX - 60f;
+                if (barW < 80f) barW = 80f;
+                Rect barRect = new Rect(barX, topY + 3f, barW, NeedTopLineH - 6f);
                 if (satisfaction > 0.8f)
                     GUI.color = new Color(0.4f, 0.8f, 0.4f);
                 else if (satisfaction > 0.4f)
@@ -1750,43 +1759,58 @@ namespace FactionColonies.SupplyChain
                 Widgets.FillableBar(barRect, satisfaction);
                 GUI.color = Color.white;
 
-                // Show projected % with last-cycle comparison when they differ
-                string displayText;
+                // Percentage right of bar
+                Text.Anchor = TextAnchor.MiddleRight;
+                Widgets.Label(new Rect(barRect.xMax + 4f, topY, 50f, NeedTopLineH),
+                    (satisfaction * 100f).ToString("F0") + "%");
+
+                // --- Bottom line: projection detail + penalties ---
+                float botY = curY + NeedTopLineH + 2f;
+                Text.Font = GameFont.Tiny;
+                Text.Anchor = TextAnchor.MiddleLeft;
+
+                string statusText;
                 if (state.demanded > 0 && Math.Abs(satisfaction - actual) > 0.005f)
                 {
-                    displayText = (string)"SC_SatisfactionProjected".Translate(
+                    statusText = (string)"SC_SatisfactionProjected".Translate(
                         (satisfaction * 100f).ToString("F0"),
                         (actual * 100f).ToString("F0"));
                 }
                 else
                 {
-                    displayText = (string)"SC_SatisfactionDisplay".Translate(
+                    statusText = (string)"SC_SatisfactionDisplay".Translate(
                         (satisfaction * 100f).ToString("F0"),
                         state.fulfilled.ToString("F1"),
                         state.demanded.ToString("F1"));
                 }
-                Widgets.Label(new Rect(cx + 314f, curY, 130f, 24f), displayText);
+                GUI.color = new Color(0.7f, 0.7f, 0.7f);
+                Widgets.Label(new Rect(cx + 24f, botY, 200f, NeedBotLineH), statusText);
+                GUI.color = Color.white;
 
+                // Penalty summary on bottom-right
                 if (satisfaction < 1f)
                 {
-                    Text.Font = GameFont.Tiny;
                     GUI.color = new Color(1f, 0.5f, 0.5f);
                     double projectedShortfall = state.demanded * (1.0 - satisfaction);
                     string penaltyText = GetProjectedPenaltySummary(state, projectedShortfall);
-                    Rect penaltyRect = new Rect(cx + 450f, curY, 200f, 24f);
                     if (penaltyText != null)
+                    {
+                        Rect penaltyRect = new Rect(cx + 228f, botY, viewRect.width - cx - 232f, NeedBotLineH);
+                        Text.Anchor = TextAnchor.MiddleRight;
                         Widgets.Label(penaltyRect, Text.ClampTextWithEllipsis(penaltyRect, penaltyText));
+                    }
                     GUI.color = Color.white;
-                    Text.Font = GameFont.Small;
                 }
 
-                // Tooltip explaining demand source + projection
+                Text.Font = GameFont.Small;
+
+                // Tooltip
                 string tooltip = BuildNeedTooltip(state, satisfaction, actual);
                 if (tooltip != null)
                     TooltipHandler.TipRegion(rowRect, tooltip);
 
                 Text.Anchor = TextAnchor.UpperLeft;
-                curY += 26f;
+                curY += NeedRowStep;
                 idx++;
             }
         }
