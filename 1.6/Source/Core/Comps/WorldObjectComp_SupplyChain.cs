@@ -1001,7 +1001,9 @@ namespace FactionColonies.SupplyChain
                     GUI.DrawTexture(new Rect(contentX, curY + 2f, 24f, 24f), def.Icon);
 
                 Text.Anchor = TextAnchor.MiddleLeft;
-                Widgets.Label(new Rect(contentX + 28f, curY, 100f, barHeight), def.label.CapitalizeFirst());
+                Rect reslabel = new Rect(contentX + 28f, curY, 100f, barHeight);
+                string reslabelstr = Text.ClampTextWithEllipsis(reslabel, def.label.CapitalizeFirst());
+                Widgets.Label(reslabel, reslabelstr);
 
                 float barX = contentX + 130f;
                 Rect barRect = new Rect(barX, curY + 4f, barWidth, barHeight - 8f);
