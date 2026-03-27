@@ -200,51 +200,74 @@ namespace FactionColonies.SupplyChain
         }
 
         /// <summary>
-        /// Creates placeholder NeedStates (fulfilled = 0) for all active SettlementNeedDefs
-        /// that don't already have a NeedState. Safe to call multiple times.
+        /// Fully rebuilds needStates from current settlement state — base, building, and
+        /// comp-provided needs — while preserving fulfilled values from the last tax resolution.
+        /// Called on settlement creation, load, worker changes, building changes, and upgrades.
         /// </summary>
-        public void InitializeNeedStates()
+        public void RebuildNeedStates()
         {
             WorldSettlementFC ws = WorldSettlement;
-            FactionFC faction = FactionCache.FactionComp;
             if (ws == null) return;
+            FactionFC faction = FactionCache.FactionComp;
 
-            HashSet<string> existingIds = new HashSet<string>();
+            // Preserve fulfilled values from last tax resolution
+            Dictionary<string, double> prevFulfilled = new Dictionary<string, double>();
             for (int i = 0; i < needStates.Count; i++)
-                existingIds.Add(needStates[i].needId);
+                prevFulfilled[needStates[i].needId] = needStates[i].fulfilled;
 
+            List<NeedState> newStates = new List<NeedState>();
+
+            // 1. Base settlement needs (from SettlementNeedDefs)
             foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
             {
                 if (faction != null && !needDef.IsActiveForFaction(faction)) continue;
                 if (!needDef.IsActiveForSettlement(ws)) continue;
-                if (existingIds.Contains(needDef.defName)) continue;
 
                 double demand = needDef.CalculateDemand(ws);
-                needStates.Add(new NeedState(needDef.defName, needDef.resource, demand, 0));
+                double fulfilled;
+                prevFulfilled.TryGetValue(needDef.defName, out fulfilled);
+                newStates.Add(new NeedState(needDef.defName, needDef.resource, demand, fulfilled));
             }
-        }
 
-        /// <summary>
-        /// Recalculates demanded amounts on existing def-based NeedStates from current
-        /// settlement state (e.g. after worker count changes). Building and comp-provided
-        /// needs are left unchanged since they are recomputed at tax resolution.
-        /// </summary>
-        private void RefreshNeedDemands()
-        {
-            WorldSettlementFC ws = WorldSettlement;
-            if (ws == null) return;
-
-            for (int i = 0; i < needStates.Count; i++)
+            // 2. Building needs (from BuildingNeedExtension)
+            if (ws.BuildingsComp != null)
             {
-                NeedState state = needStates[i];
-                if (state.needId.StartsWith("bldg.")) continue;
-                if (state.penalties != null) continue; // comp-provided need
-
-                SettlementNeedDef needDef = DefDatabase<SettlementNeedDef>.GetNamedSilentFail(state.needId);
-                if (needDef == null) continue;
-
-                state.demanded = needDef.CalculateDemand(ws);
+                foreach (BuildingFC building in ws.BuildingsComp.Buildings)
+                {
+                    if (building.def == null || building.def == BuildingFCDefOf.Empty) continue;
+                    BuildingNeedExtension ext = SupplyChainCache.GetBuildingNeedExt(building.def);
+                    if (ext == null || ext.inputs == null) continue;
+                    foreach (BuildingResourceInput input in ext.inputs)
+                    {
+                        if (input.resource == null || input.amount <= 0) continue;
+                        string needId = "bldg." + building.def.defName + "." + input.resource.defName;
+                        double fulfilled;
+                        prevFulfilled.TryGetValue(needId, out fulfilled);
+                        newStates.Add(new NeedState(needId, input.resource, input.amount, fulfilled));
+                    }
+                }
             }
+
+            // 3. Comp-provided needs (from INeedProvider)
+            foreach (WorldObjectComp comp in ws.AllComps)
+            {
+                INeedProvider provider = comp as INeedProvider;
+                if (provider == null) continue;
+                List<NeedEntry> compNeeds = new List<NeedEntry>();
+                provider.CollectNeeds(ws, compNeeds);
+                foreach (NeedEntry entry in compNeeds)
+                {
+                    if (entry.resource == null || entry.amount <= 0) continue;
+                    double fulfilled;
+                    prevFulfilled.TryGetValue(entry.needId, out fulfilled);
+                    NeedState ns = new NeedState(entry.needId, entry.resource, entry.amount, fulfilled);
+                    ns.penalties = entry.penalties;
+                    ns.label = entry.label;
+                    newStates.Add(ns);
+                }
+            }
+
+            needStates = newStates;
         }
 
         // --- IStatModifierProvider ---
@@ -669,7 +692,7 @@ namespace FactionColonies.SupplyChain
                 if (allocations.Count > 0)
                     ReRegisterAllocations();
 
-                InitializeNeedStates();
+                RebuildNeedStates();
             }
         }
 
@@ -1741,7 +1764,6 @@ namespace FactionColonies.SupplyChain
 
         private void DrawNeedsSection(Rect viewRect, ref float curY)
         {
-            RefreshNeedDemands();
             if (needStates.Count == 0) return;
 
             Text.Font = GameFont.Medium;
@@ -1774,13 +1796,14 @@ namespace FactionColonies.SupplyChain
                 Text.Anchor = TextAnchor.MiddleLeft;
                 string label;
                 if (state.needId.StartsWith("bldg."))
-                    label = state.needId.Replace("bldg.", "").Replace(".", " - ");
+                    label = ResolveBuildingNeedLabel(state.needId);
                 else
                 {
                     SettlementNeedDef needDef = DefDatabase<SettlementNeedDef>.GetNamedSilentFail(state.needId);
                     label = needDef != null ? needDef.label.CapitalizeFirst() : state.needId;
                 }
-                Widgets.Label(new Rect(cx + 24f, curY, 130f, 24f), label);
+                Rect labelRect = new Rect(cx + 24f, curY, 130f, 24f);
+                Widgets.Label(labelRect, Text.ClampTextWithEllipsis(labelRect, label));
 
                 Rect barRect = new Rect(cx + 158f, curY + 4f, 150f, 16f);
                 if (satisfaction > 0.8f)
@@ -1821,6 +1844,24 @@ namespace FactionColonies.SupplyChain
             }
         }
 
+        private string ResolveBuildingNeedLabel(string needId)
+        {
+            int separatorIdx = needId.IndexOf('.', 5);
+            if (separatorIdx < 0)
+                return needId.Substring(5);
+
+            string buildingDefName = needId.Substring(5, separatorIdx - 5);
+            string resourceDefName = needId.Substring(separatorIdx + 1);
+
+            BuildingFCDef buildingDef = DefDatabase<BuildingFCDef>.GetNamedSilentFail(buildingDefName);
+            ResourceTypeDef resourceDef = DefDatabase<ResourceTypeDef>.GetNamedSilentFail(resourceDefName);
+
+            string buildingLabel = buildingDef != null ? buildingDef.label.CapitalizeFirst() : buildingDefName;
+            string resourceLabel = resourceDef != null ? resourceDef.label.CapitalizeFirst() : resourceDefName;
+
+            return buildingLabel + " - " + resourceLabel;
+        }
+
         private string BuildNeedTooltip(NeedState state)
         {
             WorldSettlementFC ws = WorldSettlement;
@@ -1829,7 +1870,7 @@ namespace FactionColonies.SupplyChain
             if (state.needId.StartsWith("bldg."))
             {
                 // Building need: show building name + input amount
-                string bldgInfo = state.needId.Replace("bldg.", "").Replace(".", " - ");
+                string bldgInfo = ResolveBuildingNeedLabel(state.needId);
                 return bldgInfo + ": " + state.demanded.ToString("F1") + " " + state.resource.label;
             }
 

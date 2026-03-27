@@ -39,7 +39,8 @@ namespace FactionColonies.SupplyChain
 
         public bool IsActiveForSettlement(WorldSettlementFC settlement)
         {
-            bool allowed = settlement.settlementDef.IsInList(allowedSettlementTypes);
+            bool allowed = allowedSettlementTypes is null || allowedSettlementTypes.Count == 0
+                || settlement.settlementDef.IsInList(allowedSettlementTypes);
             bool blocked = settlement.settlementDef.IsInList(blockedSettlementTypes);
 
             return allowed && !blocked;

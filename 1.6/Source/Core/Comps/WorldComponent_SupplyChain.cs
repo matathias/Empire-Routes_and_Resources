@@ -1,7 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using FactionColonies.util;
 using RimWorld;
 using RimWorld.Planet;
 using UnityEngine;
@@ -955,7 +952,7 @@ namespace FactionColonies.SupplyChain
 
             WorldObjectComp_SupplyChain comp = GetComp(settlement);
             if (comp != null)
-                comp.InitializeNeedStates();
+                comp.RebuildNeedStates();
         }
 
         public void OnSettlementRemoved(WorldSettlementFC settlement)
@@ -973,6 +970,9 @@ namespace FactionColonies.SupplyChain
         public void OnSettlementUpgraded(WorldSettlementFC settlement, int oldLevel, int newLevel)
         {
             DirtyFlowCache();
+            WorldObjectComp_SupplyChain comp = GetComp(settlement);
+            if (comp != null)
+                comp.RebuildNeedStates();
         }
 
         public void OnSettlementTypeChanged(WorldSettlementFC settlement, WorldSettlementDef oldDef, WorldSettlementDef newDef)
@@ -989,7 +989,10 @@ namespace FactionColonies.SupplyChain
             resourceColumnsDirty = true;
             WorldObjectComp_SupplyChain comp = GetComp(settlement);
             if (comp != null)
+            {
                 comp.DirtyLocalCaps();
+                comp.RebuildNeedStates();
+            }
         }
 
         public void OnBuildingDeconstructed(WorldSettlementFC settlement, BuildingFCDef building, int slot)
@@ -999,7 +1002,10 @@ namespace FactionColonies.SupplyChain
             resourceColumnsDirty = true;
             WorldObjectComp_SupplyChain comp = GetComp(settlement);
             if (comp != null)
+            {
                 comp.DirtyLocalCaps();
+                comp.RebuildNeedStates();
+            }
         }
 
         public void OnSquadDeployed(WorldSettlementFC settlement, MilitaryJobDef job, bool isExtraSquad) { }

@@ -1,4 +1,5 @@
-using RimWorld.Planet;
+using HarmonyLib;
+using System.Reflection;
 using UnityEngine;
 using Verse;
 
@@ -100,6 +101,7 @@ namespace FactionColonies.SupplyChain
     {
         static SupplyChainStartup()
         {
+            new Harmony("com.Matathias.Empire.SupplyChain").PatchAll(Assembly.GetExecutingAssembly());
             EmpireCacheUtil.RegisterCacheInvalidator("SupplyChain", () =>
             {
                 SupplyChainCache.InvalidateCache();
