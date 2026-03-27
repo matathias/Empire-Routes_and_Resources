@@ -470,7 +470,7 @@
 		<statModifiers>
 			<li><stat>SC_RouteEfficiencyBonus</stat><value>-0.1</value></li>
 			<li><stat>SC_SellRateMultiplier</stat><value>-0.1</value></li>
-			<li><stat>prosperityBaseRecovery</stat><value>-1</value></li>
+			<li><stat>prosperityGainedBase</stat><value>-1</value></li>
 		</statModifiers>
 	</FactionColonies.FCEventDef>
 
