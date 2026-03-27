@@ -199,6 +199,31 @@ namespace FactionColonies.SupplyChain
             return null;
         }
 
+        /// <summary>
+        /// Creates placeholder NeedStates (fulfilled = 0) for all active SettlementNeedDefs
+        /// that don't already have a NeedState. Safe to call multiple times.
+        /// </summary>
+        public void InitializeNeedStates()
+        {
+            WorldSettlementFC ws = WorldSettlement;
+            FactionFC faction = FactionCache.FactionComp;
+            if (ws == null) return;
+
+            HashSet<string> existingIds = new HashSet<string>();
+            for (int i = 0; i < needStates.Count; i++)
+                existingIds.Add(needStates[i].needId);
+
+            foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
+            {
+                if (faction != null && !needDef.IsActiveForFaction(faction)) continue;
+                if (!needDef.IsActiveForSettlement(ws)) continue;
+                if (existingIds.Contains(needDef.defName)) continue;
+
+                double demand = needDef.CalculateDemand(ws);
+                needStates.Add(new NeedState(needDef.defName, needDef.resource, demand, 0));
+            }
+        }
+
         // --- IStatModifierProvider ---
 
         private Dictionary<FCStatDef, double> cachedStatMods;
@@ -621,25 +646,7 @@ namespace FactionColonies.SupplyChain
                 if (allocations.Count > 0)
                     ReRegisterAllocations();
 
-                // Ensure any newly added SettlementNeedDefs have placeholder NeedStates
-                WorldSettlementFC ws = WorldSettlement;
-                FactionFC faction = FactionCache.FactionComp;
-                if (ws != null)
-                {
-                    HashSet<string> existingIds = new HashSet<string>();
-                    for (int i = 0; i < needStates.Count; i++)
-                        existingIds.Add(needStates[i].needId);
-
-                    foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
-                    {
-                        if (faction != null && !needDef.IsActiveForFaction(faction)) continue;
-                        if (!existingIds.Contains(needDef.defName))
-                        {
-                            double demand = needDef.CalculateDemand(ws);
-                            needStates.Add(new NeedState(needDef.defName, needDef.resource, demand, 0));
-                        }
-                    }
-                }
+                InitializeNeedStates();
             }
         }
 

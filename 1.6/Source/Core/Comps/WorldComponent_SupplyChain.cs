@@ -952,6 +952,10 @@ namespace FactionColonies.SupplyChain
             capsAndStockpilesDirty = true;
             DirtyFlowCache();
             resourceColumnsDirty = true;
+
+            WorldObjectComp_SupplyChain comp = GetComp(settlement);
+            if (comp != null)
+                comp.InitializeNeedStates();
         }
 
         public void OnSettlementRemoved(WorldSettlementFC settlement)
