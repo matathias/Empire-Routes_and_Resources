@@ -226,7 +226,8 @@ namespace FactionColonies.SupplyChain
                 double demand = needDef.CalculateDemand(ws);
                 double fulfilled;
                 prevFulfilled.TryGetValue(needDef.defName, out fulfilled);
-                newStates.Add(new NeedState(needDef.defName, needDef.resource, demand, fulfilled));
+                newStates.Add(new NeedState(needDef.defName, needDef.resource, demand, fulfilled,
+                    needDef.label.CapitalizeFirst(), NeedCategory.Base, needDef.penalties));
             }
 
             // 2. Building needs (from BuildingNeedExtension)
@@ -241,9 +242,11 @@ namespace FactionColonies.SupplyChain
                     {
                         if (input.resource == null || input.amount <= 0) continue;
                         string needId = "bldg." + building.def.defName + "." + input.resource.defName;
+                        string needLabel = building.def.label.CapitalizeFirst() + " - " + input.resource.label.CapitalizeFirst();
                         double fulfilled;
                         prevFulfilled.TryGetValue(needId, out fulfilled);
-                        newStates.Add(new NeedState(needId, input.resource, input.amount, fulfilled));
+                        newStates.Add(new NeedState(needId, input.resource, input.amount, fulfilled,
+                            needLabel, NeedCategory.Building, ext.penalties));
                     }
                 }
             }
@@ -260,10 +263,8 @@ namespace FactionColonies.SupplyChain
                     if (entry.resource == null || entry.amount <= 0) continue;
                     double fulfilled;
                     prevFulfilled.TryGetValue(entry.needId, out fulfilled);
-                    NeedState ns = new NeedState(entry.needId, entry.resource, entry.amount, fulfilled);
-                    ns.penalties = entry.penalties;
-                    ns.label = entry.label;
-                    newStates.Add(ns);
+                    newStates.Add(new NeedState(entry.needId, entry.resource, entry.amount, fulfilled,
+                        entry.label, NeedCategory.Comp, entry.penalties));
                 }
             }
 
@@ -298,123 +299,38 @@ namespace FactionColonies.SupplyChain
         private double ComputeStatModifier(FCStatDef stat)
         {
             double total = 0.0;
-
-            // Base settlement needs
-            foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
+            foreach (NeedState state in needStates)
             {
-                if (needDef.penalties == null) continue;
-
-                NeedState state = FindNeedState(needDef.defName);
-                if (state == null || state.demanded <= 0 || state.fulfilled >= state.demanded) continue;
+                if (state.penalties == null || state.demanded <= 0 || state.fulfilled >= state.demanded)
+                    continue;
                 double shortfall = state.demanded - state.fulfilled;
-
-                foreach (NeedPenalty penalty in needDef.penalties)
+                foreach (NeedPenalty penalty in state.penalties)
                 {
                     if (penalty.stat == stat)
                         total += penalty.penaltyPerUnit * shortfall;
                 }
             }
-
-            // Building needs
-            WorldSettlementFC ws = WorldSettlement;
-            if (ws != null && ws.BuildingsComp != null)
-            {
-                foreach (BuildingFC building in ws.BuildingsComp.Buildings)
-                {
-                    if (building.def == null || building.def == BuildingFCDefOf.Empty)
-                        continue;
-
-                    BuildingNeedExtension ext = SupplyChainCache.GetBuildingNeedExt(building.def);
-                    if (ext == null) continue;
-
-                    List<NeedPenalty> penalties = ext.penalties;
-                    if (penalties == null || penalties.Count == 0) continue;
-
-                    // Total shortfall across all inputs for this building
-                    double totalShortfall = 0.0;
-                    if (ext.inputs != null)
-                    {
-                        foreach (BuildingResourceInput input in ext.inputs)
-                        {
-                            if (input.resource == null) continue;
-                            string needId = "bldg." + building.def.defName + "." + input.resource.defName;
-                            NeedState state = FindNeedState(needId);
-                            if (state != null && state.demanded > 0 && state.fulfilled < state.demanded)
-                                totalShortfall += state.demanded - state.fulfilled;
-                        }
-                    }
-
-                    if (totalShortfall <= 0.0) continue;
-
-                    foreach (NeedPenalty penalty in penalties)
-                    {
-                        if (penalty.stat == stat)
-                            total += penalty.penaltyPerUnit * totalShortfall;
-                    }
-                }
-            }
-
-            // Comp-provided needs (e.g., specialist needs via INeedProvider)
-            if (needStates != null)
-            {
-                foreach (NeedState state in needStates)
-                {
-                    if (state.penalties == null || state.demanded <= 0 || state.fulfilled >= state.demanded) continue;
-                    double shortfall = state.demanded - state.fulfilled;
-                    foreach (NeedPenalty penalty in state.penalties)
-                    {
-                        if (penalty.stat == stat)
-                            total += penalty.penaltyPerUnit * shortfall;
-                    }
-                }
-            }
-
             return total != 0.0 ? total : stat.IdentityValue;
         }
 
         public string GetStatModifierDesc(FCStatDef stat)
         {
             string desc = null;
-
-            foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
+            foreach (NeedState state in needStates)
             {
-                if (needDef.penalties == null) continue;
-
-                NeedState state = FindNeedState(needDef.defName);
-                if (state == null || state.demanded <= 0 || state.fulfilled >= state.demanded) continue;
+                if (state.penalties == null || state.demanded <= 0 || state.fulfilled >= state.demanded)
+                    continue;
                 double shortfall = state.demanded - state.fulfilled;
-
-                foreach (NeedPenalty penalty in needDef.penalties)
+                foreach (NeedPenalty penalty in state.penalties)
                 {
                     if (penalty.stat != stat) continue;
                     double val = penalty.penaltyPerUnit * shortfall;
                     if (val <= 0) continue;
 
-                    string line = "SC_UnmetNeedPenalty".Translate(needDef.label, val.ToString("F1"));
+                    string line = "SC_UnmetNeedPenalty".Translate(state.label ?? state.needId, val.ToString("F1"));
                     desc = desc == null ? line : desc + "\n" + line;
                 }
             }
-
-            // Comp-provided needs (e.g., specialist needs via INeedProvider)
-            if (needStates != null)
-            {
-                foreach (NeedState state in needStates)
-                {
-                    if (state.penalties == null || state.demanded <= 0 || state.fulfilled >= state.demanded) continue;
-                    double shortfall = state.demanded - state.fulfilled;
-                    foreach (NeedPenalty penalty in state.penalties)
-                    {
-                        if (penalty.stat != stat) continue;
-                        double val = penalty.penaltyPerUnit * shortfall;
-                        if (val <= 0) continue;
-
-                        string needLabel = state.label ?? state.needId;
-                        string line = "SC_UnmetNeedPenalty".Translate(needLabel, val.ToString("F1"));
-                        desc = desc == null ? line : desc + "\n" + line;
-                    }
-                }
-            }
-
             return desc;
         }
 
@@ -1794,16 +1710,8 @@ namespace FactionColonies.SupplyChain
                     GUI.DrawTexture(new Rect(cx, curY + 2f, 20f, 20f), state.resource.Icon);
 
                 Text.Anchor = TextAnchor.MiddleLeft;
-                string label;
-                if (state.needId.StartsWith("bldg."))
-                    label = ResolveBuildingNeedLabel(state.needId);
-                else
-                {
-                    SettlementNeedDef needDef = DefDatabase<SettlementNeedDef>.GetNamedSilentFail(state.needId);
-                    label = needDef != null ? needDef.label.CapitalizeFirst() : state.needId;
-                }
                 Rect labelRect = new Rect(cx + 24f, curY, 130f, 24f);
-                Widgets.Label(labelRect, Text.ClampTextWithEllipsis(labelRect, label));
+                Widgets.Label(labelRect, Text.ClampTextWithEllipsis(labelRect, state.label ?? state.needId));
 
                 Rect barRect = new Rect(cx + 158f, curY + 4f, 150f, 16f);
                 if (satisfaction > 0.8f)
@@ -1844,60 +1752,46 @@ namespace FactionColonies.SupplyChain
             }
         }
 
-        private string ResolveBuildingNeedLabel(string needId)
-        {
-            int separatorIdx = needId.IndexOf('.', 5);
-            if (separatorIdx < 0)
-                return needId.Substring(5);
-
-            string buildingDefName = needId.Substring(5, separatorIdx - 5);
-            string resourceDefName = needId.Substring(separatorIdx + 1);
-
-            BuildingFCDef buildingDef = DefDatabase<BuildingFCDef>.GetNamedSilentFail(buildingDefName);
-            ResourceTypeDef resourceDef = DefDatabase<ResourceTypeDef>.GetNamedSilentFail(resourceDefName);
-
-            string buildingLabel = buildingDef != null ? buildingDef.label.CapitalizeFirst() : buildingDefName;
-            string resourceLabel = resourceDef != null ? resourceDef.label.CapitalizeFirst() : resourceDefName;
-
-            return buildingLabel + " - " + resourceLabel;
-        }
-
         private string BuildNeedTooltip(NeedState state)
         {
             WorldSettlementFC ws = WorldSettlement;
             if (ws == null) return null;
 
-            if (state.needId.StartsWith("bldg."))
-            {
-                // Building need: show building name + input amount
-                string bldgInfo = ResolveBuildingNeedLabel(state.needId);
-                return bldgInfo + ": " + state.demanded.ToString("F1") + " " + state.resource.label;
-            }
+            string displayLabel = state.label ?? state.needId;
 
+            if (state.category == NeedCategory.Building)
+                return displayLabel + ": " + state.demanded.ToString("F1") + " " + state.resource.label;
+
+            // Base/comp needs: show scaling breakdown if a SettlementNeedDef exists
             SettlementNeedDef needDef = DefDatabase<SettlementNeedDef>.GetNamedSilentFail(state.needId);
-            if (needDef == null) return null;
-
-            string scalingDesc;
-            switch (needDef.scaling)
+            string tip;
+            if (needDef != null)
             {
-                case NeedScaling.PerWorker:
-                    scalingDesc = needDef.baseAmount.ToString("F1") + " per worker x " + ws.workers + " = " + state.demanded.ToString("F1");
-                    break;
-                case NeedScaling.PerLevel:
-                    scalingDesc = needDef.baseAmount.ToString("F1") + " per level x " + ws.settlementLevel + " = " + state.demanded.ToString("F1");
-                    break;
-                default:
-                    scalingDesc = needDef.baseAmount.ToString("F1") + " (flat)";
-                    break;
+                string scalingDesc;
+                switch (needDef.scaling)
+                {
+                    case NeedScaling.PerWorker:
+                        scalingDesc = needDef.baseAmount.ToString("F1") + " per worker x " + ws.workers + " = " + state.demanded.ToString("F1");
+                        break;
+                    case NeedScaling.PerLevel:
+                        scalingDesc = needDef.baseAmount.ToString("F1") + " per level x " + ws.settlementLevel + " = " + state.demanded.ToString("F1");
+                        break;
+                    default:
+                        scalingDesc = needDef.baseAmount.ToString("F1") + " (flat)";
+                        break;
+                }
+                tip = displayLabel + "\n" + scalingDesc;
+            }
+            else
+            {
+                tip = displayLabel + ": " + state.demanded.ToString("F1") + " " + state.resource.label;
             }
 
-            string tip = needDef.label.CapitalizeFirst() + "\n" + scalingDesc;
-
-            if (state.Satisfaction < 1f && needDef.penalties != null)
+            if (state.Satisfaction < 1f && state.penalties != null)
             {
                 tip += "\n\nPenalties:";
                 double shortfall = state.demanded - state.fulfilled;
-                foreach (NeedPenalty penalty in needDef.penalties)
+                foreach (NeedPenalty penalty in state.penalties)
                 {
                     double penaltyVal = penalty.penaltyPerUnit * shortfall;
                     tip += "\n  " + (penalty.label ?? penalty.stat.label) + ": -" + penaltyVal.ToString("F1");
@@ -1909,25 +1803,18 @@ namespace FactionColonies.SupplyChain
 
         private string GetPenaltySummary(NeedState state)
         {
-            if (state.demanded <= 0 || state.fulfilled >= state.demanded) return null;
+            if (state.penalties == null || state.demanded <= 0 || state.fulfilled >= state.demanded)
+                return null;
             double shortfall = state.demanded - state.fulfilled;
-
-            // Check base need penalties
-            SettlementNeedDef needDef = DefDatabase<SettlementNeedDef>.GetNamedSilentFail(state.needId);
-            if (needDef != null && needDef.penalties != null)
+            string result = null;
+            foreach (NeedPenalty penalty in state.penalties)
             {
-                string result = null;
-                foreach (NeedPenalty penalty in needDef.penalties)
-                {
-                    double val = penalty.penaltyPerUnit * shortfall;
-                    string displayLabel = penalty.label ?? penalty.stat.label;
-                    string part = "SC_PenaltyLine".Translate(val.ToString("F1"), displayLabel);
-                    result = result == null ? part : result + ", " + part;
-                }
-                return result;
+                double val = penalty.penaltyPerUnit * shortfall;
+                string displayLabel = penalty.label ?? penalty.stat.label;
+                string part = "SC_PenaltyLine".Translate(val.ToString("F1"), displayLabel);
+                result = result == null ? part : result + ", " + part;
             }
-
-            return null;
+            return result;
         }
 
         // --- Complex Mode: Add Local Sell Order ---

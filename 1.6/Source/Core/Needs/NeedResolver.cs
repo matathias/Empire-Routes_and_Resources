@@ -32,7 +32,8 @@ namespace FactionColonies.SupplyChain
                 double drawn;
                 stockpile.TryDraw(needDef.resource, demand, out drawn);
 
-                states.Add(new NeedState(needDef.defName, needDef.resource, demand, drawn));
+                states.Add(new NeedState(needDef.defName, needDef.resource, demand, drawn,
+                    needDef.label.CapitalizeFirst(), NeedCategory.Base, needDef.penalties));
             }
 
             // 2. Building needs
@@ -77,7 +78,10 @@ namespace FactionColonies.SupplyChain
                         comp = comp,
                         needId = needDef.defName,
                         resource = needDef.resource,
-                        demand = demand
+                        demand = demand,
+                        label = needDef.label.CapitalizeFirst(),
+                        category = NeedCategory.Base,
+                        penalties = needDef.penalties
                     });
                 }
 
@@ -102,7 +106,10 @@ namespace FactionColonies.SupplyChain
                                 comp = comp,
                                 needId = "bldg." + building.def.defName + "." + input.resource.defName,
                                 resource = input.resource,
-                                demand = input.amount
+                                demand = input.amount,
+                                label = building.def.label.CapitalizeFirst() + " - " + input.resource.label.CapitalizeFirst(),
+                                category = NeedCategory.Building,
+                                penalties = ext.penalties
                             });
                         }
                     }
@@ -130,6 +137,7 @@ namespace FactionColonies.SupplyChain
                             demand = entry.amount,
                             penalties = entry.penalties,
                             label = entry.label,
+                            category = NeedCategory.Comp,
                             provider = provider
                         });
                     }
@@ -177,10 +185,8 @@ namespace FactionColonies.SupplyChain
                     compStates[entry.comp] = states;
                 }
 
-                NeedState ns = new NeedState(entry.needId, entry.resource, entry.demand, drawn);
-                ns.penalties = entry.penalties;
-                ns.label = entry.label;
-                states.Add(ns);
+                states.Add(new NeedState(entry.needId, entry.resource, entry.demand, drawn,
+                    entry.label, entry.category, entry.penalties));
 
                 // Track provider resolutions
                 if (entry.provider != null)
@@ -248,7 +254,9 @@ namespace FactionColonies.SupplyChain
                     stockpile.TryDraw(input.resource, input.amount, out drawn);
 
                     string needId = "bldg." + building.def.defName + "." + input.resource.defName;
-                    states.Add(new NeedState(needId, input.resource, input.amount, drawn));
+                    string needLabel = building.def.label.CapitalizeFirst() + " - " + input.resource.label.CapitalizeFirst();
+                    states.Add(new NeedState(needId, input.resource, input.amount, drawn,
+                        needLabel, NeedCategory.Building, ext.penalties));
                 }
             }
         }
@@ -271,10 +279,8 @@ namespace FactionColonies.SupplyChain
                     double drawn;
                     stockpile.TryDraw(entry.resource, entry.amount, out drawn);
 
-                    NeedState ns = new NeedState(entry.needId, entry.resource, entry.amount, drawn);
-                    ns.penalties = entry.penalties;
-                    ns.label = entry.label;
-                    states.Add(ns);
+                    states.Add(new NeedState(entry.needId, entry.resource, entry.amount, drawn,
+                        entry.label, NeedCategory.Comp, entry.penalties));
 
                     resolutions.Add(new NeedResolution
                     {
@@ -297,6 +303,7 @@ namespace FactionColonies.SupplyChain
             public double demand;
             public List<NeedPenalty> penalties;
             public string label;
+            public NeedCategory category;
             public INeedProvider provider;
         }
     }

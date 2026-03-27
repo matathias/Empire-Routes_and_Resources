@@ -3,6 +3,13 @@ using Verse;
 
 namespace FactionColonies.SupplyChain
 {
+    public enum NeedCategory : byte
+    {
+        Base,
+        Building,
+        Comp
+    }
+
     /// <summary>
     /// Tracks the satisfaction of a single need for one settlement.
     /// Persisted on WorldObjectComp_SupplyChain.
@@ -13,19 +20,16 @@ namespace FactionColonies.SupplyChain
         public ResourceTypeDef resource;
         public double demanded;
         public double fulfilled;
+        public string label;
+        public NeedCategory category;
 
         /// <summary>
-        /// Penalties for comp-provided needs (via INeedProvider). Null for def-based needs
-        /// (which get penalties from the SettlementNeedDef itself).
-        /// Not serialized — recomputed each tax resolution.
+        /// Stat penalties applied when this need is unsatisfied.
+        /// Populated for all categories: from SettlementNeedDef for base needs,
+        /// from BuildingNeedExtension for building needs, from INeedProvider for comp needs.
+        /// Not serialized — recomputed each rebuild/resolution.
         /// </summary>
         public List<NeedPenalty> penalties;
-
-        /// <summary>
-        /// Display label for comp-provided needs. Null for def-based needs
-        /// (which use SettlementNeedDef.label). Not serialized.
-        /// </summary>
-        public string label;
 
         public float Satisfaction
         {
@@ -36,12 +40,16 @@ namespace FactionColonies.SupplyChain
         {
         }
 
-        public NeedState(string needId, ResourceTypeDef resource, double demanded, double fulfilled)
+        public NeedState(string needId, ResourceTypeDef resource, double demanded, double fulfilled,
+            string label, NeedCategory category, List<NeedPenalty> penalties = null)
         {
             this.needId = needId;
             this.resource = resource;
             this.demanded = demanded;
             this.fulfilled = fulfilled;
+            this.label = label;
+            this.category = category;
+            this.penalties = penalties;
         }
 
         public void ExposeData()
@@ -50,6 +58,8 @@ namespace FactionColonies.SupplyChain
             Scribe_Defs.Look(ref resource, "resource");
             Scribe_Values.Look(ref demanded, "demanded");
             Scribe_Values.Look(ref fulfilled, "fulfilled");
+            Scribe_Values.Look(ref label, "label");
+            Scribe_Values.Look(ref category, "category");
         }
     }
 }
