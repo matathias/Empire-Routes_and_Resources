@@ -4,6 +4,7 @@ using Verse;
 
 namespace FactionColonies.SupplyChain
 {
+    [StaticConstructorOnStartup]
     public static class RouteOverlayUtil
     {
         private const float PlanetRadius = 100f;
