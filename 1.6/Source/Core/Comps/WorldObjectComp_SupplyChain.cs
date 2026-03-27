@@ -224,6 +224,29 @@ namespace FactionColonies.SupplyChain
             }
         }
 
+        /// <summary>
+        /// Recalculates demanded amounts on existing def-based NeedStates from current
+        /// settlement state (e.g. after worker count changes). Building and comp-provided
+        /// needs are left unchanged since they are recomputed at tax resolution.
+        /// </summary>
+        private void RefreshNeedDemands()
+        {
+            WorldSettlementFC ws = WorldSettlement;
+            if (ws == null) return;
+
+            for (int i = 0; i < needStates.Count; i++)
+            {
+                NeedState state = needStates[i];
+                if (state.needId.StartsWith("bldg.")) continue;
+                if (state.penalties != null) continue; // comp-provided need
+
+                SettlementNeedDef needDef = DefDatabase<SettlementNeedDef>.GetNamedSilentFail(state.needId);
+                if (needDef == null) continue;
+
+                state.demanded = needDef.CalculateDemand(ws);
+            }
+        }
+
         // --- IStatModifierProvider ---
 
         private Dictionary<FCStatDef, double> cachedStatMods;
@@ -1718,6 +1741,7 @@ namespace FactionColonies.SupplyChain
 
         private void DrawNeedsSection(Rect viewRect, ref float curY)
         {
+            RefreshNeedDemands();
             if (needStates.Count == 0) return;
 
             Text.Font = GameFont.Medium;
