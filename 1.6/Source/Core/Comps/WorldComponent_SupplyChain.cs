@@ -118,6 +118,8 @@ namespace FactionColonies.SupplyChain
         }
 
         private bool firstTick = true;
+        private BuildingFilter filterStockpileCap;
+        private BuildingFilter filterBuildingNeeds;
 
         private void RegisterWithRegistries()
         {
@@ -125,24 +127,32 @@ namespace FactionColonies.SupplyChain
             MainTableRegistry.Register(this);
             LifecycleRegistry.Register(this);
 
-            BuildingFilterRegistry.Register(new BuildingFilter(
-                "SC_FilterStockpileCap".Translate(),
-                null,
-                def =>
-                {
-                    BuildingNeedExtension ext = def.GetModExtension<BuildingNeedExtension>();
-                    return ext != null && ext.capBonuses != null && ext.capBonuses.Count > 0;
-                }
-            ));
-            BuildingFilterRegistry.Register(new BuildingFilter(
-                "SC_FilterBuildingNeeds".Translate(),
-                null,
-                def =>
-                {
-                    BuildingNeedExtension ext = def.GetModExtension<BuildingNeedExtension>();
-                    return ext != null && ext.inputs != null && ext.inputs.Count > 0;
-                }
-            ));
+            if (filterStockpileCap == null)
+            {
+                filterStockpileCap = new BuildingFilter(
+                    "SC_FilterStockpileCap".Translate(),
+                    null,
+                    def =>
+                    {
+                        BuildingNeedExtension ext = def.GetModExtension<BuildingNeedExtension>();
+                        return ext != null && ext.capBonuses != null && ext.capBonuses.Count > 0;
+                    }
+                );
+            }
+            if (filterBuildingNeeds == null)
+            {
+                filterBuildingNeeds = new BuildingFilter(
+                    "SC_FilterBuildingNeeds".Translate(),
+                    null,
+                    def =>
+                    {
+                        BuildingNeedExtension ext = def.GetModExtension<BuildingNeedExtension>();
+                        return ext != null && ext.inputs != null && ext.inputs.Count > 0;
+                    }
+                );
+            }
+            BuildingFilterRegistry.Register(filterStockpileCap);
+            BuildingFilterRegistry.Register(filterBuildingNeeds);
         }
 
         public override void WorldComponentTick()
