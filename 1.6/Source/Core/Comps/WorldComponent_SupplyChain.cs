@@ -102,6 +102,25 @@ namespace FactionColonies.SupplyChain
 
             stockpile = new DictionaryStockpile(factionStockpile, factionCaps);
 
+            RegisterWithRegistries();
+
+            SupplyChainCache.ClearCompCache();
+            capsAndStockpilesDirty = true;
+
+            // Reconcile with global settings (mode may have changed while this save was unloaded)
+            if (mode != SupplyChainSettings.mode)
+            {
+                LogUtil.Message("Mode mismatch: save=" + mode + ", settings=" + SupplyChainSettings.mode + ". Switching.");
+                SwitchMode(SupplyChainSettings.mode);
+            }
+
+            LogUtil.Message("WorldComponent_SupplyChain initialized (mode=" + mode + ", fromLoad=" + fromLoad + ")");
+        }
+
+        private bool firstTick = true;
+
+        private void RegisterWithRegistries()
+        {
             TaxTickRegistry.Register(this);
             MainTableRegistry.Register(this);
             LifecycleRegistry.Register(this);
@@ -124,18 +143,17 @@ namespace FactionColonies.SupplyChain
                     return ext != null && ext.inputs != null && ext.inputs.Count > 0;
                 }
             ));
+        }
 
-            SupplyChainCache.ClearCompCache();
-            capsAndStockpilesDirty = true;
-
-            // Reconcile with global settings (mode may have changed while this save was unloaded)
-            if (mode != SupplyChainSettings.mode)
+        public override void WorldComponentTick()
+        {
+            base.WorldComponentTick();
+            if (firstTick)
             {
-                LogUtil.Message("Mode mismatch: save=" + mode + ", settings=" + SupplyChainSettings.mode + ". Switching.");
-                SwitchMode(SupplyChainSettings.mode);
+                firstTick = false;
+                // Re-register in case ClearCaches ran after FinalizeInit (new game race condition)
+                RegisterWithRegistries();
             }
-
-            LogUtil.Message("WorldComponent_SupplyChain initialized (mode=" + mode + ", fromLoad=" + fromLoad + ")");
         }
 
         // --- World Map Route Visualization ---
