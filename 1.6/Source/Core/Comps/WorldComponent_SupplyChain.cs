@@ -48,6 +48,13 @@ namespace FactionColonies.SupplyChain
         private string newSellOrderAmountBuffer = "";
         private float newSellOrderAmount;
 
+        // Simple mode tithe injection UI state
+        private Vector2 scrollPosSimple;
+        private WorldSettlementFC newTitheSettlement;
+        private ResourceTypeDef newTitheResource;
+        private string newTitheAmountBuffer = "";
+        private float newTitheAmount;
+
         // Complex mode tab state
         private int complexTab = 0; // 0 = Stockpiles, 1 = Routes
         private Vector2 scrollPosStockpiles;
@@ -182,12 +189,10 @@ namespace FactionColonies.SupplyChain
                 if (!route.IsValid()) continue;
                 long key = MakePairKey(route);
 
-                if (!pairRouteCache.ContainsKey(key))
-                    pairRouteCache[key] = route;
+                pairRouteCache.TryAdd(key, route);
 
                 string line = route.amountPerPeriod.ToString("F0") + " " + route.resource.label;
-                string existing;
-                if (pairLabelCache.TryGetValue(key, out existing))
+                if (pairLabelCache.TryGetValue(key, out string existing))
                     pairLabelCache[key] = existing + "\n" + line;
                 else
                     pairLabelCache[key] = line;
@@ -240,8 +245,7 @@ namespace FactionColonies.SupplyChain
                     if (!relevant) continue;
                 }
 
-                string label;
-                pairLabelCache.TryGetValue(kvp.Key, out label);
+                pairLabelCache.TryGetValue(kvp.Key, out string label);
                 if (label != null)
                     RouteOverlayUtil.DrawRouteLabel(route, grid, label);
             }
@@ -252,7 +256,7 @@ namespace FactionColonies.SupplyChain
 
         public static void DrawRoutesForSettlement(WorldComponent_SupplyChain wc, WorldSettlementFC ws)
         {
-            if (ws == null || wc == null) return;
+            if (ws is null || wc is null) return;
             wc.EnsurePairCaches();
             WorldGrid grid = Find.WorldGrid;
 
@@ -1119,7 +1123,7 @@ namespace FactionColonies.SupplyChain
 
             EnsureCapsAndStockpiles();
 
-            // Header
+            // Header (pinned outside scroll)
             Text.Font = GameFont.Medium;
             Widgets.Label(new Rect(inner.x, curY, 300f, 30f), "SC_FactionStockpile".Translate());
             Text.Font = GameFont.Tiny;
@@ -1129,15 +1133,51 @@ namespace FactionColonies.SupplyChain
             Text.Font = GameFont.Small;
             curY += 38f;
 
-            // Resource bars — scale bar to fill available width
+            // Pre-calculate counts for scroll height
             FactionFC simpleFaction = FactionCache.FactionComp;
+            int resourceCount = 0;
+            foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
+            {
+                if (!def.isPoolResource) resourceCount++;
+            }
+
+            int totalTitheInjections = 0;
+            if (simpleFaction != null)
+            {
+                foreach (WorldSettlementFC s in simpleFaction.settlements)
+                {
+                    WorldObjectComp_SupplyChain comp = GetComp(s);
+                    if (comp == null) continue;
+                    foreach (KeyValuePair<ResourceTypeDef, double> kv in comp.TitheInjections)
+                    {
+                        if (kv.Key != null && kv.Value > 0) totalTitheInjections++;
+                    }
+                }
+            }
+
+            float totalHeight = resourceCount * 30f  // resource bars
+                + 12f                                 // gap
+                + 34f + 32f                           // sell orders header + add row
+                + globalSellOrders.Count * 28f        // sell order rows
+                + 56f                                 // overflow info
+                + 16f                                 // gap
+                + 34f + 32f                           // tithe header + add row
+                + (totalTitheInjections > 0 ? totalTitheInjections * 28f : 24f)
+                + 20f;                                // bottom padding
+
+            Rect scrollArea = new Rect(inner.x, curY, inner.width, inner.yMax - curY);
+            Rect viewRect = new Rect(0f, 0f, scrollArea.width - 16f, totalHeight);
+            Widgets.BeginScrollView(scrollArea, ref scrollPosSimple, viewRect);
+            float drawY = 0f;
+
+            // Resource bars — scale bar to fill available width
             const float barHeight = 28f;
             const float accentW = 4f;
             const float arrowSize = 16f;
-            float contentX = inner.x + accentW + 4f;
+            float contentX = accentW + 4f;
             float labelEndX = contentX + 130f;
             float amountTextW = 150f;
-            float barWidth = inner.width - (labelEndX - inner.x) - arrowSize - 8f - amountTextW - 4f;
+            float barWidth = viewRect.width - labelEndX - arrowSize - 8f - amountTextW - 4f;
             if (barWidth < 100f) barWidth = 100f;
 
             int resIdx = 0;
@@ -1147,27 +1187,25 @@ namespace FactionColonies.SupplyChain
 
                 double amount = stockpile.GetAmount(def);
                 double cap = stockpile.GetCap(def);
-                if (cap <= 0) continue;
-
                 float fillPct = cap > 0 ? (float)(amount / cap) : 0f;
                 FlowBreakdown simpleFlow = GetCachedSimpleFlow(simpleFaction, def);
 
-                Rect rowRect = new Rect(inner.x, curY, inner.width, barHeight);
+                Rect rowRect = new Rect(0f, drawY, viewRect.width, barHeight);
                 if (resIdx % 2 == 0) Widgets.DrawHighlight(rowRect);
                 UIUtilSC.DrawFlowHighlight(rowRect, simpleFlow.Net);
 
                 // Left accent bar colored by flow
                 Color accentColor = simpleFlow.Net > 0.01 ? AccentUtil.Income
                     : simpleFlow.Net < -0.01 ? AccentUtil.Expense : Color.gray;
-                Widgets.DrawBoxSolid(new Rect(inner.x, curY, accentW, barHeight), accentColor);
+                Widgets.DrawBoxSolid(new Rect(0f, drawY, accentW, barHeight), accentColor);
 
                 if (def.Icon != null)
-                    GUI.DrawTexture(new Rect(contentX, curY + 2f, 24f, 24f), def.Icon);
+                    GUI.DrawTexture(new Rect(contentX, drawY + 2f, 24f, 24f), def.Icon);
 
                 Text.Anchor = TextAnchor.MiddleLeft;
-                Widgets.Label(new Rect(contentX + 28f, curY, 100f, barHeight), def.label.CapitalizeFirst());
+                Widgets.Label(new Rect(contentX + 28f, drawY, 100f, barHeight), def.label.CapitalizeFirst());
 
-                Rect barRect = new Rect(labelEndX, curY + 4f, barWidth, barHeight - 8f);
+                Rect barRect = new Rect(labelEndX, drawY + 4f, barWidth, barHeight - 8f);
                 Widgets.FillableBar(barRect, fillPct);
 
                 // Arrow indicator (between bar and amount text)
@@ -1175,17 +1213,17 @@ namespace FactionColonies.SupplyChain
                 if (simpleFlow.Net > 0.01)
                 {
                     GUI.color = AccentUtil.Income;
-                    GUI.DrawTexture(new Rect(arrowX, curY + (barHeight - arrowSize) / 2f, arrowSize, arrowSize), TexUI.ArrowTexRight);
+                    GUI.DrawTexture(new Rect(arrowX, drawY + (barHeight - arrowSize) / 2f, arrowSize, arrowSize), TexUI.ArrowTexRight);
                     GUI.color = Color.white;
                 }
                 else if (simpleFlow.Net < -0.01)
                 {
                     GUI.color = AccentUtil.Expense;
-                    GUI.DrawTexture(new Rect(arrowX, curY + (barHeight - arrowSize) / 2f, arrowSize, arrowSize), TexUI.ArrowTexLeft);
+                    GUI.DrawTexture(new Rect(arrowX, drawY + (barHeight - arrowSize) / 2f, arrowSize, arrowSize), TexUI.ArrowTexLeft);
                     GUI.color = Color.white;
                 }
 
-                Widgets.Label(new Rect(arrowX + arrowSize + 4f, curY, amountTextW, barHeight),
+                Widgets.Label(new Rect(arrowX + arrowSize + 4f, drawY, amountTextW, barHeight),
                     "SC_StockpileAmount".Translate(amount.ToString("F1"), cap.ToString("F0")));
 
                 int numSettlements = simpleFaction != null ? simpleFaction.settlements.Count : 0;
@@ -1196,27 +1234,26 @@ namespace FactionColonies.SupplyChain
                     numSettlements, SupplyChainSettings.baseCapPerSettlement, buildingCapBonus));
 
                 Text.Anchor = TextAnchor.UpperLeft;
-                curY += barHeight + 2f;
+                drawY += barHeight + 2f;
                 resIdx++;
             }
 
-            curY += 12f;
+            drawY += 12f;
 
             // Sell Orders section
             Text.Font = GameFont.Medium;
-            Rect sellHeaderRect = new Rect(inner.x, curY, 300f, 30f);
+            Rect sellHeaderRect = new Rect(0f, drawY, 300f, 30f);
             Widgets.Label(sellHeaderRect, "SC_StandingSellOrders".Translate());
             TooltipHandler.TipRegion(sellHeaderRect, (string)"SC_SellOrdersTooltip".Translate(
                 SupplyChainSettings.overflowPenaltyRate.ToString("P0")));
             Text.Font = GameFont.Small;
-            curY += 34f;
+            drawY += 34f;
 
-            DrawAddSellOrderRow(inner, ref curY);
-            curY += 4f;
+            DrawAddSellOrderRow(viewRect, ref drawY);
+            drawY += 4f;
 
             const float sellRowH = 28f;
             const float sellAccentW = 4f;
-            float sellRowW = inner.width;
 
             List<SellOrder> toRemove = null;
             int sellIdx = 0;
@@ -1224,39 +1261,38 @@ namespace FactionColonies.SupplyChain
             {
                 if (order.resource == null) continue;
 
-                Rect rowRect = new Rect(inner.x, curY, sellRowW, sellRowH);
+                Rect rowRect = new Rect(0f, drawY, viewRect.width, sellRowH);
                 if (sellIdx % 2 == 0) Widgets.DrawHighlight(rowRect);
-                Widgets.DrawBoxSolid(new Rect(inner.x, curY, sellAccentW, sellRowH), AccentUtil.Income);
+                Widgets.DrawBoxSolid(new Rect(0f, drawY, sellAccentW, sellRowH), AccentUtil.Income);
 
-                float cx = inner.x + sellAccentW + 6f;
-                float cw = sellRowW - sellAccentW - 10f;
+                float cx = sellAccentW + 6f;
 
                 Text.Anchor = TextAnchor.MiddleLeft;
                 if (order.resource.Icon != null)
-                    GUI.DrawTexture(new Rect(cx, curY + 4f, 20f, 20f), order.resource.Icon);
+                    GUI.DrawTexture(new Rect(cx, drawY + 4f, 20f, 20f), order.resource.Icon);
 
-                Widgets.Label(new Rect(cx + 24f, curY, 120f, sellRowH),
+                Widgets.Label(new Rect(cx + 24f, drawY, 120f, sellRowH),
                     order.resource.label.CapitalizeFirst());
 
-                Widgets.Label(new Rect(cx + 150f, curY, 130f, sellRowH),
+                Widgets.Label(new Rect(cx + 150f, drawY, 130f, sellRowH),
                     "SC_UnitsPerPeriod".Translate(order.amountPerPeriod.ToString("F1")));
 
                 float expectedSilver = (float)(order.amountPerPeriod * FCSettings.silverPerResource
                     * SupplyChainSettings.overflowPenaltyRate);
                 GUI.color = new Color(0.7f, 1f, 0.7f);
-                Widgets.Label(new Rect(cx + 290f, curY, 100f, sellRowH),
+                Widgets.Label(new Rect(cx + 290f, drawY, 100f, sellRowH),
                     "SC_ExpectedSilver".Translate(expectedSilver.ToString("F0")));
                 GUI.color = Color.white;
 
-                float removeX = inner.x + sellRowW - 64f;
-                if (Widgets.ButtonText(new Rect(removeX, curY + 2f, 60f, sellRowH - 4f), "SC_Remove".Translate()))
+                float removeX = viewRect.width - 64f;
+                if (Widgets.ButtonText(new Rect(removeX, drawY + 2f, 60f, sellRowH - 4f), "SC_Remove".Translate()))
                 {
                     if (toRemove == null) toRemove = new List<SellOrder>();
                     toRemove.Add(order);
                 }
 
                 Text.Anchor = TextAnchor.UpperLeft;
-                curY += sellRowH;
+                drawY += sellRowH;
                 sellIdx++;
             }
             if (toRemove != null)
@@ -1267,31 +1303,104 @@ namespace FactionColonies.SupplyChain
             }
 
             // Overflow info
-            curY += 16f;
+            drawY += 16f;
             Text.Font = GameFont.Tiny;
             GUI.color = Color.gray;
-            Widgets.Label(new Rect(inner.x, curY, inner.width, 40f),
+            Widgets.Label(new Rect(0f, drawY, viewRect.width, 40f),
                 "SC_OverflowInfo".Translate(
                     SupplyChainSettings.overflowPenaltyRate.ToString("P0"),
                     (FCSettings.silverPerResource * SupplyChainSettings.overflowPenaltyRate).ToString("F0")));
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
 
-            curY += 16f;
+            drawY += 16f;
 
-            // Tithe Injection info
+            // Tithe Injection section
             Text.Font = GameFont.Medium;
-            Rect titheHeaderRect = new Rect(inner.x, curY, 300f, 30f);
+            Rect titheHeaderRect = new Rect(0f, drawY, 300f, 30f);
             Widgets.Label(titheHeaderRect, "SC_TitheInjection".Translate());
             TooltipHandler.TipRegion(titheHeaderRect, (string)"SC_TitheInjectionTooltip".Translate());
             Text.Font = GameFont.Small;
-            curY += 34f;
+            drawY += 34f;
 
-            GUI.color = Color.gray;
-            Widgets.Label(new Rect(inner.x, curY, inner.width, 24f),
-                "SC_TitheInjectionPerSettlement".Translate());
-            GUI.color = Color.white;
-            curY += 28f;
+            DrawAddTitheInjectionRow_Simple(viewRect, ref drawY, simpleFaction);
+            drawY += 4f;
+
+            // Flat list of all tithe injections across all settlements
+            const float titheRowH = 28f;
+            List<KeyValuePair<WorldObjectComp_SupplyChain, ResourceTypeDef>> titheToRemove = null;
+            int titheIdx = 0;
+
+            if (simpleFaction != null)
+            {
+                foreach (WorldSettlementFC settlement in simpleFaction.settlements)
+                {
+                    WorldObjectComp_SupplyChain comp = GetComp(settlement);
+                    if (comp == null) continue;
+                    foreach (KeyValuePair<ResourceTypeDef, double> kv in comp.TitheInjections)
+                    {
+                        if (kv.Key == null || kv.Value <= 0) continue;
+
+                        Rect titheRow = new Rect(0f, drawY, viewRect.width, titheRowH);
+                        if (titheIdx % 2 == 0) Widgets.DrawHighlight(titheRow);
+                        Widgets.DrawBoxSolid(new Rect(0f, drawY, accentW, titheRowH), AccentUtil.Expense);
+
+                        float cx = accentW + 6f;
+                        Text.Anchor = TextAnchor.MiddleLeft;
+
+                        // Settlement name
+                        Widgets.Label(new Rect(cx, drawY, 130f, titheRowH), settlement.Name);
+
+                        // Resource icon + name
+                        if (kv.Key.Icon != null)
+                            GUI.DrawTexture(new Rect(cx + 134f, drawY + 4f, 20f, 20f), kv.Key.Icon);
+                        Widgets.Label(new Rect(cx + 158f, drawY, 100f, titheRowH),
+                            kv.Key.label.CapitalizeFirst());
+
+                        // Units per period
+                        Widgets.Label(new Rect(cx + 264f, drawY, 130f, titheRowH),
+                            "SC_UnitsPerPeriod".Translate(kv.Value.ToString("F1")));
+
+                        // Budget value (blue tint)
+                        double silverBudget = kv.Value * FCSettings.silverPerResource;
+                        float xBtnX = viewRect.width - 28f;
+                        GUI.color = new Color(0.7f, 0.85f, 1f);
+                        Widgets.Label(new Rect(cx + 400f, drawY, xBtnX - (cx + 400f) - 4f, titheRowH),
+                            "SC_TitheBudgetValue".Translate(silverBudget.ToString("F0")));
+                        GUI.color = Color.white;
+
+                        // Remove button
+                        if (Widgets.ButtonText(new Rect(xBtnX, drawY + 2f, 24f, 24f), "X"))
+                        {
+                            if (titheToRemove == null)
+                                titheToRemove = new List<KeyValuePair<WorldObjectComp_SupplyChain, ResourceTypeDef>>();
+                            titheToRemove.Add(new KeyValuePair<WorldObjectComp_SupplyChain, ResourceTypeDef>(comp, kv.Key));
+                        }
+
+                        Text.Anchor = TextAnchor.UpperLeft;
+                        drawY += titheRowH;
+                        titheIdx++;
+                    }
+                }
+            }
+            if (titheToRemove != null)
+            {
+                foreach (KeyValuePair<WorldObjectComp_SupplyChain, ResourceTypeDef> pair in titheToRemove)
+                    pair.Key.SetTitheInjection(pair.Value, 0);
+            }
+
+            // Empty state
+            if (titheIdx == 0)
+            {
+                Text.Font = GameFont.Tiny;
+                GUI.color = Color.gray;
+                Widgets.Label(new Rect(0f, drawY, viewRect.width, 24f),
+                    "SC_NoTitheInjections".Translate());
+                GUI.color = Color.white;
+                Text.Font = GameFont.Small;
+            }
+
+            Widgets.EndScrollView();
         }
 
         // --- Complex Mode Faction Tab ---
@@ -1827,6 +1936,77 @@ namespace FactionColonies.SupplyChain
                     newSellOrderResource = null;
                     newSellOrderAmount = 0;
                     newSellOrderAmountBuffer = "";
+                }
+            }
+
+            Text.Anchor = TextAnchor.UpperLeft;
+            curY += 28f;
+        }
+
+        // --- Add Tithe Injection Row (Simple mode main tab) ---
+
+        private void DrawAddTitheInjectionRow_Simple(Rect viewRect, ref float curY, FactionFC faction)
+        {
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(new Rect(0f, curY, 40f, 26f), "SC_AddColon".Translate());
+
+            // Settlement picker
+            string settLabel = newTitheSettlement != null ? newTitheSettlement.Name : (string)"SC_PickSettlement".Translate();
+            if (Widgets.ButtonText(new Rect(44f, curY, 130f, 24f), settLabel))
+            {
+                List<FloatMenuOption> options = new List<FloatMenuOption>();
+                if (faction != null)
+                {
+                    foreach (WorldSettlementFC s in faction.settlements)
+                    {
+                        WorldSettlementFC captured = s;
+                        options.Add(new FloatMenuOption(s.Name, delegate
+                        {
+                            newTitheSettlement = captured;
+                        }));
+                    }
+                }
+                Find.WindowStack.Add(new FloatMenu(options));
+            }
+
+            // Resource picker
+            string resLabel = newTitheResource != null ? newTitheResource.label.CapitalizeFirst() : (string)"SC_PickResource".Translate();
+            if (Widgets.ButtonText(new Rect(180f, curY, 130f, 24f), resLabel))
+            {
+                List<FloatMenuOption> options = new List<FloatMenuOption>();
+                foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
+                {
+                    if (def.isPoolResource) continue;
+                    ResourceTypeDef captured = def;
+                    options.Add(new FloatMenuOption(def.label.CapitalizeFirst(), delegate
+                    {
+                        newTitheResource = captured;
+                    }));
+                }
+                Find.WindowStack.Add(new FloatMenu(options));
+            }
+
+            // Amount
+            Widgets.TextFieldNumeric(new Rect(316f, curY, 80f, 24f),
+                ref newTitheAmount, ref newTitheAmountBuffer, 0f, 9999f);
+
+            // Add button
+            if (Widgets.ButtonText(new Rect(404f, curY, 60f, 24f), "SC_Add".Translate()))
+            {
+                if (newTitheSettlement != null && newTitheResource != null && newTitheAmount > 0)
+                {
+                    WorldObjectComp_SupplyChain comp = GetComp(newTitheSettlement);
+                    if (comp != null)
+                    {
+                        comp.SetTitheInjection(newTitheResource, newTitheAmount);
+                    }
+                    else
+                    {
+                        newTitheSettlement = null;
+                    }
+                    newTitheResource = null;
+                    newTitheAmount = 0;
+                    newTitheAmountBuffer = "";
                 }
             }
 

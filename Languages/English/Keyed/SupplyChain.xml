@@ -107,6 +107,7 @@
     <SC_TitheInjection>Tithe Injection</SC_TitheInjection>
     <SC_TitheInjectionTooltip>Tithe injection converts stockpiled resources into additional tithe budget.\n\nConfigured amounts are drawn from the stockpile each tax period. The budget raises the tithe cap for that resource, letting you choose what items to receive via the tithe menu.\n\nIf the stockpile doesn't have enough, only what's available is injected.</SC_TitheInjectionTooltip>
     <SC_TitheInjectionPerSettlement>Configure tithe injections per settlement in the settlement Supply Chain tab.</SC_TitheInjectionPerSettlement>
+    <SC_NoTitheInjections>No tithe injections configured.</SC_NoTitheInjections>
     <SC_TitheBudgetValue>+{0} silver tithe budget</SC_TitheBudgetValue>
     <SC_TitheInjectionDesc>Supply chain tithe injection: +{0} silver</SC_TitheInjectionDesc>
     <SC_BarFlowTitheInjection>  Tithe injection: -{0}</SC_BarFlowTitheInjection>
