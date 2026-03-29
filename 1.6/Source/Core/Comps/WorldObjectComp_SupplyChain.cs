@@ -144,8 +144,6 @@ namespace FactionColonies.SupplyChain
         {
             foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
             {
-                if (def.isPoolResource)
-                    continue;
                 localCaps[def] = SupplyChainSettings.localCapBase;
             }
 
@@ -158,7 +156,7 @@ namespace FactionColonies.SupplyChain
                 if (ext?.capBonuses == null) continue;
                 foreach (BuildingCapBonus bonus in ext.capBonuses)
                 {
-                    if (bonus.resource != null && !bonus.resource.isPoolResource && localCaps.ContainsKey(bonus.resource))
+                    if (bonus.resource != null && localCaps.ContainsKey(bonus.resource))
                         localCaps[bonus.resource] += bonus.amount;
                 }
             }
@@ -681,12 +679,7 @@ namespace FactionColonies.SupplyChain
             float y = inner.y + 40f;
             float rowHeight = 35f;
 
-            int resourceCount = 0;
-            foreach (ResourceFC resource in uiSettlement.Resources)
-            {
-                if (!resource.def.isPoolResource)
-                    resourceCount++;
-            }
+            int resourceCount = uiSettlement.Resources.Count;
 
             float totalHeight = resourceCount * rowHeight + 40f
                 + needStates.Count * NeedRowStep + 50f;
@@ -738,7 +731,6 @@ namespace FactionColonies.SupplyChain
 
             foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
             {
-                if (def.isPoolResource) continue;
                 double cap = localStockpileDict.GetCap(def);
                 if (cap <= 0) continue;
 
@@ -793,7 +785,6 @@ namespace FactionColonies.SupplyChain
 
             foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
             {
-                if (def.isPoolResource) continue;
                 double cap = localStockpileDict.GetCap(def);
                 if (cap <= 0) continue;
 
@@ -916,7 +907,6 @@ namespace FactionColonies.SupplyChain
             int resourceCount = 0;
             foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
             {
-                if (def.isPoolResource) continue;
                 double cap = localStockpileDict != null ? localStockpileDict.GetCap(def) : 0;
                 if (cap > 0) resourceCount++;
             }
@@ -943,10 +933,8 @@ namespace FactionColonies.SupplyChain
             int idx = 0;
             foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
             {
-                if (def.isPoolResource) continue;
-
-                double amount = localStockpileDict != null ? localStockpileDict.GetAmount(def) : 0;
-                double cap = localStockpileDict != null ? localStockpileDict.GetCap(def) : 0;
+                double amount = localStockpileDict?.GetAmount(def) ?? 0;
+                double cap = localStockpileDict?.GetCap(def) ?? 0;
                 if (cap <= 0) continue;
 
                 float fillPct = cap > 0 ? (float)(amount / cap) : 0f;
@@ -1039,11 +1027,7 @@ namespace FactionColonies.SupplyChain
             const float rowHeight = 35f;
             const float sectionPad = 8f;
 
-            int resourceCount = 0;
-            foreach (ResourceFC resource in uiSettlement.Resources)
-            {
-                if (!resource.def.isPoolResource) resourceCount++;
-            }
+            int resourceCount = uiSettlement.Resources.Count;
 
             float allocH = 36f + resourceCount * rowHeight + sectionPad;
             float totalHeight = allocH + 16f;
@@ -1605,9 +1589,6 @@ namespace FactionColonies.SupplyChain
             int idx = 0;
             foreach (ResourceFC resource in uiSettlement.Resources)
             {
-                if (resource.def.isPoolResource)
-                    continue;
-
                 ResourceTypeDef def = resource.def;
                 double currentAlloc = GetAllocation(def);
                 double rawProd = resource.rawTotalProduction;

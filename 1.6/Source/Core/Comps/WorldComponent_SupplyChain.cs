@@ -304,8 +304,6 @@ namespace FactionColonies.SupplyChain
 
             foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
             {
-                if (def.isPoolResource)
-                    continue;
                 factionCaps[def] = numSettlements * SupplyChainSettings.baseCapPerSettlement;
             }
 
@@ -320,7 +318,7 @@ namespace FactionColonies.SupplyChain
                     if (ext?.capBonuses == null) continue;
                     foreach (BuildingCapBonus bonus in ext.capBonuses)
                     {
-                        if (bonus.resource != null && !bonus.resource.isPoolResource && factionCaps.ContainsKey(bonus.resource))
+                        if (bonus.resource != null && factionCaps.ContainsKey(bonus.resource))
                             factionCaps[bonus.resource] += bonus.amount;
                     }
                 }
@@ -594,8 +592,7 @@ namespace FactionColonies.SupplyChain
                 double settlementProd = 0;
                 foreach (ResourceFC resource in settlement.Resources)
                 {
-                    if (!resource.def.isPoolResource)
-                        settlementProd += resource.rawTotalProduction;
+                    settlementProd += resource.rawTotalProduction;
                 }
                 productionShares[settlement] = settlementProd;
                 totalProduction += settlementProd;
@@ -692,8 +689,6 @@ namespace FactionColonies.SupplyChain
 
                 foreach (ResourceFC resource in settlement.Resources)
                 {
-                    if (resource.def.isPoolResource) continue;
-
                     double allocated = comp.GetAllocation(resource.def);
                     if (allocated <= 0) continue;
 
@@ -707,7 +702,8 @@ namespace FactionColonies.SupplyChain
                     }
                     contribMap[settlement] = allocated;
 
-                    if (excess > 0)
+                    // Pool resources cap silently — no overflow auto-sell
+                    if (excess > 0 && !resource.def.isPoolResource)
                     {
                         double current;
                         totalOverflow.TryGetValue(resource.def, out current);
@@ -775,15 +771,13 @@ namespace FactionColonies.SupplyChain
 
                 foreach (ResourceFC resource in settlement.Resources)
                 {
-                    if (resource.def.isPoolResource) continue;
-
                     double allocated = comp.GetAllocation(resource.def);
                     if (allocated <= 0) continue;
 
                     double excess = localStockpile.Credit(resource.def, allocated);
 
-                    // Overflow: auto-sell excess at penalty rate
-                    if (excess > 0)
+                    // Overflow: auto-sell excess at penalty rate (pool resources cap silently)
+                    if (excess > 0 && !resource.def.isPoolResource)
                     {
                         float silver = (float)(excess * FCSettings.silverPerResource * SupplyChainSettings.overflowPenaltyRate);
                         settlement.AddOneTimeSilverIncome(silver);
@@ -1138,7 +1132,7 @@ namespace FactionColonies.SupplyChain
             int resourceCount = 0;
             foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
             {
-                if (!def.isPoolResource) resourceCount++;
+                resourceCount++;
             }
 
             int totalTitheInjections = 0;
@@ -1175,7 +1169,7 @@ namespace FactionColonies.SupplyChain
             const float accentW = 4f;
             const float arrowSize = 16f;
             float contentX = accentW + 4f;
-            float labelEndX = contentX + 130f;
+            float labelEndX = contentX + 172f;
             float amountTextW = 150f;
             float barWidth = viewRect.width - labelEndX - arrowSize - 8f - amountTextW - 4f;
             if (barWidth < 100f) barWidth = 100f;
@@ -1183,8 +1177,6 @@ namespace FactionColonies.SupplyChain
             int resIdx = 0;
             foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
             {
-                if (def.isPoolResource) continue;
-
                 double amount = stockpile.GetAmount(def);
                 double cap = stockpile.GetCap(def);
                 float fillPct = cap > 0 ? (float)(amount / cap) : 0f;
@@ -1203,7 +1195,11 @@ namespace FactionColonies.SupplyChain
                     GUI.DrawTexture(new Rect(contentX, drawY + 2f, 24f, 24f), def.Icon);
 
                 Text.Anchor = TextAnchor.MiddleLeft;
-                Widgets.Label(new Rect(contentX + 28f, drawY, 100f, barHeight), def.label.CapitalizeFirst());
+                bool prevWordWrap = Text.WordWrap;
+                Text.WordWrap = false;
+                Rect labelRect = new Rect(contentX + 28f, drawY, 140f, barHeight);
+                Widgets.Label(labelRect, Text.ClampTextWithEllipsis(labelRect, def.label.CapitalizeFirst()));
+                Text.WordWrap = prevWordWrap;
 
                 Rect barRect = new Rect(labelEndX, drawY + 4f, barWidth, barHeight - 8f);
                 Widgets.FillableBar(barRect, fillPct);
@@ -1349,23 +1345,23 @@ namespace FactionColonies.SupplyChain
                         Text.Anchor = TextAnchor.MiddleLeft;
 
                         // Settlement name
-                        Widgets.Label(new Rect(cx, drawY, 130f, titheRowH), settlement.Name);
+                        Widgets.Label(new Rect(cx, drawY, 200f, titheRowH), settlement.Name);
 
                         // Resource icon + name
                         if (kv.Key.Icon != null)
-                            GUI.DrawTexture(new Rect(cx + 134f, drawY + 4f, 20f, 20f), kv.Key.Icon);
-                        Widgets.Label(new Rect(cx + 158f, drawY, 100f, titheRowH),
+                            GUI.DrawTexture(new Rect(cx + 204f, drawY + 4f, 20f, 20f), kv.Key.Icon);
+                        Widgets.Label(new Rect(cx + 228f, drawY, 100f, titheRowH),
                             kv.Key.label.CapitalizeFirst());
 
                         // Units per period
-                        Widgets.Label(new Rect(cx + 264f, drawY, 130f, titheRowH),
+                        Widgets.Label(new Rect(cx + 334f, drawY, 130f, titheRowH),
                             "SC_UnitsPerPeriod".Translate(kv.Value.ToString("F1")));
 
                         // Budget value (blue tint)
                         double silverBudget = kv.Value * FCSettings.silverPerResource;
                         float xBtnX = viewRect.width - 28f;
                         GUI.color = new Color(0.7f, 0.85f, 1f);
-                        Widgets.Label(new Rect(cx + 400f, drawY, xBtnX - (cx + 400f) - 4f, titheRowH),
+                        Widgets.Label(new Rect(cx + 470f, drawY, xBtnX - (cx + 470f) - 4f, titheRowH),
                             "SC_TitheBudgetValue".Translate(silverBudget.ToString("F0")));
                         GUI.color = Color.white;
 
@@ -1480,7 +1476,6 @@ namespace FactionColonies.SupplyChain
                 cachedResourceColumns = new List<ResourceTypeDef>();
                 foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
                 {
-                    if (def.isPoolResource) continue;
                     bool anyHasCap = false;
                     foreach (WorldSettlementFC s in faction.settlements)
                     {
@@ -1952,7 +1947,7 @@ namespace FactionColonies.SupplyChain
 
             // Settlement picker
             string settLabel = newTitheSettlement != null ? newTitheSettlement.Name : (string)"SC_PickSettlement".Translate();
-            if (Widgets.ButtonText(new Rect(44f, curY, 130f, 24f), settLabel))
+            if (Widgets.ButtonText(new Rect(44f, curY, 200f, 24f), settLabel))
             {
                 List<FloatMenuOption> options = new List<FloatMenuOption>();
                 if (faction != null)
@@ -1971,7 +1966,7 @@ namespace FactionColonies.SupplyChain
 
             // Resource picker
             string resLabel = newTitheResource != null ? newTitheResource.label.CapitalizeFirst() : (string)"SC_PickResource".Translate();
-            if (Widgets.ButtonText(new Rect(180f, curY, 130f, 24f), resLabel))
+            if (Widgets.ButtonText(new Rect(250f, curY, 130f, 24f), resLabel))
             {
                 List<FloatMenuOption> options = new List<FloatMenuOption>();
                 foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
@@ -1987,11 +1982,11 @@ namespace FactionColonies.SupplyChain
             }
 
             // Amount
-            Widgets.TextFieldNumeric(new Rect(316f, curY, 80f, 24f),
+            Widgets.TextFieldNumeric(new Rect(386f, curY, 80f, 24f),
                 ref newTitheAmount, ref newTitheAmountBuffer, 0f, 9999f);
 
             // Add button
-            if (Widgets.ButtonText(new Rect(404f, curY, 60f, 24f), "SC_Add".Translate()))
+            if (Widgets.ButtonText(new Rect(474f, curY, 60f, 24f), "SC_Add".Translate()))
             {
                 if (newTitheSettlement != null && newTitheResource != null && newTitheAmount > 0)
                 {
