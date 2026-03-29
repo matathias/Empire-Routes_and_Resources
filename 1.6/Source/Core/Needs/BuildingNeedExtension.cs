@@ -29,8 +29,8 @@ namespace FactionColonies.SupplyChain
         public List<NeedPenalty> penalties;
         public List<BuildingCapBonus> capBonuses;
 
-        private bool hasInputs => inputs != null && inputs.Count > 0;
-        private bool hasCaps => capBonuses != null && capBonuses.Count > 0;
+        private bool hasInputs => inputs?.Count > 0;
+        private bool hasCaps => capBonuses?.Count > 0;
         private bool hasBoth => hasInputs && hasCaps;
 
         public string SectionLabel
@@ -112,12 +112,12 @@ namespace FactionColonies.SupplyChain
         public string GetCardDescription(BuildingFCDef def)
         {
             List<string> parts = new List<string>();
-            if (inputs != null && inputs.Count > 0)
+            if (hasInputs)
             {
                 string needStr = string.Join(", ", inputs.Select(i => i.amount.ToString("0.##") + " " + i.resource.LabelCap));
                 parts.Add("SC_BuildingNeedCardNeeds".Translate(needStr));
             }
-            if (capBonuses != null && capBonuses.Count > 0)
+            if (hasCaps)
             {
                 string capStr = string.Join(", ", capBonuses.Select(b => "+" + b.amount.ToString("0.##") + " " + b.resource.LabelCap));
                 parts.Add("SC_BuildingNeedCardCap".Translate(capStr));

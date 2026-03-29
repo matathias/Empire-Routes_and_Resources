@@ -13,6 +13,8 @@
 		<timeTillTrigger>0</timeTillTrigger>
 		<isRandomEvent>true</isRandomEvent>
 		<weight>8</weight>
+		<cooldownTicks>600000</cooldownTicks>
+		<minDaysSinceFounded>7</minDaysSinceFounded>
 		<rangeSettlementsAffected>1~1</rangeSettlementsAffected>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<activateAtStart>true</activateAtStart>
@@ -51,7 +53,7 @@
 		<defName>sc_warehouseFire_opt3</defName>
 		<label>Salvage what we can and sell the rest for scrap.</label>
 		<baseChanceOfSuccess>100</baseChanceOfSuccess>
-		<silverCost>0</silverCost>
+		<silverCost>100</silverCost>
 		<parentEvent>sc_warehouseFire</parentEvent>
 		<successEvent>sc_warehouseFire_salvaged</successEvent>
 	</FactionColonies.FCOptionDef>
@@ -116,6 +118,8 @@
 		<timeTillTrigger>0</timeTillTrigger>
 		<isRandomEvent>true</isRandomEvent>
 		<weight>12</weight>
+		<cooldownTicks>300000</cooldownTicks>
+		<minDaysSinceFounded>5</minDaysSinceFounded>
 		<rangeSettlementsAffected>1~2</rangeSettlementsAffected>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<activateAtStart>true</activateAtStart>
@@ -137,7 +141,7 @@
 		<defName>sc_merchantSurplus_opt1</defName>
 		<label>Buy the lot. Take everything they're selling.</label>
 		<baseChanceOfSuccess>100</baseChanceOfSuccess>
-		<silverCost>400</silverCost>
+		<silverCost>800</silverCost>
 		<parentEvent>sc_merchantSurplus</parentEvent>
 		<successEvent>sc_merchantSurplus_bought</successEvent>
 	</FactionColonies.FCOptionDef>
@@ -155,7 +159,7 @@
 		<defName>sc_merchantSurplus_opt3</defName>
 		<label>Sell it forward. Flip the goods for silver.</label>
 		<baseChanceOfSuccess>100</baseChanceOfSuccess>
-		<silverCost>0</silverCost>
+		<silverCost>200</silverCost>
 		<parentEvent>sc_merchantSurplus</parentEvent>
 		<successEvent>sc_merchantSurplus_flipped</successEvent>
 	</FactionColonies.FCOptionDef>
@@ -220,6 +224,8 @@
 		<timeTillTrigger>0</timeTillTrigger>
 		<isRandomEvent>true</isRandomEvent>
 		<weight>10</weight>
+		<cooldownTicks>600000</cooldownTicks>
+		<minDaysSinceFounded>7</minDaysSinceFounded>
 		<rangeSettlementsAffected>1~1</rangeSettlementsAffected>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<requiredResource>RTD_Food</requiredResource>
@@ -248,7 +254,7 @@
 		<defName>sc_spoilage_opt1</defName>
 		<label>Rush cold storage measures. Spend silver to save food.</label>
 		<baseChanceOfSuccess>100</baseChanceOfSuccess>
-		<silverCost>300</silverCost>
+		<silverCost>400</silverCost>
 		<parentEvent>sc_spoilage</parentEvent>
 		<successEvent>sc_spoilage_coldStorage</successEvent>
 	</FactionColonies.FCOptionDef>
@@ -257,7 +263,7 @@
 		<defName>sc_spoilage_opt2</defName>
 		<label>Distribute it before it goes bad. Extra rations for everyone.</label>
 		<baseChanceOfSuccess>100</baseChanceOfSuccess>
-		<silverCost>0</silverCost>
+		<silverCost>100</silverCost>
 		<parentEvent>sc_spoilage</parentEvent>
 		<successEvent>sc_spoilage_distributed</successEvent>
 	</FactionColonies.FCOptionDef>
@@ -363,6 +369,8 @@
 		<timeTillTrigger>0</timeTillTrigger>
 		<isRandomEvent>true</isRandomEvent>
 		<weight>8</weight>
+		<cooldownTicks>600000</cooldownTicks>
+		<minDaysSinceFounded>10</minDaysSinceFounded>
 		<rangeSettlementsAffected>1~2</rangeSettlementsAffected>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<requiredResource>RTD_Food</requiredResource>

@@ -13,6 +13,8 @@
 		<timeTillTrigger>0</timeTillTrigger>
 		<isRandomEvent>true</isRandomEvent>
 		<weight>6</weight>
+		<cooldownTicks>900000</cooldownTicks>
+		<minDaysSinceFounded>10</minDaysSinceFounded>
 		<rangeSettlementsAffected>1~3</rangeSettlementsAffected>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<requiredResource>RTD_Food</requiredResource>
@@ -111,14 +113,7 @@
 		<timeTillTrigger>600000</timeTillTrigger>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
-			<li><stat>RTD_Weapons_ProductionMultiplier</stat><value>-0.15</value></li>
-			<li><stat>RTD_Apparel_ProductionMultiplier</stat><value>-0.15</value></li>
-			<li><stat>RTD_Logging_ProductionMultiplier</stat><value>-0.15</value></li>
-			<li><stat>RTD_Mining_ProductionMultiplier</stat><value>-0.15</value></li>
-			<li><stat>RTD_Research_ProductionMultiplier</stat><value>-0.15</value></li>
-			<li><stat>RTD_Power_ProductionMultiplier</stat><value>-0.15</value></li>
-			<li><stat>RTD_Medicine_ProductionMultiplier</stat><value>-0.15</value></li>
-			<li><stat>RTD_Animals_ProductionMultiplier</stat><value>-0.15</value></li>
+			<li><stat>workerProductionMultiplier</stat><value>0.85</value></li>
 		</statModifiers>
 	</FactionColonies.FCEventDef>
 
@@ -146,6 +141,8 @@
 		<timeTillTrigger>0</timeTillTrigger>
 		<isRandomEvent>true</isRandomEvent>
 		<weight>8</weight>
+		<cooldownTicks>600000</cooldownTicks>
+		<minDaysSinceFounded>10</minDaysSinceFounded>
 		<rangeSettlementsAffected>1~2</rangeSettlementsAffected>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<requiredResource>RTD_Medicine</requiredResource>
@@ -211,6 +208,7 @@
 		<desc>Outside traders delivered a shipment of medicine. The shortage is alleviated, at least for now.</desc>
 		<category>EC_SupplyChain</category>
 		<timeTillTrigger>300000</timeTillTrigger>
+		<timeTillTriggerMax>450000</timeTillTriggerMax>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
 			<li><stat>RTD_Medicine_ProductionAdditive</stat><value>1</value></li>
@@ -223,6 +221,7 @@
 		<desc>Medicine is being rationed severely. People are unhappy, but everyone gets at least something.</desc>
 		<category>EC_SupplyChain</category>
 		<timeTillTrigger>300000</timeTillTrigger>
+		<timeTillTriggerMax>450000</timeTillTriggerMax>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
 			<li><stat>happinessLostBase</stat><value>1.5</value></li>
@@ -235,6 +234,7 @@
 		<desc>Food workers are brewing herbal remedies instead. Medicine stocks are improving, but meals are getting thinner.</desc>
 		<category>EC_SupplyChain</category>
 		<timeTillTrigger>300000</timeTillTrigger>
+		<timeTillTriggerMax>450000</timeTillTriggerMax>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
 			<li><stat>RTD_Medicine_ProductionAdditive</stat><value>0.5</value></li>
@@ -266,6 +266,9 @@
 		<timeTillTrigger>0</timeTillTrigger>
 		<isRandomEvent>true</isRandomEvent>
 		<weight>6</weight>
+		<cooldownTicks>600000</cooldownTicks>
+		<minDaysSinceFounded>7</minDaysSinceFounded>
+		<minTechLevel>Industrial</minTechLevel>
 		<rangeSettlementsAffected>1~2</rangeSettlementsAffected>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<requiredResource>RTD_Power</requiredResource>
@@ -321,8 +324,8 @@
 		<timeTillTrigger>300000</timeTillTrigger>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
-			<li><stat>RTD_Power_ProductionAdditive</stat><value>4</value></li>
-			<li><stat>happinessGainedBase</stat><value>0.5</value></li>
+			<li><stat>RTD_Power_ProductionAdditive</stat><value>3</value></li>
+			<li><stat>happinessGainedBase</stat><value>1</value></li>
 		</statModifiers>
 	</FactionColonies.FCEventDef>
 
@@ -335,14 +338,14 @@
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
 			<li><stat>RTD_Power_ProductionAdditive</stat><value>1</value></li>
-			<li><stat>happinessLostBase</stat><value>0.5</value></li>
+			<li><stat>happinessLostBase</stat><value>2</value></li>
 		</statModifiers>
 	</FactionColonies.FCEventDef>
 
 	<FactionColonies.FCEventDef>
 		<defName>sc_powerSurplus_stored</defName>
 		<label>Steady Power</label>
-		<desc>The extra power hums quietly through the grid. Lights stay on, machines run smoothly, and settlers sleep soundly.</desc>
+		<desc>The extra power hums quietly through the grid. Lights stay on, machines run smoothly, and workers sleep soundly.</desc>
 		<category>EC_SupplyChain</category>
 		<timeTillTrigger>300000</timeTillTrigger>
 		<settlementsCarryOver>true</settlementsCarryOver>
