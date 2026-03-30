@@ -375,8 +375,8 @@ namespace FactionColonies.SupplyChain
             public double routeOut;
             public double sellOrders;
             public double titheInjection;
-            public double needs { get { return baseNeeds + buildingNeeds + compNeeds; } }
-            public double Net { get { return production + routeIn - needs - routeOut - sellOrders - titheInjection; } }
+            public double needs => baseNeeds + buildingNeeds + compNeeds;
+            public double Net => production + routeIn - needs - routeOut - sellOrders - titheInjection;
         }
 
         private static ulong FlowKey(int settlementTile, ushort resourceIndex)
@@ -394,8 +394,7 @@ namespace FactionColonies.SupplyChain
             }
 
             ulong key = FlowKey(settlement.Tile, def.index);
-            FlowBreakdown flow;
-            if (!flowCache.TryGetValue(key, out flow))
+            if (!flowCache.TryGetValue(key, out FlowBreakdown flow))
             {
                 flow = CalculateFlow(settlement, comp, def);
                 flowCache[key] = flow;
@@ -412,8 +411,7 @@ namespace FactionColonies.SupplyChain
                 flowCacheDirty = false;
             }
 
-            FlowBreakdown flow;
-            if (!simpleFlowCache.TryGetValue(def.index, out flow))
+            if (!simpleFlowCache.TryGetValue(def.index, out FlowBreakdown flow))
             {
                 flow = CalculateSimpleFlow(faction, def);
                 simpleFlowCache[def.index] = flow;

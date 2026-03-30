@@ -20,6 +20,6 @@
 		</li>
 	</modDependencies>
 
-	<description>A sub-mod for Empire adding stockpile management and supply routes between settlements. Features a simple mode (shared faction stockpile) and a complex mode (per-settlement stockpiles with logistics routes).</description>
+	<description>A sub-mod for Empire Refactored, adding stockpile management and supply routes between settlements. Features a simple mode with a shared faction stockpile, and a complex mode with per-settlement stockpiles with logistics routes.</description>
 
 </ModMetaData>
