@@ -133,5 +133,17 @@
     <!-- Stat Descriptions -->
     <SC_Stat_SellRateMultiplier>Improves the silver earned when selling surplus resources from the stockpile.</SC_Stat_SellRateMultiplier>
     <SC_Stat_RouteEfficiencyBonus>Reduces resource losses on supply routes originating from this settlement.</SC_Stat_RouteEfficiencyBonus>
+    <SC_Stat_TaxEfficiency>Supply chain satisfaction improves tax collection efficiency at this settlement.</SC_Stat_TaxEfficiency>
+
+    <!-- Surplus Bonuses -->
+    <SC_SurplusBonus>{0} surplus: +{1}</SC_SurplusBonus>
+
+    <!-- Trade Network -->
+    <SC_NetworkPartnerBonus>Trade partners ({0}): +{1}</SC_NetworkPartnerBonus>
+    <SC_NetworkHubBonus>Trade hub ({0}): +{1}</SC_NetworkHubBonus>
+
+    <!-- Tax Efficiency -->
+    <SC_TaxEfficiencyDesc>Needs satisfaction ({0}%): x{1}% tax efficiency</SC_TaxEfficiencyDesc>
+    <SC_SellRateNetworkDesc>Trade network: x{0}% sell rate</SC_SellRateNetworkDesc>
 
 </LanguageData>

@@ -21,6 +21,14 @@
 				<label>unrest</label>
 			</li>
 		</penalties>
+		<surplusBonuses>
+			<li>
+				<stat>unrestLostBase</stat>
+				<maxBonus>2.0</maxBonus>
+				<label>reliable power</label>
+			</li>
+		</surplusBonuses>
+		<maxSurplusRatio>2.0</maxSurplusRatio>
 	</FactionColonies.SupplyChain.SettlementNeedDef>
 
 	<FactionColonies.SupplyChain.SettlementNeedDef>
@@ -37,6 +45,14 @@
 				<label>happiness</label>
 			</li>
 		</penalties>
+		<surplusBonuses>
+			<li>
+				<stat>loyaltyGainedBase</stat>
+				<maxBonus>2.0</maxBonus>
+				<label>medical surplus</label>
+			</li>
+		</surplusBonuses>
+		<maxSurplusRatio>2.0</maxSurplusRatio>
 	</FactionColonies.SupplyChain.SettlementNeedDef>
 
 	<FactionColonies.SupplyChain.SettlementNeedDef>
@@ -53,6 +69,14 @@
 				<label>loyalty</label>
 			</li>
 		</penalties>
+		<surplusBonuses>
+			<li>
+				<stat>prosperityGainedBase</stat>
+				<maxBonus>2.0</maxBonus>
+				<label>strong infrastructure</label>
+			</li>
+		</surplusBonuses>
+		<maxSurplusRatio>2.0</maxSurplusRatio>
 	</FactionColonies.SupplyChain.SettlementNeedDef>
 
 </Defs>

@@ -675,6 +675,14 @@ namespace FactionColonies.SupplyChain
         {
             RecalculateCaps();
 
+            // No trade network in Simple mode — clear any stale network info
+            foreach (WorldSettlementFC settlement in faction.settlements)
+            {
+                WorldObjectComp_SupplyChain sc = GetComp(settlement);
+                if (sc != null)
+                    sc.SetNetworkInfo(0, 0);
+            }
+
             Dictionary<ResourceTypeDef, double> totalOverflow = new Dictionary<ResourceTypeDef, double>();
             Dictionary<ResourceTypeDef, Dictionary<WorldSettlementFC, double>> contributions =
                 new Dictionary<ResourceTypeDef, Dictionary<WorldSettlementFC, double>>();
@@ -790,6 +798,12 @@ namespace FactionColonies.SupplyChain
             supplyRoutes.Sort((a, b) => a.priority.CompareTo(b.priority));
             List<SupplyRoute> invalidRoutes = null;
 
+            // Track route connectivity for trade network bonuses
+            Dictionary<WorldSettlementFC, HashSet<WorldSettlementFC>> networkOut =
+                new Dictionary<WorldSettlementFC, HashSet<WorldSettlementFC>>();
+            Dictionary<WorldSettlementFC, HashSet<WorldSettlementFC>> networkIn =
+                new Dictionary<WorldSettlementFC, HashSet<WorldSettlementFC>>();
+
             foreach (SupplyRoute route in supplyRoutes)
             {
                 if (!route.IsValid())
@@ -816,6 +830,23 @@ namespace FactionColonies.SupplyChain
                 {
                     LogUtil.Message("Route " + route.source.Name + " -> " + route.destination.Name
                         + ": " + transferred.ToString("F1") + " " + route.resource.label + " transferred");
+
+                    // Track connectivity for network bonuses
+                    HashSet<WorldSettlementFC> outSet;
+                    if (!networkOut.TryGetValue(route.source, out outSet))
+                    {
+                        outSet = new HashSet<WorldSettlementFC>();
+                        networkOut[route.source] = outSet;
+                    }
+                    outSet.Add(route.destination);
+
+                    HashSet<WorldSettlementFC> inSet;
+                    if (!networkIn.TryGetValue(route.destination, out inSet))
+                    {
+                        inSet = new HashSet<WorldSettlementFC>();
+                        networkIn[route.destination] = inSet;
+                    }
+                    inSet.Add(route.source);
                 }
             }
 
@@ -825,6 +856,36 @@ namespace FactionColonies.SupplyChain
                 foreach (SupplyRoute route in invalidRoutes)
                     supplyRoutes.Remove(route);
                 DirtyFlowCache();
+            }
+
+            // Distribute network info to settlement comps
+            foreach (WorldSettlementFC settlement in faction.settlements)
+            {
+                WorldObjectComp_SupplyChain netComp = GetComp(settlement);
+                if (netComp is null) continue;
+
+                networkOut.TryGetValue(settlement, out HashSet<WorldSettlementFC> outP);
+                networkIn.TryGetValue(settlement, out HashSet<WorldSettlementFC> inP);
+
+                int outCount = outP?.Count ?? 0;
+                int inCount = inP?.Count ?? 0;
+
+                // Distinct partners = union of in and out
+                int partners;
+                if (outP != null && inP != null)
+                {
+                    HashSet<WorldSettlementFC> all = new HashSet<WorldSettlementFC>(outP);
+                    foreach (WorldSettlementFC s in inP)
+                        all.Add(s);
+                    partners = all.Count;
+                }
+                else
+                {
+                    partners = outCount + inCount;
+                }
+
+                int hub = outCount < inCount ? outCount : inCount;
+                netComp.SetNetworkInfo(partners, hub);
             }
 
             // 4. RESOLVE TITHE INJECTIONS (draw from local stockpiles, set externalTitheBudget)
@@ -942,6 +1003,14 @@ namespace FactionColonies.SupplyChain
 
         public void PostSettlementCreateTax(WorldSettlementFC settlement, ref int silverAmount, List<Thing> titheThings)
         {
+            if (silverAmount <= 0 || FactionCache.FactionComp == null) return;
+
+            FCStatDef taxEffStat = DefDatabase<FCStatDef>.GetNamedSilentFail("SC_TaxEfficiency");
+            if (taxEffStat == null) return;
+
+            double mult = FactionCache.FactionComp.GetStatValue(taxEffStat, settlement);
+            if (mult > 0 && mult != 1.0)
+                silverAmount = (int)(silverAmount * mult);
         }
 
         private void DistributeSilver(float silver, ResourceTypeDef resource,

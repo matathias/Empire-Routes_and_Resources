@@ -31,6 +31,16 @@ namespace FactionColonies.SupplyChain
         /// </summary>
         public List<NeedPenalty> penalties;
 
+        /// <summary>
+        /// Surplus ratio and bonus data. surplusRatio is set by NeedResolver post-draw:
+        /// stockpile remaining / demanded. surplusBonuses and maxSurplusRatio are copied
+        /// from the SettlementNeedDef. Not serialized — recomputed each resolution,
+        /// preserved between cycles by RebuildNeedStates.
+        /// </summary>
+        public double surplusRatio;
+        public List<NeedSurplusBonus> surplusBonuses;
+        public double maxSurplusRatio;
+
         public float Satisfaction
         {
             get { return demanded > 0 ? (float)(fulfilled / demanded) : 1f; }
@@ -41,7 +51,8 @@ namespace FactionColonies.SupplyChain
         }
 
         public NeedState(string needId, ResourceTypeDef resource, double demanded, double fulfilled,
-            string label, NeedCategory category, List<NeedPenalty> penalties = null)
+            string label, NeedCategory category, List<NeedPenalty> penalties = null,
+            List<NeedSurplusBonus> surplusBonuses = null, double maxSurplusRatio = 2.0)
         {
             this.needId = needId;
             this.resource = resource;
@@ -50,6 +61,8 @@ namespace FactionColonies.SupplyChain
             this.label = label;
             this.category = category;
             this.penalties = penalties;
+            this.surplusBonuses = surplusBonuses;
+            this.maxSurplusRatio = maxSurplusRatio;
         }
 
         public void ExposeData()

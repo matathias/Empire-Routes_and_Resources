@@ -20,6 +20,14 @@
                 <label>loyalty</label>
             </li>
         </penalties>
+        <surplusBonuses>
+            <li>
+                <stat>happinessGainedBase</stat>
+                <maxBonus>3.0</maxBonus>
+                <label>food abundance</label>
+            </li>
+        </surplusBonuses>
+        <maxSurplusRatio>2.0</maxSurplusRatio>
     </FactionColonies.SupplyChain.SettlementNeedDef>
 
 </Defs>

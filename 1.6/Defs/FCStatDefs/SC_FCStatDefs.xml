@@ -17,4 +17,12 @@
 		<descriptionKey>SC_Stat_RouteEfficiencyBonus</descriptionKey>
 	</FactionColonies.FCStatDef>
 
+	<FactionColonies.FCStatDef>
+		<defName>SC_TaxEfficiency</defName>
+		<label>tax efficiency</label>
+		<aggregation>Multiplicative</aggregation>
+		<appliesToSettlements>true</appliesToSettlements>
+		<descriptionKey>SC_Stat_TaxEfficiency</descriptionKey>
+	</FactionColonies.FCStatDef>
+
 </Defs>

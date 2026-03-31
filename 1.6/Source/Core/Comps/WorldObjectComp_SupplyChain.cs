@@ -38,6 +38,10 @@ namespace FactionColonies.SupplyChain
         // Needs
         private List<NeedState> needStates = new List<NeedState>();
 
+        // Trade network
+        private int connectedPartners;
+        private int hubScore;
+
         private WorldSettlementFC cachedSettlement;
         private Dictionary<ResourceTypeDef, string> sliderBuffers = new Dictionary<ResourceTypeDef, string>();
         private Vector2 scrollPos;
@@ -187,6 +191,13 @@ namespace FactionColonies.SupplyChain
             statModsDirty = true;
         }
 
+        public void SetNetworkInfo(int partners, int hub)
+        {
+            connectedPartners = partners;
+            hubScore = hub;
+            statModsDirty = true;
+        }
+
         private NeedState FindNeedState(string needId)
         {
             for (int i = 0; i < needStates.Count; i++)
@@ -208,10 +219,14 @@ namespace FactionColonies.SupplyChain
             if (ws == null) return;
             FactionFC faction = FactionCache.FactionComp;
 
-            // Preserve fulfilled values from last tax resolution
+            // Preserve fulfilled values and surplus ratios from last tax resolution
             Dictionary<string, double> prevFulfilled = new Dictionary<string, double>();
+            Dictionary<string, double> prevSurplusRatio = new Dictionary<string, double>();
             for (int i = 0; i < needStates.Count; i++)
+            {
                 prevFulfilled[needStates[i].needId] = needStates[i].fulfilled;
+                prevSurplusRatio[needStates[i].needId] = needStates[i].surplusRatio;
+            }
 
             List<NeedState> newStates = new List<NeedState>();
 
@@ -222,10 +237,13 @@ namespace FactionColonies.SupplyChain
                 if (!needDef.IsActiveForSettlement(ws)) continue;
 
                 double demand = needDef.CalculateDemand(ws);
-                double fulfilled;
-                prevFulfilled.TryGetValue(needDef.defName, out fulfilled);
-                newStates.Add(new NeedState(needDef.defName, needDef.resource, demand, fulfilled,
-                    needDef.label.CapitalizeFirst(), NeedCategory.Base, needDef.penalties));
+                prevFulfilled.TryGetValue(needDef.defName, out double fulfilled);
+                prevSurplusRatio.TryGetValue(needDef.defName, out double prevSurplus);
+                NeedState ns = new NeedState(needDef.defName, needDef.resource, demand, fulfilled,
+                    needDef.label.CapitalizeFirst(), NeedCategory.Base, needDef.penalties,
+                    needDef.surplusBonuses, needDef.maxSurplusRatio);
+                ns.surplusRatio = prevSurplus;
+                newStates.Add(ns);
             }
 
             // 2. Building needs (from BuildingNeedExtension)
@@ -296,24 +314,75 @@ namespace FactionColonies.SupplyChain
 
         private double ComputeStatModifier(FCStatDef stat)
         {
-            double total = 0.0;
-            foreach (NeedState state in needStates)
+            double value = stat.IdentityValue;
+
+            if (stat.aggregation == FCStatAggregation.Additive)
             {
-                if (state.penalties == null || state.demanded <= 0 || state.fulfilled >= state.demanded)
-                    continue;
-                double shortfall = state.demanded - state.fulfilled;
-                foreach (NeedPenalty penalty in state.penalties)
+                // 1. Penalties for unmet needs
+                foreach (NeedState state in needStates)
                 {
-                    if (penalty.stat == stat)
-                        total += penalty.penaltyPerUnit * shortfall;
+                    if (state.penalties == null || state.demanded <= 0 || state.fulfilled >= state.demanded)
+                        continue;
+                    double shortfall = state.demanded - state.fulfilled;
+                    foreach (NeedPenalty penalty in state.penalties)
+                    {
+                        if (penalty.stat == stat)
+                            value += penalty.penaltyPerUnit * shortfall;
+                    }
+                }
+
+                // 2. Surplus bonuses
+                foreach (NeedState state in needStates)
+                {
+                    if (state.surplusBonuses == null || state.surplusRatio <= 0)
+                        continue;
+                    double maxSR = state.maxSurplusRatio > 0 ? state.maxSurplusRatio : 2.0;
+                    double fraction = Math.Min(1.0, state.surplusRatio / maxSR);
+                    foreach (NeedSurplusBonus bonus in state.surplusBonuses)
+                    {
+                        if (bonus.stat == stat)
+                            value += bonus.maxBonus * fraction;
+                    }
+                }
+
+                // 3. Trade network bonuses (Complex mode only — 0 in Simple)
+                if (stat == FCStatDefOf.happinessGainedBase)
+                    value += 0.5 * Math.Min(connectedPartners, 5);
+                else if (stat == FCStatDefOf.prosperityGainedBase)
+                    value += 1.0 * Math.Min(hubScore, 3);
+            }
+            else // Multiplicative
+            {
+                // Tax efficiency: 1.0 + 0.20 * averageSatisfaction
+                FCStatDef taxEffStat = DefDatabase<FCStatDef>.GetNamedSilentFail("SC_TaxEfficiency");
+                if (stat == taxEffStat && needStates.Count > 0)
+                {
+                    double sum = 0;
+                    int count = 0;
+                    foreach (NeedState state in needStates)
+                    {
+                        if (state.demanded > 0) { sum += state.Satisfaction; count++; }
+                    }
+                    if (count > 0)
+                        value = 1.0 + 0.20 * (sum / count);
+                }
+
+                // Network sell rate: 1.0 + 0.10*min(partners,5) + 0.10*min(hub,3)
+                FCStatDef sellStat = DefDatabase<FCStatDef>.GetNamedSilentFail("SC_SellRateMultiplier");
+                if (stat == sellStat && (connectedPartners > 0 || hubScore > 0))
+                {
+                    value = 1.0 + 0.10 * Math.Min(connectedPartners, 5) + 0.10 * Math.Min(hubScore, 3);
                 }
             }
-            return total != 0.0 ? total : stat.IdentityValue;
+
+            return value;
         }
 
         public string GetStatModifierDesc(FCStatDef stat)
         {
             string desc = null;
+
+            // Penalty descriptions
             foreach (NeedState state in needStates)
             {
                 if (state.penalties == null || state.demanded <= 0 || state.fulfilled >= state.demanded)
@@ -329,6 +398,68 @@ namespace FactionColonies.SupplyChain
                     desc = desc == null ? line : desc + "\n" + line;
                 }
             }
+
+            // Surplus bonus descriptions
+            foreach (NeedState state in needStates)
+            {
+                if (state.surplusBonuses == null || state.surplusRatio <= 0)
+                    continue;
+                double maxSR = state.maxSurplusRatio > 0 ? state.maxSurplusRatio : 2.0;
+                double fraction = Math.Min(1.0, state.surplusRatio / maxSR);
+                foreach (NeedSurplusBonus bonus in state.surplusBonuses)
+                {
+                    if (bonus.stat != stat) continue;
+                    double val = bonus.maxBonus * fraction;
+                    if (val <= 0) continue;
+
+                    string line = "SC_SurplusBonus".Translate(bonus.label ?? state.label, val.ToString("F1"));
+                    desc = desc == null ? line : desc + "\n" + line;
+                }
+            }
+
+            // Network bonus descriptions
+            if (stat == FCStatDefOf.happinessGainedBase && connectedPartners > 0)
+            {
+                double val = 0.5 * Math.Min(connectedPartners, 5);
+                string line = "SC_NetworkPartnerBonus".Translate(connectedPartners.ToString(), val.ToString("F1"));
+                desc = desc == null ? line : desc + "\n" + line;
+            }
+            if (stat == FCStatDefOf.prosperityGainedBase && hubScore > 0)
+            {
+                double val = 1.0 * Math.Min(hubScore, 3);
+                string line = "SC_NetworkHubBonus".Translate(hubScore.ToString(), val.ToString("F1"));
+                desc = desc == null ? line : desc + "\n" + line;
+            }
+
+            // Tax efficiency description
+            FCStatDef taxEffStat = DefDatabase<FCStatDef>.GetNamedSilentFail("SC_TaxEfficiency");
+            if (stat == taxEffStat && needStates.Count > 0)
+            {
+                double sum = 0;
+                int count = 0;
+                foreach (NeedState state in needStates)
+                {
+                    if (state.demanded > 0) { sum += state.Satisfaction; count++; }
+                }
+                if (count > 0)
+                {
+                    double avgSat = sum / count;
+                    double mult = 1.0 + 0.20 * avgSat;
+                    string line = "SC_TaxEfficiencyDesc".Translate(
+                        (avgSat * 100).ToString("F0"), (mult * 100).ToString("F0"));
+                    desc = desc == null ? line : desc + "\n" + line;
+                }
+            }
+
+            // Network sell rate description
+            FCStatDef sellStat = DefDatabase<FCStatDef>.GetNamedSilentFail("SC_SellRateMultiplier");
+            if (stat == sellStat && (connectedPartners > 0 || hubScore > 0))
+            {
+                double mult = 1.0 + 0.10 * Math.Min(connectedPartners, 5) + 0.10 * Math.Min(hubScore, 3);
+                string line = "SC_SellRateNetworkDesc".Translate((mult * 100).ToString("F0"));
+                desc = desc == null ? line : desc + "\n" + line;
+            }
+
             return desc;
         }
 
@@ -600,6 +731,9 @@ namespace FactionColonies.SupplyChain
             Scribe_Collections.Look(ref needStates, "needStates", LookMode.Deep);
             if (needStates == null)
                 needStates = new List<NeedState>();
+
+            Scribe_Values.Look(ref connectedPartners, "connectedPartners", 0);
+            Scribe_Values.Look(ref hubScore, "hubScore", 0);
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {

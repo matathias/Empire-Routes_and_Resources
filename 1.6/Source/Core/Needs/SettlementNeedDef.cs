@@ -18,6 +18,13 @@ namespace FactionColonies.SupplyChain
         public string label;
     }
 
+    public class NeedSurplusBonus
+    {
+        public FCStatDef stat;
+        public double maxBonus;
+        public string label;
+    }
+
     /// <summary>
     /// Defines a base settlement need that consumes resources from the stockpile each tax period.
     /// Unmet needs apply stat penalties proportional to the satisfaction deficit.
@@ -31,6 +38,8 @@ namespace FactionColonies.SupplyChain
         public List<WorldSettlementDef> allowedSettlementTypes;
         public List<WorldSettlementDef> blockedSettlementTypes;
         public List<NeedPenalty> penalties;
+        public List<NeedSurplusBonus> surplusBonuses;
+        public double maxSurplusRatio = 2.0;
 
         public bool IsActiveForFaction(FactionFC faction)
         {
@@ -73,6 +82,14 @@ namespace FactionColonies.SupplyChain
                 {
                     if (penalties[i].stat == null)
                         yield return "SettlementNeedDef " + defName + " penalty " + i + " has null stat";
+                }
+            }
+            if (surplusBonuses != null)
+            {
+                for (int i = 0; i < surplusBonuses.Count; i++)
+                {
+                    if (surplusBonuses[i].stat == null)
+                        yield return "SettlementNeedDef " + defName + " surplusBonus " + i + " has null stat";
                 }
             }
         }

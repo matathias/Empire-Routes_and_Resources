@@ -33,7 +33,8 @@ namespace FactionColonies.SupplyChain
                 stockpile.TryDraw(needDef.resource, demand, out drawn);
 
                 states.Add(new NeedState(needDef.defName, needDef.resource, demand, drawn,
-                    needDef.label.CapitalizeFirst(), NeedCategory.Base, needDef.penalties));
+                    needDef.label.CapitalizeFirst(), NeedCategory.Base, needDef.penalties,
+                    needDef.surplusBonuses, needDef.maxSurplusRatio));
             }
 
             // 2. Building needs
@@ -41,6 +42,14 @@ namespace FactionColonies.SupplyChain
 
             // 3. Comp-provided needs (e.g., specialist needs via INeedProvider)
             ResolveCompNeeds(settlement, stockpile, states);
+
+            // 4. Compute surplus ratios (post-all-draws)
+            foreach (NeedState state in states)
+            {
+                if (state.surplusBonuses == null || state.demanded <= 0 || state.fulfilled < state.demanded)
+                    continue;
+                state.surplusRatio = stockpile.GetAmount(state.resource) / state.demanded;
+            }
 
             comp.SetNeedStates(states);
             settlement.InvalidateStatCache();
@@ -81,7 +90,9 @@ namespace FactionColonies.SupplyChain
                         demand = demand,
                         label = needDef.label.CapitalizeFirst(),
                         category = NeedCategory.Base,
-                        penalties = needDef.penalties
+                        penalties = needDef.penalties,
+                        surplusBonuses = needDef.surplusBonuses,
+                        maxSurplusRatio = needDef.maxSurplusRatio
                     });
                 }
 
@@ -186,7 +197,8 @@ namespace FactionColonies.SupplyChain
                 }
 
                 states.Add(new NeedState(entry.needId, entry.resource, entry.demand, drawn,
-                    entry.label, entry.category, entry.penalties));
+                    entry.label, entry.category, entry.penalties,
+                    entry.surplusBonuses, entry.maxSurplusRatio));
 
                 // Track provider resolutions
                 if (entry.provider != null)
@@ -203,6 +215,17 @@ namespace FactionColonies.SupplyChain
                         demanded = entry.demand,
                         fulfilled = drawn
                     });
+                }
+            }
+
+            // Compute surplus ratios (post-all-draws, faction-wide shared stockpile)
+            foreach (KeyValuePair<WorldObjectComp_SupplyChain, List<NeedState>> kv in compStates)
+            {
+                foreach (NeedState state in kv.Value)
+                {
+                    if (state.surplusBonuses == null || state.demanded <= 0 || state.fulfilled < state.demanded)
+                        continue;
+                    state.surplusRatio = stockpile.GetAmount(state.resource) / state.demanded;
                 }
             }
 
@@ -305,6 +328,8 @@ namespace FactionColonies.SupplyChain
             public string label;
             public NeedCategory category;
             public INeedProvider provider;
+            public List<NeedSurplusBonus> surplusBonuses;
+            public double maxSurplusRatio;
         }
     }
 }
