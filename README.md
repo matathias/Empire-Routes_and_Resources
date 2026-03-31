@@ -14,4 +14,4 @@ By default, stockpiles are faction-wide. Every settlement contributes to the sam
 
 ## Further Details
 
-This mod depends on Empire Refactored, expanding the systems of that mod.
+This mod depends on [Empire Refactored](https://github.com/matathias/Empire-1_6-Continued), expanding the systems of that mod.
