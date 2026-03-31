@@ -12,6 +12,8 @@ namespace FactionColonies.SupplyChain
         public ResourceTypeDef resource;
         public double amount;
         public List<NeedPenalty> penalties;
+        public List<NeedSurplusBonus> surplusBonuses;
+        public double maxSurplusRatio;
     }
 
     /// <summary>

@@ -149,7 +149,9 @@ namespace FactionColonies.SupplyChain
                             penalties = entry.penalties,
                             label = entry.label,
                             category = NeedCategory.Comp,
-                            provider = provider
+                            provider = provider,
+                            surplusBonuses = entry.surplusBonuses,
+                            maxSurplusRatio = entry.maxSurplusRatio
                         });
                     }
                 }
@@ -303,7 +305,8 @@ namespace FactionColonies.SupplyChain
                     stockpile.TryDraw(entry.resource, entry.amount, out drawn);
 
                     states.Add(new NeedState(entry.needId, entry.resource, entry.amount, drawn,
-                        entry.label, NeedCategory.Comp, entry.penalties));
+                        entry.label, NeedCategory.Comp, entry.penalties,
+                        entry.surplusBonuses, entry.maxSurplusRatio));
 
                     resolutions.Add(new NeedResolution
                     {
