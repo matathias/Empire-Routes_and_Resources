@@ -666,7 +666,7 @@ namespace FactionColonies.SupplyChain
                 yield return g;
 
             WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
-            if (wc == null) yield break;
+            if (wc == null || wc.Mode != SupplyChainMode.Complex) yield break;
 
             yield return new Command_Toggle
             {
