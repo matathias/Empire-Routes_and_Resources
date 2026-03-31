@@ -88,7 +88,7 @@
 		<timeTillTrigger>300000</timeTillTrigger>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
-			<li><stat>RTD_Food_ProductionMultiplier</stat><value>-0.1</value></li>
+			<li><stat>RTD_Food_ProductionMultiplier</stat><value>0.9</value></li>
 		</statModifiers>
 	</FactionColonies.FCEventDef>
 
@@ -100,7 +100,7 @@
 		<timeTillTrigger>600000</timeTillTrigger>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
-			<li><stat>RTD_Food_ProductionMultiplier</stat><value>-0.15</value></li>
+			<li><stat>RTD_Food_ProductionMultiplier</stat><value>0.85</value></li>
 			<li><stat>happinessLostBase</stat><value>3</value></li>
 		</statModifiers>
 	</FactionColonies.FCEventDef>
@@ -250,7 +250,7 @@
 		<timeTillTrigger>600000</timeTillTrigger>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
-			<li><stat>RTD_Medicine_ProductionMultiplier</stat><value>0.15</value></li>
+			<li><stat>RTD_Medicine_ProductionMultiplier</stat><value>1.15</value></li>
 		</statModifiers>
 	</FactionColonies.FCEventDef>
 
@@ -364,7 +364,7 @@
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
 			<li><stat>RTD_Power_ProductionAdditive</stat><value>1</value></li>
-			<li><stat>SC_SellRateMultiplier</stat><value>0.1</value></li>
+			<li><stat>SC_SellRateMultiplier</stat><value>1.1</value></li>
 		</statModifiers>
 	</FactionColonies.FCEventDef>
 

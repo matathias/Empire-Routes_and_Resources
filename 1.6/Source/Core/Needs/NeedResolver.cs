@@ -293,30 +293,37 @@ namespace FactionColonies.SupplyChain
                 INeedProvider provider = comp as INeedProvider;
                 if (provider == null) continue;
 
-                List<NeedEntry> compNeeds = new List<NeedEntry>();
-                provider.CollectNeeds(settlement, compNeeds);
-
-                List<NeedResolution> resolutions = new List<NeedResolution>();
-                foreach (NeedEntry entry in compNeeds)
+                try
                 {
-                    if (entry.resource == null || entry.amount <= 0) continue;
+                    List<NeedEntry> compNeeds = new List<NeedEntry>();
+                    provider.CollectNeeds(settlement, compNeeds);
 
-                    double drawn;
-                    stockpile.TryDraw(entry.resource, entry.amount, out drawn);
-
-                    states.Add(new NeedState(entry.needId, entry.resource, entry.amount, drawn,
-                        entry.label, NeedCategory.Comp, entry.penalties,
-                        entry.surplusBonuses, entry.maxSurplusRatio));
-
-                    resolutions.Add(new NeedResolution
+                    List<NeedResolution> resolutions = new List<NeedResolution>();
+                    foreach (NeedEntry entry in compNeeds)
                     {
-                        needId = entry.needId,
-                        demanded = entry.amount,
-                        fulfilled = drawn
-                    });
-                }
+                        if (entry.resource == null || entry.amount <= 0) continue;
 
-                provider.OnNeedsResolved(resolutions);
+                        double drawn;
+                        stockpile.TryDraw(entry.resource, entry.amount, out drawn);
+
+                        states.Add(new NeedState(entry.needId, entry.resource, entry.amount, drawn,
+                            entry.label, NeedCategory.Comp, entry.penalties,
+                            entry.surplusBonuses, entry.maxSurplusRatio));
+
+                        resolutions.Add(new NeedResolution
+                        {
+                            needId = entry.needId,
+                            demanded = entry.amount,
+                            fulfilled = drawn
+                        });
+                    }
+
+                    provider.OnNeedsResolved(resolutions);
+                }
+                catch (Exception e)
+                {
+                    LogUtil.Error("INeedProvider " + comp.GetType().Name + " threw during need resolution: " + e);
+                }
             }
         }
 

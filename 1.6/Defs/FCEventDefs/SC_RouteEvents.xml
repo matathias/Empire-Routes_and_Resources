@@ -211,7 +211,7 @@
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
 			<li><stat>SC_RouteEfficiencyBonus</stat><value>0.1</value></li>
-			<li><stat>SC_SellRateMultiplier</stat><value>0.05</value></li>
+			<li><stat>SC_SellRateMultiplier</stat><value>1.05</value></li>
 		</statModifiers>
 	</FactionColonies.FCEventDef>
 
@@ -325,7 +325,7 @@
 		<timeTillTrigger>600000</timeTillTrigger>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
-			<li><stat>SC_SellRateMultiplier</stat><value>0.3</value></li>
+			<li><stat>SC_SellRateMultiplier</stat><value>1.3</value></li>
 			<li><stat>loyaltyLostBase</stat><value>1</value></li>
 		</statModifiers>
 	</FactionColonies.FCEventDef>
@@ -338,7 +338,7 @@
 		<timeTillTrigger>300000</timeTillTrigger>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
-			<li><stat>SC_SellRateMultiplier</stat><value>0.2</value></li>
+			<li><stat>SC_SellRateMultiplier</stat><value>1.2</value></li>
 		</statModifiers>
 	</FactionColonies.FCEventDef>
 
@@ -350,7 +350,7 @@
 		<timeTillTrigger>300000</timeTillTrigger>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
-			<li><stat>SC_SellRateMultiplier</stat><value>-0.1</value></li>
+			<li><stat>SC_SellRateMultiplier</stat><value>0.9</value></li>
 		</statModifiers>
 	</FactionColonies.FCEventDef>
 
@@ -374,7 +374,7 @@
 		<timeTillTrigger>300000</timeTillTrigger>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
-			<li><stat>SC_SellRateMultiplier</stat><value>0.15</value></li>
+			<li><stat>SC_SellRateMultiplier</stat><value>1.15</value></li>
 			<li><stat>SC_RouteEfficiencyBonus</stat><value>0.05</value></li>
 		</statModifiers>
 	</FactionColonies.FCEventDef>
@@ -461,7 +461,7 @@
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
 			<li><stat>SC_RouteEfficiencyBonus</stat><value>-0.05</value></li>
-			<li><stat>SC_SellRateMultiplier</stat><value>-0.05</value></li>
+			<li><stat>SC_SellRateMultiplier</stat><value>0.95</value></li>
 		</statModifiers>
 	</FactionColonies.FCEventDef>
 
@@ -474,7 +474,7 @@
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
 			<li><stat>SC_RouteEfficiencyBonus</stat><value>-0.05</value></li>
-			<li><stat>SC_SellRateMultiplier</stat><value>-0.05</value></li>
+			<li><stat>SC_SellRateMultiplier</stat><value>0.95</value></li>
 			<li><stat>happinessLostBase</stat><value>2</value></li>
 		</statModifiers>
 	</FactionColonies.FCEventDef>
@@ -489,7 +489,7 @@
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
 			<li><stat>SC_RouteEfficiencyBonus</stat><value>-0.1</value></li>
-			<li><stat>SC_SellRateMultiplier</stat><value>-0.1</value></li>
+			<li><stat>SC_SellRateMultiplier</stat><value>0.9</value></li>
 			<li><stat>prosperityGainedBase</stat><value>-1</value></li>
 		</statModifiers>
 	</FactionColonies.FCEventDef>

@@ -107,6 +107,9 @@ namespace FactionColonies.SupplyChain
                     curY += 22f;
                 }
             }
+
+            Text.Font = GameFont.Small;
+            Text.Anchor = TextAnchor.UpperLeft;
         }
 
         public string GetCardDescription(BuildingFCDef def)

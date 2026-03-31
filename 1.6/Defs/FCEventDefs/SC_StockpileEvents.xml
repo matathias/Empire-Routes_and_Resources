@@ -347,7 +347,7 @@
 		<timeTillTrigger>300000</timeTillTrigger>
 		<settlementsCarryOver>true</settlementsCarryOver>
 		<statModifiers>
-			<li><stat>RTD_Food_ProductionMultiplier</stat><value>0.05</value></li>
+			<li><stat>RTD_Food_ProductionMultiplier</stat><value>1.05</value></li>
 		</statModifiers>
 		<modExtensions>
 			<li Class="FactionColonies.SupplyChain.SCEventHandler_Stockpile">
