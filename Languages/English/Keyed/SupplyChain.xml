@@ -120,6 +120,7 @@
     <SC_ShowRouteLabels>Show Labels</SC_ShowRouteLabels>
     <SC_ShowRouteLabelsDesc>Toggle display of resource type and amount labels on visible supply route lines.</SC_ShowRouteLabelsDesc>
     <SC_SettingsAnimateArrows>Animate route arrows on world map</SC_SettingsAnimateArrows>
+    <SC_SettingsUseMaxWorkers>Base worker needs on total population instead of assigned workers</SC_SettingsUseMaxWorkers>
 
     <!-- Building Detail Section -->
     <SC_BuildingNeeds>Building Needs</SC_BuildingNeeds>

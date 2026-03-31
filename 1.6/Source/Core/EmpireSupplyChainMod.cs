@@ -16,6 +16,7 @@ namespace FactionColonies.SupplyChain
         public static double routeDecayPerDay = 0.1;
         public static double localCapBase = 50.0;
         public static bool animateRouteArrows = false;
+        public static bool useMaxWorkersForNeeds = false;
 
         private static string capBuffer = null;
         private static string routeDecayBuffer = null;
@@ -31,6 +32,7 @@ namespace FactionColonies.SupplyChain
             Scribe_Values.Look(ref routeDecayPerDay, "routeDecayPerDay", 0.1);
             Scribe_Values.Look(ref localCapBase, "localCapBase", 50.0);
             Scribe_Values.Look(ref animateRouteArrows, "animateRouteArrows", false);
+            Scribe_Values.Look(ref useMaxWorkersForNeeds, "useMaxWorkersForNeeds", false);
         }
 
         public void DoWindowContents(Rect inRect)
@@ -65,6 +67,9 @@ namespace FactionColonies.SupplyChain
             ls.Gap(12f);
 
             ls.CheckboxLabeled("SC_SettingsAnimateArrows".Translate(), ref animateRouteArrows);
+            ls.Gap(12f);
+
+            ls.CheckboxLabeled("SC_SettingsUseMaxWorkers".Translate(), ref useMaxWorkersForNeeds);
             ls.Gap(12f);
 
             ls.Label("SC_SettingsOverflowRate".Translate(

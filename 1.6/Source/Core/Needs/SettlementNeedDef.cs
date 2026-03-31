@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using RimWorld;
 using Verse;
@@ -60,7 +61,10 @@ namespace FactionColonies.SupplyChain
             switch (scaling)
             {
                 case NeedScaling.PerWorker:
-                    return baseAmount * settlement.workers;
+                    double pop = SupplyChainSettings.useMaxWorkersForNeeds
+                        ? Math.Max(settlement.workers, settlement.workersMax)
+                        : settlement.workers;
+                    return baseAmount * pop;
                 case NeedScaling.PerLevel:
                     return baseAmount * settlement.settlementLevel;
                 default:
