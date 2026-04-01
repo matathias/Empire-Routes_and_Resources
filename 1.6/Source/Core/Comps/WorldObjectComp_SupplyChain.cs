@@ -804,21 +804,19 @@ namespace FactionColonies.SupplyChain
 
         private void DrawSimpleModeTab(Rect boundingBox)
         {
-            Rect inner = boundingBox.ContractedBy(10f);
-
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(inner.x, inner.y, inner.width, 30f), "SC_StockpileAllocations".Translate());
+            Widgets.Label(new Rect(boundingBox.x, boundingBox.y, boundingBox.width, 30f), "SC_StockpileAllocations".Translate());
             Text.Font = GameFont.Small;
 
-            float y = inner.y + 40f;
+            float y = boundingBox.y + 40f;
             float rowHeight = 35f;
 
             int resourceCount = uiSettlement.Resources.Count;
 
             float totalHeight = resourceCount * rowHeight + 40f
                 + needStates.Count * NeedRowStep + 50f;
-            Rect viewRect = new Rect(0f, 0f, inner.width - 16f, totalHeight);
-            Rect scrollRect = new Rect(inner.x, y, inner.width, inner.height - (y - inner.y));
+            Rect viewRect = new Rect(0f, 0f, boundingBox.width - 16f, totalHeight);
+            Rect scrollRect = new Rect(boundingBox.x, y, boundingBox.width, boundingBox.height - (y - boundingBox.y));
 
             Widgets.BeginScrollView(scrollRect, ref scrollPos, viewRect);
             float curY = 0f;
@@ -973,11 +971,9 @@ namespace FactionColonies.SupplyChain
 
         private void DrawComplexModeTab(Rect boundingBox)
         {
-            Rect inner = boundingBox.ContractedBy(5f);
-
             // Sub-tab bar
             float tabH = 24f;
-            float tabW = inner.width / 5f;
+            float tabW = boundingBox.width / 5f;
             string[] tabLabels = new string[]
             {
                 (string)"SC_SubStockpile".Translate(),
@@ -990,23 +986,23 @@ namespace FactionColonies.SupplyChain
             Rect chosenRect = new Rect();
             for (int i = 0; i < 5; i++)
             {
-                Rect tabRect = new Rect(inner.x + tabW * i, inner.y, tabW, tabH);
+                Rect tabRect = new Rect(boundingBox.x + tabW * i, boundingBox.y, tabW, tabH);
                 if (UIUtil.ButtonFlat(tabRect, tabLabels[i], highlighted: complexSubTab == i))
                     complexSubTab = i;
                 if (complexSubTab == i)
                     chosenRect = tabRect;
             }
 
-            UIUtil.DrawTabDecoratorHorizontalTop(chosenRect, inner, Color.gray);
+            UIUtil.DrawTabDecoratorHorizontalTop(chosenRect, boundingBox, Color.gray);
 
             // Measure status bar (dynamic height based on row wrapping)
-            float statusBarH = MeasureStockpileStatusBar(inner.width);
+            float statusBarH = MeasureStockpileStatusBar(boundingBox.width);
             float statusGap = statusBarH > 0f ? StatusBarGap : 0f;
 
             // Content area below tabs, above status bar
-            float contentY = inner.y + tabH;
-            float contentH = inner.yMax - contentY - statusBarH - statusGap;
-            Rect contentRect = new Rect(inner.x, contentY, inner.width, contentH);
+            float contentY = boundingBox.y + tabH;
+            float contentH = boundingBox.yMax - contentY - statusBarH - statusGap;
+            Rect contentRect = new Rect(boundingBox.x, contentY, boundingBox.width, contentH);
 
             if (complexSubTab == 0)
                 DrawComplexStockpile(contentRect);
@@ -1022,7 +1018,7 @@ namespace FactionColonies.SupplyChain
             // Bottom status bar
             if (statusBarH > 0f)
             {
-                Rect statusRect = new Rect(inner.x, inner.yMax - statusBarH, inner.width, statusBarH);
+                Rect statusRect = new Rect(boundingBox.x, boundingBox.yMax - statusBarH, boundingBox.width, statusBarH);
                 DrawStockpileStatusBar(statusRect);
             }
         }
