@@ -87,7 +87,7 @@
 					<li><resource>RTD_Food</resource><amount>0.5</amount></li>
 				</inputs>
 				<penalties>
-					<li><stat>loyaltyLostBase</stat><penaltyPerUnit>2.0</penaltyPerUnit><label>hungry troops</label></li>
+					<li><stat>loyaltyLostBase</stat><penaltyPerUnit>2.0</penaltyPerUnit><label>loyalty</label></li>
 				</penalties>
 			</li>
 		</value>

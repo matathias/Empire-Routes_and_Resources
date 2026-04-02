@@ -58,7 +58,7 @@ namespace FactionColonies.SupplyChain
             this.resource = resource;
             this.demanded = demanded;
             this.fulfilled = fulfilled;
-            this.label = needDef?.label ?? label ?? needId;
+            this.label = label ?? needDef?.label ?? needId;
             this.category = category;
             this.penalties = penalties;
             this.surplusBonuses = surplusBonuses;
