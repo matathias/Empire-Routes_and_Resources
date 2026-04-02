@@ -19,6 +19,9 @@
 			<displayName>Empire</displayName>
 		</li>
 	</modDependencies>
+	<loadAfter>
+		<li>Matathias.Empire</li>
+	</loadAfter>
 
 	<description>A sub-mod for Empire Refactored, adding stockpile management and supply routes between settlements. Features a simple mode with a shared faction stockpile, and a complex mode with per-settlement stockpiles with logistics routes.</description>
 
