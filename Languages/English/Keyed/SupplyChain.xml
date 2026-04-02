@@ -37,7 +37,7 @@
     <SC_EmpireSupplyNetwork>Empire Supply Network</SC_EmpireSupplyNetwork>
     <SC_ModeComplex>Mode: Complex</SC_ModeComplex>
     <SC_Settlement>Settlement</SC_Settlement>
-<SC_PerPeriod>{0}/period</SC_PerPeriod>
+    <SC_PerPeriod>{0}/period</SC_PerPeriod>
     <SC_EfficiencyPercent>{0}%</SC_EfficiencyPercent>
     <SC_EfficiencyTooltip>Travel: {0} days\nDecay rate: {1}/day\nEfficiency: {2}%\n\nFormula: 1 / (1 + days × decay)</SC_EfficiencyTooltip>
     <SC_NewRoute>New route:</SC_NewRoute>
@@ -99,7 +99,7 @@
     <SC_SatisfactionDisplay>{0}% ({1} / {2})</SC_SatisfactionDisplay>
     <SC_SatisfactionProjected>{0}% projected (last: {1}%)</SC_SatisfactionProjected>
     <SC_PenaltyLine>-{0} {1}</SC_PenaltyLine>
-    <SC_UnmetNeedPenalty>Unmet {0} need: -{1}</SC_UnmetNeedPenalty>
+    <SC_UnmetNeedPenalty>{1} - Unmet {0} need</SC_UnmetNeedPenalty>
     <SC_NeedProjectionExplain>Projected satisfaction: {0}% (based on current stockpile and flow)</SC_NeedProjectionExplain>
     <SC_NeedActualLast>Last tax cycle: {0}%</SC_NeedActualLast>
 

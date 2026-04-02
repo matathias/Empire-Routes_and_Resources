@@ -4,6 +4,7 @@ using RimWorld;
 using RimWorld.Planet;
 using UnityEngine;
 using Verse;
+using FactionColonies;
 
 namespace FactionColonies.SupplyChain
 {
@@ -393,8 +394,18 @@ namespace FactionColonies.SupplyChain
                     if (penalty.stat != stat) continue;
                     double val = penalty.penaltyPerUnit * shortfall;
                     if (val <= 0) continue;
+                    val = Math.Round(val, 2);
 
-                    string line = "SC_UnmetNeedPenalty".Translate(state.label ?? state.needId, val.ToString("F1"));
+                    bool invert = stat.invertedForDisplay;
+                    /* Due to the weirdness of unrest, we actually want to invert the inversion for unrest values */
+                    /* Should *really* replace unrest with "stability" or something... */
+                    if (stat == FCStatDefOf.unrestGainedBase ||
+                        stat == FCStatDefOf.unrestGainedMultiplier ||
+                        stat == FCStatDefOf.unrestLostBase ||
+                        stat == FCStatDefOf.unrestLostMultiplier)
+                        invert = !invert;
+
+                    string line = "SC_UnmetNeedPenalty".Translate(state.label ?? state.needId, TextUtil.ColorizeAdditiveBonus(val, hardinvert: invert));
                     desc = desc == null ? line : desc + "\n" + line;
                 }
             }
@@ -976,11 +987,11 @@ namespace FactionColonies.SupplyChain
             float tabW = boundingBox.width / 5f;
             string[] tabLabels = new string[]
             {
-                (string)"SC_SubStockpile".Translate(),
-                (string)"SC_SubNeeds".Translate(),
-                (string)"SC_SubProduction".Translate(),
-                (string)"SC_SubOrders".Translate(),
-                (string)"SC_SubRoutes".Translate()
+                "SC_SubStockpile".Translate(),
+                "SC_SubNeeds".Translate(),
+                "SC_SubProduction".Translate(),
+                "SC_SubOrders".Translate(),
+                "SC_SubRoutes".Translate()
             };
 
             Rect chosenRect = new Rect();
@@ -1037,7 +1048,7 @@ namespace FactionColonies.SupplyChain
             int resourceCount = 0;
             foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
             {
-                double cap = localStockpileDict != null ? localStockpileDict.GetCap(def) : 0;
+                double cap = localStockpileDict?.GetCap(def) ?? 0;
                 if (cap > 0) resourceCount++;
             }
 
