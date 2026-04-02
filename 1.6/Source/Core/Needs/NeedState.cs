@@ -17,6 +17,7 @@ namespace FactionColonies.SupplyChain
     public class NeedState : IExposable
     {
         public string needId;
+        public SettlementNeedDef needDef;
         public ResourceTypeDef resource;
         public double demanded;
         public double fulfilled;
@@ -41,10 +42,7 @@ namespace FactionColonies.SupplyChain
         public List<NeedSurplusBonus> surplusBonuses;
         public double maxSurplusRatio;
 
-        public float Satisfaction
-        {
-            get { return demanded > 0 ? (float)(fulfilled / demanded) : 1f; }
-        }
+        public float Satisfaction => demanded > 0 ? (float)(fulfilled / demanded) : 1f;
 
         public NeedState()
         {
@@ -52,13 +50,15 @@ namespace FactionColonies.SupplyChain
 
         public NeedState(string needId, ResourceTypeDef resource, double demanded, double fulfilled,
             string label, NeedCategory category, List<NeedPenalty> penalties = null,
-            List<NeedSurplusBonus> surplusBonuses = null, double maxSurplusRatio = 2.0)
+            List<NeedSurplusBonus> surplusBonuses = null, double maxSurplusRatio = 2.0,
+            SettlementNeedDef needDef = null)
         {
             this.needId = needId;
+            this.needDef = needDef;
             this.resource = resource;
             this.demanded = demanded;
             this.fulfilled = fulfilled;
-            this.label = label;
+            this.label = needDef?.label ?? label ?? needId;
             this.category = category;
             this.penalties = penalties;
             this.surplusBonuses = surplusBonuses;
@@ -68,6 +68,7 @@ namespace FactionColonies.SupplyChain
         public void ExposeData()
         {
             Scribe_Values.Look(ref needId, "needId");
+            Scribe_Defs.Look(ref needDef, "needDef");
             Scribe_Defs.Look(ref resource, "resource");
             Scribe_Values.Look(ref demanded, "demanded");
             Scribe_Values.Look(ref fulfilled, "fulfilled");

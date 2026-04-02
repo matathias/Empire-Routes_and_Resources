@@ -94,15 +94,9 @@ namespace FactionColonies.SupplyChain
             return localStockpileDict;
         }
 
-        public List<SellOrder> LocalSellOrders
-        {
-            get { return localSellOrders; }
-        }
+        public List<SellOrder> LocalSellOrders => localSellOrders;
 
-        public Dictionary<ResourceTypeDef, double> TitheInjections
-        {
-            get { return titheInjections; }
-        }
+        public Dictionary<ResourceTypeDef, double> TitheInjections => titheInjections;
 
         /// <summary>
         /// Initializes the local stockpile wrapper. Called by WorldComponent after mode switch or FinalizeInit.
@@ -140,10 +134,7 @@ namespace FactionColonies.SupplyChain
         /// <summary>
         /// Direct access to local stockpile dict for mode-switching (distributing faction stockpile).
         /// </summary>
-        public Dictionary<ResourceTypeDef, double> LocalStockpile
-        {
-            get { return localStockpiles; }
-        }
+        public Dictionary<ResourceTypeDef, double> LocalStockpile => localStockpiles;
 
         public void RecalculateLocalCaps()
         {
@@ -201,10 +192,10 @@ namespace FactionColonies.SupplyChain
 
         private NeedState FindNeedState(string needId)
         {
-            for (int i = 0; i < needStates.Count; i++)
+            foreach (NeedState state in needStates)
             {
-                if (needStates[i].needId == needId)
-                    return needStates[i];
+                if (state.needId == needId)
+                    return state;
             }
             return null;
         }
@@ -217,16 +208,16 @@ namespace FactionColonies.SupplyChain
         public void RebuildNeedStates()
         {
             WorldSettlementFC ws = WorldSettlement;
-            if (ws == null) return;
             FactionFC faction = FactionCache.FactionComp;
+            if (ws is null || faction is null) return;
 
             // Preserve fulfilled values and surplus ratios from last tax resolution
             Dictionary<string, double> prevFulfilled = new Dictionary<string, double>();
             Dictionary<string, double> prevSurplusRatio = new Dictionary<string, double>();
-            for (int i = 0; i < needStates.Count; i++)
+            foreach(NeedState state in needStates)
             {
-                prevFulfilled[needStates[i].needId] = needStates[i].fulfilled;
-                prevSurplusRatio[needStates[i].needId] = needStates[i].surplusRatio;
+                prevFulfilled[state.needId] = state.fulfilled;
+                prevSurplusRatio[state.needId] = state.surplusRatio;                
             }
 
             List<NeedState> newStates = new List<NeedState>();
@@ -234,7 +225,7 @@ namespace FactionColonies.SupplyChain
             // 1. Base settlement needs (from SettlementNeedDefs)
             foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
             {
-                if (faction != null && !needDef.IsActiveForFaction(faction)) continue;
+                if (!needDef.IsActiveForFaction(faction)) continue;
                 if (!needDef.IsActiveForSettlement(ws)) continue;
 
                 double demand = needDef.CalculateDemand(ws);
@@ -242,7 +233,8 @@ namespace FactionColonies.SupplyChain
                 prevSurplusRatio.TryGetValue(needDef.defName, out double prevSurplus);
                 NeedState ns = new NeedState(needDef.defName, needDef.resource, demand, fulfilled,
                     needDef.label.CapitalizeFirst(), NeedCategory.Base, needDef.penalties,
-                    needDef.surplusBonuses, needDef.maxSurplusRatio);
+                    needDef.surplusBonuses, needDef.maxSurplusRatio,
+                    needDef: needDef);
                 ns.surplusRatio = prevSurplus;
                 newStates.Add(ns);
             }
@@ -260,8 +252,7 @@ namespace FactionColonies.SupplyChain
                         if (input.resource == null || input.amount <= 0) continue;
                         string needId = "bldg." + building.def.defName + "." + input.resource.defName;
                         string needLabel = building.def.label.CapitalizeFirst() + " - " + input.resource.label.CapitalizeFirst();
-                        double fulfilled;
-                        prevFulfilled.TryGetValue(needId, out fulfilled);
+                        prevFulfilled.TryGetValue(needId, out double fulfilled);
                         newStates.Add(new NeedState(needId, input.resource, input.amount, fulfilled,
                             needLabel, NeedCategory.Building, ext.penalties));
                     }
@@ -355,7 +346,7 @@ namespace FactionColonies.SupplyChain
             else // Multiplicative
             {
                 // Tax efficiency: 1.0 + 0.20 * averageSatisfaction
-                FCStatDef taxEffStat = DefDatabase<FCStatDef>.GetNamedSilentFail("SC_TaxEfficiency");
+                FCStatDef taxEffStat = SCStatDefOf.SC_TaxEfficiency;
                 if (stat == taxEffStat && needStates.Count > 0)
                 {
                     double sum = 0;
@@ -369,7 +360,7 @@ namespace FactionColonies.SupplyChain
                 }
 
                 // Network sell rate: 1.0 + 0.10*min(partners,5) + 0.10*min(hub,3)
-                FCStatDef sellStat = DefDatabase<FCStatDef>.GetNamedSilentFail("SC_SellRateMultiplier");
+                FCStatDef sellStat = SCStatDefOf.SC_SellRateMultiplier;
                 if (stat == sellStat && (connectedPartners > 0 || hubScore > 0))
                 {
                     value = 1.0 + 0.10 * Math.Min(connectedPartners, 5) + 0.10 * Math.Min(hubScore, 3);
@@ -405,7 +396,7 @@ namespace FactionColonies.SupplyChain
                         stat == FCStatDefOf.unrestLostMultiplier)
                         invert = !invert;
 
-                    string line = "SC_UnmetNeedPenalty".Translate(state.label ?? state.needId, TextUtil.ColorizeAdditiveBonus(val, hardinvert: invert));
+                    string line = "SC_UnmetNeedPenalty".Translate(state.label, TextUtil.ColorizeAdditiveBonus(val, hardinvert: invert));
                     desc = desc == null ? line : desc + "\n" + line;
                 }
             }
@@ -443,7 +434,7 @@ namespace FactionColonies.SupplyChain
             }
 
             // Tax efficiency description
-            FCStatDef taxEffStat = DefDatabase<FCStatDef>.GetNamedSilentFail("SC_TaxEfficiency");
+            FCStatDef taxEffStat = SCStatDefOf.SC_TaxEfficiency;
             if (stat == taxEffStat && needStates.Count > 0)
             {
                 double sum = 0;
@@ -463,7 +454,7 @@ namespace FactionColonies.SupplyChain
             }
 
             // Network sell rate description
-            FCStatDef sellStat = DefDatabase<FCStatDef>.GetNamedSilentFail("SC_SellRateMultiplier");
+            FCStatDef sellStat = SCStatDefOf.SC_SellRateMultiplier;
             if (stat == sellStat && (connectedPartners > 0 || hubScore > 0))
             {
                 double mult = 1.0 + 0.10 * Math.Min(connectedPartners, 5) + 0.10 * Math.Min(hubScore, 3);
@@ -1866,7 +1857,7 @@ namespace FactionColonies.SupplyChain
 
                 Text.Anchor = TextAnchor.MiddleLeft;
                 Rect labelRect = new Rect(cx + 24f, topY, 140f, NeedTopLineH);
-                Widgets.Label(labelRect, Text.ClampTextWithEllipsis(labelRect, state.label ?? state.needId));
+                Widgets.Label(labelRect, Text.ClampTextWithEllipsis(labelRect, state.label));
 
                 float barX = cx + 168f;
                 float barW = viewRect.width - barX - 60f;
@@ -1942,7 +1933,7 @@ namespace FactionColonies.SupplyChain
             WorldSettlementFC ws = WorldSettlement;
             if (ws == null) return null;
 
-            string displayLabel = state.label ?? state.needId;
+            string displayLabel = state.label;
 
             string tip;
             if (state.category == NeedCategory.Building)
@@ -1952,7 +1943,7 @@ namespace FactionColonies.SupplyChain
             else
             {
                 // Base/comp needs: show scaling breakdown if a SettlementNeedDef exists
-                SettlementNeedDef needDef = DefDatabase<SettlementNeedDef>.GetNamedSilentFail(state.needId);
+                SettlementNeedDef needDef = state.needDef;
                 if (needDef != null)
                 {
                     string scalingDesc;
