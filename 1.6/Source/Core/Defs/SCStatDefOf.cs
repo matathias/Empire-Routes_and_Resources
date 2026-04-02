@@ -8,5 +8,10 @@ namespace FactionColonies.SupplyChain
         public static FCStatDef SC_SellRateMultiplier;
         public static FCStatDef SC_RouteEfficiencyBonus;
         public static FCStatDef SC_TaxEfficiency;
+        
+        static SCStatDefOf()
+        {
+            DefOfHelper.EnsureInitializedInCtor(typeof(SCStatDefOf));
+        }
     }
 }
