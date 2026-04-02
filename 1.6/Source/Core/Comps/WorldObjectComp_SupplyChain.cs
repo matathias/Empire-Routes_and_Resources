@@ -77,9 +77,8 @@ namespace FactionColonies.SupplyChain
         {
             get
             {
-                if (cachedSettlement != null)
-                    return cachedSettlement;
-                cachedSettlement = parent as WorldSettlementFC;
+                if (cachedSettlement is null)
+                    cachedSettlement = parent as WorldSettlementFC;
                 return cachedSettlement;
             }
         }
@@ -103,9 +102,9 @@ namespace FactionColonies.SupplyChain
         /// </summary>
         public void InitLocalStockpile()
         {
-            if (localStockpiles == null)
+            if (localStockpiles is null)
                 localStockpiles = new Dictionary<ResourceTypeDef, double>();
-            if (localCaps == null)
+            if (localCaps is null)
                 localCaps = new Dictionary<ResourceTypeDef, double>();
             localStockpileDict = new DictionaryStockpile(localStockpiles, localCaps);
         }
@@ -144,12 +143,12 @@ namespace FactionColonies.SupplyChain
             }
 
             WorldSettlementFC ws = WorldSettlement;
-            if (ws?.BuildingsComp == null) return;
+            if (ws?.BuildingsComp is null) return;
             foreach (BuildingFC building in ws.BuildingsComp.Buildings)
             {
-                if (building.def == null || building.def == BuildingFCDefOf.Empty) continue;
+                if (building.def is null || building.def == BuildingFCDefOf.Empty) continue;
                 BuildingNeedExtension ext = SupplyChainCache.GetBuildingNeedExt(building.def);
-                if (ext?.capBonuses == null) continue;
+                if (ext?.capBonuses is null) continue;
                 foreach (BuildingCapBonus bonus in ext.capBonuses)
                 {
                     if (bonus.resource != null && localCaps.ContainsKey(bonus.resource))
@@ -172,10 +171,7 @@ namespace FactionColonies.SupplyChain
 
         // --- Needs ---
 
-        public List<NeedState> NeedStates
-        {
-            get { return needStates; }
-        }
+        public List<NeedState> NeedStates => needStates;
 
         public void SetNeedStates(List<NeedState> states)
         {
@@ -244,14 +240,14 @@ namespace FactionColonies.SupplyChain
             {
                 foreach (BuildingFC building in ws.BuildingsComp.Buildings)
                 {
-                    if (building.def == null || building.def == BuildingFCDefOf.Empty) continue;
+                    if (building.def is null || building.def == BuildingFCDefOf.Empty) continue;
                     BuildingNeedExtension ext = SupplyChainCache.GetBuildingNeedExt(building.def);
-                    if (ext == null || ext.inputs == null) continue;
+                    if (ext?.inputs is null) continue;
                     foreach (BuildingResourceInput input in ext.inputs)
                     {
-                        if (input.resource == null || input.amount <= 0) continue;
-                        string needId = "bldg." + building.def.defName + "." + input.resource.defName;
-                        string needLabel = building.def.label.CapitalizeFirst() + " - " + input.resource.label.CapitalizeFirst();
+                        if (input.resource is null || input.amount <= 0) continue;
+                        string needId = $"bldg.{building.def.defName}.{input.resource.defName}";
+                        string needLabel = $"{building.def.label.CapitalizeFirst()} - {input.resource.label.CapitalizeFirst()}";
                         prevFulfilled.TryGetValue(needId, out double fulfilled);
                         newStates.Add(new NeedState(needId, input.resource, input.amount, fulfilled,
                             needLabel, NeedCategory.Building, ext.penalties));
@@ -263,14 +259,13 @@ namespace FactionColonies.SupplyChain
             foreach (WorldObjectComp comp in ws.AllComps)
             {
                 INeedProvider provider = comp as INeedProvider;
-                if (provider == null) continue;
+                if (provider is null) continue;
                 List<NeedEntry> compNeeds = new List<NeedEntry>();
                 provider.CollectNeeds(ws, compNeeds);
                 foreach (NeedEntry entry in compNeeds)
                 {
-                    if (entry.resource == null || entry.amount <= 0) continue;
-                    double fulfilled;
-                    prevFulfilled.TryGetValue(entry.needId, out fulfilled);
+                    if (entry.resource is null || entry.amount <= 0) continue;
+                    prevFulfilled.TryGetValue(entry.needId, out double fulfilled);
                     newStates.Add(new NeedState(entry.needId, entry.resource, entry.amount, fulfilled,
                         entry.label, NeedCategory.Comp, entry.penalties));
                 }
@@ -286,17 +281,16 @@ namespace FactionColonies.SupplyChain
 
         public double GetStatModifier(FCStatDef stat)
         {
-            if (statModsDirty || cachedStatMods == null)
+            if (statModsDirty || cachedStatMods is null)
             {
-                if (cachedStatMods == null)
+                if (cachedStatMods is null)
                     cachedStatMods = new Dictionary<FCStatDef, double>();
                 else
                     cachedStatMods.Clear();
                 statModsDirty = false;
             }
 
-            double val;
-            if (cachedStatMods.TryGetValue(stat, out val))
+            if (cachedStatMods.TryGetValue(stat, out double val))
                 return val;
 
             val = ComputeStatModifier(stat);
@@ -313,7 +307,7 @@ namespace FactionColonies.SupplyChain
                 // 1. Penalties for unmet needs
                 foreach (NeedState state in needStates)
                 {
-                    if (state.penalties == null || state.demanded <= 0 || state.fulfilled >= state.demanded)
+                    if (state.penalties is null || state.demanded <= 0 || state.fulfilled >= state.demanded)
                         continue;
                     double shortfall = state.demanded - state.fulfilled;
                     foreach (NeedPenalty penalty in state.penalties)
@@ -326,7 +320,7 @@ namespace FactionColonies.SupplyChain
                 // 2. Surplus bonuses
                 foreach (NeedState state in needStates)
                 {
-                    if (state.surplusBonuses == null || state.surplusRatio <= 0)
+                    if (state.surplusBonuses is null || state.surplusRatio <= 0)
                         continue;
                     double maxSR = state.maxSurplusRatio > 0 ? state.maxSurplusRatio : 2.0;
                     double fraction = Math.Min(1.0, state.surplusRatio / maxSR);
@@ -377,7 +371,7 @@ namespace FactionColonies.SupplyChain
             // Penalty descriptions
             foreach (NeedState state in needStates)
             {
-                if (state.penalties == null || state.demanded <= 0 || state.fulfilled >= state.demanded)
+                if (state.penalties is null || state.demanded <= 0 || state.fulfilled >= state.demanded)
                     continue;
                 double shortfall = state.demanded - state.fulfilled;
                 foreach (NeedPenalty penalty in state.penalties)
@@ -397,14 +391,14 @@ namespace FactionColonies.SupplyChain
                         invert = !invert;
 
                     string line = "SC_UnmetNeedPenalty".Translate(state.label, TextUtil.ColorizeAdditiveBonus(val, hardinvert: invert));
-                    desc = desc == null ? line : desc + "\n" + line;
+                    desc = desc is null ? line : desc + "\n" + line;
                 }
             }
 
             // Surplus bonus descriptions
             foreach (NeedState state in needStates)
             {
-                if (state.surplusBonuses == null || state.surplusRatio <= 0)
+                if (state.surplusBonuses is null || state.surplusRatio <= 0)
                     continue;
                 double maxSR = state.maxSurplusRatio > 0 ? state.maxSurplusRatio : 2.0;
                 double fraction = Math.Min(1.0, state.surplusRatio / maxSR);
@@ -415,7 +409,7 @@ namespace FactionColonies.SupplyChain
                     if (val <= 0) continue;
 
                     string line = "SC_SurplusBonus".Translate(bonus.label ?? state.label, val.ToString("F1"));
-                    desc = desc == null ? line : desc + "\n" + line;
+                    desc = desc is null ? line : desc + "\n" + line;
                 }
             }
 
@@ -424,13 +418,13 @@ namespace FactionColonies.SupplyChain
             {
                 double val = 0.5 * Math.Min(connectedPartners, 5);
                 string line = "SC_NetworkPartnerBonus".Translate(connectedPartners.ToString(), val.ToString("F1"));
-                desc = desc == null ? line : desc + "\n" + line;
+                desc = desc is null ? line : desc + "\n" + line;
             }
             if (stat == FCStatDefOf.prosperityGainedBase && hubScore > 0)
             {
                 double val = 1.0 * Math.Min(hubScore, 3);
                 string line = "SC_NetworkHubBonus".Translate(hubScore.ToString(), val.ToString("F1"));
-                desc = desc == null ? line : desc + "\n" + line;
+                desc = desc is null ? line : desc + "\n" + line;
             }
 
             // Tax efficiency description
@@ -449,7 +443,7 @@ namespace FactionColonies.SupplyChain
                     double mult = 1.0 + 0.20 * avgSat;
                     string line = "SC_TaxEfficiencyDesc".Translate(
                         (avgSat * 100).ToString("F0"), (mult * 100).ToString("F0"));
-                    desc = desc == null ? line : desc + "\n" + line;
+                    desc = desc is null ? line : desc + "\n" + line;
                 }
             }
 
@@ -459,7 +453,7 @@ namespace FactionColonies.SupplyChain
             {
                 double mult = 1.0 + 0.10 * Math.Min(connectedPartners, 5) + 0.10 * Math.Min(hubScore, 3);
                 string line = "SC_SellRateNetworkDesc".Translate((mult * 100).ToString("F0"));
-                desc = desc == null ? line : desc + "\n" + line;
+                desc = desc is null ? line : desc + "\n" + line;
             }
 
             return desc;
@@ -469,28 +463,26 @@ namespace FactionColonies.SupplyChain
 
         public double GetExternalTitheBudget(ResourceFC resource)
         {
-            if (resource == null || resource.def == null || resource.def.isPoolResource)
+            if (resource?.def is null || !resource.def.CanTithe)
                 return 0;
 
             // At tax time, use actual drawn amounts; otherwise use configured injection (optimistic)
             if (isTaxTime)
             {
-                double drawn;
-                return actualTitheDrawn.TryGetValue(resource.def, out drawn) ? drawn * FCSettings.silverPerResource : 0;
+                return actualTitheDrawn.TryGetValue(resource.def, out double drawn) ? drawn * FCSettings.silverPerResource : 0;
             }
 
-            double injection;
-            return titheInjections.TryGetValue(resource.def, out injection) && injection > 0
+            return titheInjections.TryGetValue(resource.def, out double injection) && injection > 0
                 ? injection * FCSettings.silverPerResource
                 : 0;
         }
 
         public string GetExternalTitheBudgetDesc(ResourceFC resource)
         {
-            if (resource == null || resource.def == null) return null;
+            if (resource?.def is null || !resource.def.CanTithe)
+                return null;
 
-            double injection;
-            if (!titheInjections.TryGetValue(resource.def, out injection) || injection <= 0)
+            if (!titheInjections.TryGetValue(resource.def, out double injection) || injection <= 0)
                 return null;
 
             double silverValue = injection * FCSettings.silverPerResource;
@@ -502,22 +494,20 @@ namespace FactionColonies.SupplyChain
 
         public double GetTitheInjection(ResourceTypeDef def)
         {
-            double val;
-            return titheInjections.TryGetValue(def, out val) ? val : 0;
+            return titheInjections.TryGetValue(def, out double val) ? val : 0;
         }
 
         public void SetTitheInjection(ResourceTypeDef def, double amount)
         {
-            if (def.isPoolResource) return;
+            if (!def.CanTithe)
+                return;
 
             if (amount <= 0)
                 titheInjections.Remove(def);
             else
                 titheInjections[def] = amount;
 
-            WorldSettlementFC ws = WorldSettlement;
-            if (ws != null)
-                ws.DirtyProfitCache();
+            WorldSettlement?.DirtyProfitCache();
             SupplyChainCache.Comp?.DirtyFlowCache();
         }
 
@@ -533,36 +523,27 @@ namespace FactionColonies.SupplyChain
 
             foreach (KeyValuePair<ResourceTypeDef, double> kv in titheInjections)
             {
-                if (kv.Key == null || kv.Key.isPoolResource || kv.Value <= 0) continue;
+                if (kv.Key is null || !kv.Key.CanTithe || kv.Value <= 0) continue;
 
-                double drawn;
-                stockpile.TryDraw(kv.Key, kv.Value, out drawn);
+                stockpile.TryDraw(kv.Key, kv.Value, out double drawn);
 
                 if (drawn > 0)
                     actualTitheDrawn[kv.Key] = drawn;
 
-                string settleName = ws != null ? ws.Name : "unknown";
+                string settleName = ws?.Name ?? "unknown";
                 if (SupplyChainSettings.PrintDebug)
                 {
                     if (drawn < kv.Value && drawn > 0)
                     {
-                        LogUtil.Message("Tithe injection shortfall at " + settleName + ": "
-                            + kv.Key.label + " wanted " + kv.Value.ToString("F1")
-                            + ", only " + drawn.ToString("F1") + " available (budget reduced to "
-                            + (drawn * FCSettings.silverPerResource).ToString("F0") + " silver)");
+                        LogSC.Message($"Tithe injection shortfall at {settleName}: {kv.Key.label} wanted {kv.Value}, only {drawn} available (budget reduced to {drawn * FCSettings.silverPerResource} silver)");
                     }
                     else if (drawn <= 0)
                     {
-                        LogUtil.Message("Tithe injection at " + settleName + ": "
-                            + kv.Key.label + " wanted " + kv.Value.ToString("F1")
-                            + ", stockpile empty — skipped");
+                        LogSC.Message($"Tithe injection at {settleName}: {kv.Key.label} wanted {kv.Value}, stockpile empty — skipped");
                     }
                     else
                     {
-                        LogUtil.Message("Tithe injection at " + settleName + ": "
-                            + drawn.ToString("F1") + "/" + kv.Value.ToString("F1") + " "
-                            + kv.Key.label + " ("
-                            + (drawn * FCSettings.silverPerResource).ToString("F0") + " silver budget)");
+                        LogSC.Message($"Tithe injection at {settleName}: {drawn}/{kv.Value} {kv.Key.label} ({drawn * FCSettings.silverPerResource} silver budget)");
                     }
                 }
             }
@@ -581,17 +562,13 @@ namespace FactionColonies.SupplyChain
 
         public double GetAllocation(ResourceTypeDef def)
         {
-            double val;
-            return allocations.TryGetValue(def, out val) ? val : 0.0;
+            return allocations.TryGetValue(def, out double val) ? val : 0.0;
         }
 
         public bool SetAllocation(ResourceTypeDef def, double amount)
         {
-            WorldSettlementFC ws = WorldSettlement;
-            if (ws == null) return false;
-
-            ResourceFC resource = ws.GetResource(def);
-            if (resource == null) return false;
+            ResourceFC resource = WorldSettlement?.GetResource(def);
+            if (resource is null) return false;
 
             string key = ALLOC_KEY_PREFIX + def.defName;
 
@@ -616,9 +593,8 @@ namespace FactionColonies.SupplyChain
         {
             allocations.Remove(def);
             WorldSettlementFC ws = WorldSettlement;
-            string name = ws != null ? ws.Name : "unknown";
-            LogUtil.Warning("Stockpile allocation for " + def.label + " at " + name
-                + " was evicted due to insufficient production.");
+            string name = ws?.Name ?? "unknown";
+            LogSC.Warning($"Stockpile allocation for {def.label} at {name} was evicted due to insufficient production.");
         }
 
         /// <summary>
@@ -628,16 +604,16 @@ namespace FactionColonies.SupplyChain
         public void ReRegisterAllocations()
         {
             WorldSettlementFC ws = WorldSettlement;
-            if (ws == null) return;
+            if (ws is null) return;
 
             List<ResourceTypeDef> toRemove = null;
             foreach (KeyValuePair<ResourceTypeDef, double> kv in allocations)
             {
                 if (kv.Value <= 0) continue;
                 ResourceFC resource = ws.GetResource(kv.Key);
-                if (resource == null)
+                if (resource is null)
                 {
-                    if (toRemove == null) toRemove = new List<ResourceTypeDef>();
+                    if (toRemove is null) toRemove = new List<ResourceTypeDef>();
                     toRemove.Add(kv.Key);
                     continue;
                 }
@@ -646,10 +622,9 @@ namespace FactionColonies.SupplyChain
                 bool ok = resource.SetStockpileAllocation(key, kv.Value, () => OnEvicted(kv.Key));
                 if (!ok)
                 {
-                    if (toRemove == null) toRemove = new List<ResourceTypeDef>();
+                    if (toRemove is null) toRemove = new List<ResourceTypeDef>();
                     toRemove.Add(kv.Key);
-                    LogUtil.Warning("Could not re-register allocation for " + kv.Key.label
-                        + " at " + ws.Name + " (exceeds production). Clearing.");
+                    LogSC.Warning($"Could not re-register allocation for {kv.Key.label} at {ws.Name} (exceeds production). Clearing.");
                 }
             }
 
@@ -668,7 +643,7 @@ namespace FactionColonies.SupplyChain
                 yield return g;
 
             WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
-            if (wc == null || wc.Mode != SupplyChainMode.Complex) yield break;
+            if (wc is null || wc.Mode != SupplyChainMode.Complex) yield break;
 
             yield return new Command_Toggle
             {
@@ -701,8 +676,8 @@ namespace FactionColonies.SupplyChain
         public override void PostDrawExtraSelectionOverlays()
         {
             WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
-            if (wc == null || !wc.showSelectedRoutes) return;
-            WorldComponent_SupplyChain.DrawRoutesForSettlement(wc, WorldSettlement);
+            if (wc is null || !wc.showSelectedRoutes) return;
+            wc.DrawRoutesForSettlement(WorldSettlement);
         }
 
         // --- Save/Load ---
@@ -711,27 +686,27 @@ namespace FactionColonies.SupplyChain
         {
             base.PostExposeData();
             Scribe_Collections.Look(ref allocations, "scAllocations", LookMode.Def, LookMode.Value);
-            if (allocations == null)
+            if (allocations is null)
                 allocations = new Dictionary<ResourceTypeDef, double>();
 
             Scribe_Collections.Look(ref localStockpiles, "localStockpile", LookMode.Def, LookMode.Value);
-            if (localStockpiles == null)
+            if (localStockpiles is null)
                 localStockpiles = new Dictionary<ResourceTypeDef, double>();
 
             Scribe_Collections.Look(ref localCaps, "localCaps", LookMode.Def, LookMode.Value);
-            if (localCaps == null)
+            if (localCaps is null)
                 localCaps = new Dictionary<ResourceTypeDef, double>();
 
             Scribe_Collections.Look(ref localSellOrders, "localSellOrders", LookMode.Deep);
-            if (localSellOrders == null)
+            if (localSellOrders is null)
                 localSellOrders = new List<SellOrder>();
 
             Scribe_Collections.Look(ref titheInjections, "titheInjections", LookMode.Def, LookMode.Value);
-            if (titheInjections == null)
+            if (titheInjections is null)
                 titheInjections = new Dictionary<ResourceTypeDef, double>();
 
             Scribe_Collections.Look(ref needStates, "needStates", LookMode.Deep);
-            if (needStates == null)
+            if (needStates is null)
                 needStates = new List<NeedState>();
 
             Scribe_Values.Look(ref connectedPartners, "connectedPartners", 0);
@@ -792,9 +767,8 @@ namespace FactionColonies.SupplyChain
             if (uiSettlement == null) return;
 
             WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
-            if (wc != null)
-                wc.EnsureCapsAndStockpiles();
-            bool isComplex = wc != null && wc.Mode == SupplyChainMode.Complex;
+            wc?.EnsureCapsAndStockpiles();
+            bool isComplex = wc?.Mode == SupplyChainMode.Complex;
 
             if (isComplex)
                 DrawComplexModeTab(boundingBox);
@@ -815,8 +789,7 @@ namespace FactionColonies.SupplyChain
 
             int resourceCount = uiSettlement.Resources.Count;
 
-            float totalHeight = resourceCount * rowHeight + 40f
-                + needStates.Count * NeedRowStep + 50f;
+            float totalHeight = resourceCount * rowHeight + 40f + needStates.Count * NeedRowStep + 50f;
             Rect viewRect = new Rect(0f, 0f, boundingBox.width - 16f, totalHeight);
             Rect scrollRect = new Rect(boundingBox.x, y, boundingBox.width, boundingBox.height - (y - boundingBox.y));
 
@@ -899,7 +872,7 @@ namespace FactionColonies.SupplyChain
 
         private void DrawStockpileStatusBar(Rect rect)
         {
-            if (localStockpileDict == null) return;
+            if (localStockpileDict is null) return;
 
             // Separator line
             Widgets.DrawBoxSolid(new Rect(rect.x, rect.y, rect.width, 1f), new Color(0.3f, 0.3f, 0.3f));
@@ -976,7 +949,7 @@ namespace FactionColonies.SupplyChain
             // Sub-tab bar
             float tabH = 24f;
             float tabW = boundingBox.width / 5f;
-            string[] tabLabels = new string[]
+            string[] tabLabels =
             {
                 "SC_SubStockpile".Translate(),
                 "SC_SubNeeds".Translate(),
@@ -1213,7 +1186,7 @@ namespace FactionColonies.SupplyChain
             int sellIdx = 0;
             foreach (SellOrder order in localSellOrders)
             {
-                if (order.resource == null) continue;
+                if (order.resource is null) continue;
 
                 Rect sellRow = new Rect(0f, curY, viewRect.width, 26f);
                 if (sellIdx % 2 == 0) Widgets.DrawHighlight(sellRow);
@@ -1238,7 +1211,7 @@ namespace FactionColonies.SupplyChain
 
                 if (Widgets.ButtonText(new Rect(sellRow.xMax - 28f, curY + 1f, 24f, 24f), "X"))
                 {
-                    if (toRemove == null) toRemove = new List<SellOrder>();
+                    if (toRemove is null) toRemove = new List<SellOrder>();
                     toRemove.Add(order);
                 }
 
@@ -1272,7 +1245,7 @@ namespace FactionColonies.SupplyChain
             int titheIdx = 0;
             foreach (KeyValuePair<ResourceTypeDef, double> kv in titheInjections)
             {
-                if (kv.Key == null || kv.Value <= 0) continue;
+                if (kv.Key is null || kv.Value <= 0) continue;
 
                 Rect titheRow = new Rect(0f, curY, viewRect.width, 26f);
                 if (titheIdx % 2 == 0) Widgets.DrawHighlight(titheRow);
@@ -1297,7 +1270,7 @@ namespace FactionColonies.SupplyChain
 
                 if (Widgets.ButtonText(new Rect(xBtnX, curY + 1f, 24f, 24f), "X"))
                 {
-                    if (titheToRemove == null) titheToRemove = new List<ResourceTypeDef>();
+                    if (titheToRemove is null) titheToRemove = new List<ResourceTypeDef>();
                     titheToRemove.Add(kv.Key);
                 }
 
@@ -1319,10 +1292,10 @@ namespace FactionColonies.SupplyChain
         private void DrawComplexRoutes(Rect rect)
         {
             WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
-            if (wc == null) return;
+            if (wc is null) return;
 
             WorldSettlementFC ws = WorldSettlement;
-            if (ws == null) return;
+            if (ws is null) return;
 
             // --- Direction toggle (fixed above scroll) ---
             Text.Font = GameFont.Tiny;
@@ -1330,9 +1303,9 @@ namespace FactionColonies.SupplyChain
             Rect fromRect = new Rect(rect.x, rect.y + 3f, toggleW, 24f);
             Rect toRect = new Rect(rect.x + toggleW, rect.y + 3f, toggleW, 24f);
             Rect currentRect = newRouteIsOutgoing ? fromRect : toRect;
-            if (UIUtil.ButtonFlat(fromRect, (string)"SC_DirectionFrom".Translate(), highlighted: newRouteIsOutgoing))
+            if (UIUtil.ButtonFlat(fromRect, "SC_DirectionFrom".Translate(), highlighted: newRouteIsOutgoing))
                 newRouteIsOutgoing = true;
-            if (UIUtil.ButtonFlat(toRect, (string)"SC_DirectionTo".Translate(), highlighted: !newRouteIsOutgoing))
+            if (UIUtil.ButtonFlat(toRect, "SC_DirectionTo".Translate(), highlighted: !newRouteIsOutgoing))
                 newRouteIsOutgoing = false;
 
             UIUtil.DrawTabDecoratorHorizontalTop(currentRect, rect, Color.gray);
@@ -1354,7 +1327,7 @@ namespace FactionColonies.SupplyChain
             HashSet<ResourceTypeDef> routeResources = new HashSet<ResourceTypeDef>();
             foreach (SupplyRoute r in wc.SupplyRoutes)
             {
-                if (!r.IsValid() || r.resource == null) continue;
+                if (!r.IsValid() || r.resource is null) continue;
                 if (newRouteIsOutgoing && r.source == ws) routeResources.Add(r.resource);
                 else if (!newRouteIsOutgoing && r.destination == ws) routeResources.Add(r.resource);
             }
@@ -1416,7 +1389,7 @@ namespace FactionColonies.SupplyChain
 
                 // Dual accent bars: resource color + efficiency color
                 float eff = (float)route.CachedEfficiency;
-                Color routeAccent = route.resource != null ? route.resource.color : Color.gray;
+                Color routeAccent = route.resource?.color ?? Color.gray;
                 Color effAccent = AccentUtil.GetStatColor(eff * 100f, false);
                 Widgets.DrawBoxSolid(new Rect(0f, curY, AccentW, 28f), routeAccent);
                 Widgets.DrawBoxSolid(new Rect(AccentW + 2f, curY, AccentW, 28f), effAccent);
@@ -1516,7 +1489,7 @@ namespace FactionColonies.SupplyChain
         private void DrawAddRouteForm(Rect viewRect, ref float curY, WorldComponent_SupplyChain wc)
         {
             FactionFC faction = FactionCache.FactionComp;
-            if (faction == null) return;
+            if (faction is null) return;
 
             WorldSettlementFC ws = WorldSettlement;
 
@@ -1619,7 +1592,7 @@ namespace FactionColonies.SupplyChain
         private void DrawAddRouteFormFixed(float x, ref float curY, float width, WorldComponent_SupplyChain wc)
         {
             FactionFC faction = FactionCache.FactionComp;
-            if (faction == null) return;
+            if (faction is null) return;
 
             WorldSettlementFC ws = WorldSettlement;
 
@@ -1791,8 +1764,8 @@ namespace FactionColonies.SupplyChain
 
         // --- Shared: Needs Display ---
 
-        internal const float NeedRowH = 40f;
-        internal const float NeedRowStep = 42f;
+        private const float NeedRowH = 40f;
+        private const float NeedRowStep = 42f;
         private const float NeedTopLineH = 22f;
         private const float NeedBotLineH = 16f;
 
@@ -1809,7 +1782,7 @@ namespace FactionColonies.SupplyChain
             Dictionary<ResourceTypeDef, float> projectedRates = new Dictionary<ResourceTypeDef, float>();
             foreach (NeedState state in needStates)
             {
-                if (state.resource == null || projectedRates.ContainsKey(state.resource))
+                if (state.resource is null || projectedRates.ContainsKey(state.resource))
                     continue;
 
                 float rate;
@@ -1830,10 +1803,9 @@ namespace FactionColonies.SupplyChain
             int idx = 0;
             foreach (NeedState state in needStates)
             {
-                if (state.resource == null) continue;
+                if (state.resource is null) continue;
 
-                float projected;
-                if (!projectedRates.TryGetValue(state.resource, out projected))
+                if (!projectedRates.TryGetValue(state.resource, out float projected))
                     projected = state.Satisfaction;
                 float actual = state.Satisfaction;
                 float satisfaction = projected;
@@ -1885,7 +1857,7 @@ namespace FactionColonies.SupplyChain
                 string statusText;
                 if (state.demanded > 0 && Math.Abs(satisfaction - actual) > 0.005f)
                 {
-                    statusText = (string)"SC_SatisfactionProjected".Translate(
+                    statusText = "SC_SatisfactionProjected".Translate(
                         (satisfaction * 100f).ToString("F0"),
                         (actual * 100f).ToString("F0"));
                 }
@@ -1931,7 +1903,7 @@ namespace FactionColonies.SupplyChain
         private string BuildNeedTooltip(NeedState state, float projected, float actual)
         {
             WorldSettlementFC ws = WorldSettlement;
-            if (ws == null) return null;
+            if (ws is null) return null;
 
             string displayLabel = state.label;
 
@@ -1993,7 +1965,7 @@ namespace FactionColonies.SupplyChain
 
         private string GetProjectedPenaltySummary(NeedState state, double shortfall)
         {
-            if (state.penalties == null || shortfall <= 0)
+            if (state.penalties is null || shortfall <= 0)
                 return null;
             string result = null;
             foreach (NeedPenalty penalty in state.penalties)
@@ -2001,7 +1973,7 @@ namespace FactionColonies.SupplyChain
                 double val = penalty.penaltyPerUnit * shortfall;
                 string displayLabel = penalty.label ?? penalty.stat.label;
                 string part = "SC_PenaltyLine".Translate(val.ToString("F1"), displayLabel);
-                result = result == null ? part : result + ", " + part;
+                result = result is null ? part : result + ", " + part;
             }
             return result;
         }

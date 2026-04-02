@@ -18,8 +18,8 @@ namespace FactionColonies.SupplyChain
         private double cachedEfficiency;
         private bool dirty = true;
 
-        public int CachedTravelTicks { get { return cachedTravelTicks; } }
-        public double CachedEfficiency { get { return cachedEfficiency; } }
+        public int CachedTravelTicks => cachedTravelTicks;
+        public double CachedEfficiency => cachedEfficiency;
 
         public SupplyRoute()
         {
@@ -33,7 +33,8 @@ namespace FactionColonies.SupplyChain
             this.resource = resource;
             this.amountPerPeriod = amountPerPeriod;
             this.priority = priority;
-            this.dirty = true;
+            
+            dirty = true;
         }
 
         /// <summary>
@@ -45,7 +46,7 @@ namespace FactionColonies.SupplyChain
                 && !source.Destroyed && !destination.Destroyed;
         }
 
-        public void Invalidate()
+        public void SetDirty()
         {
             dirty = true;
         }
@@ -67,7 +68,7 @@ namespace FactionColonies.SupplyChain
             double baseEfficiency = 1.0 / (1.0 + travelDays * SupplyChainSettings.routeDecayPerDay);
 
             // Apply route efficiency bonus stat from source settlement
-            FCStatDef routeEffStat = DefDatabase<FCStatDef>.GetNamedSilentFail("SC_RouteEfficiencyBonus");
+            FCStatDef routeEffStat = SCStatDefOf.SC_RouteEfficiencyBonus;
             if (routeEffStat != null)
             {
                 double bonus = FactionCache.FactionComp.GetStatValue(routeEffStat, source);
@@ -83,7 +84,7 @@ namespace FactionColonies.SupplyChain
                 }
                 catch (Exception e)
                 {
-                    LogUtil.Error("ISupplyRouteModifier " + mod.GetType().Name + " threw: " + e);
+                    LogSC.Error($"ISupplyRouteModifier {mod.GetType().Name} threw: {e}");
                 }
             }
 
@@ -99,8 +100,7 @@ namespace FactionColonies.SupplyChain
             if (!IsValid() || amountPerPeriod <= 0 || cachedEfficiency <= 0)
                 return 0.0;
 
-            double drawn;
-            if (!sourceStockpile.TryDraw(resource, amountPerPeriod, out drawn) || drawn <= 0)
+            if (!sourceStockpile.TryDraw(resource, amountPerPeriod, out double drawn) || drawn <= 0)
                 return 0.0;
 
             double transferred = drawn * cachedEfficiency;
@@ -109,8 +109,7 @@ namespace FactionColonies.SupplyChain
             // If destination is full, the excess is lost (efficiency loss + overflow)
             if (excess > 0)
             {
-                LogUtil.Message("Route " + source.Name + " -> " + destination.Name + ": "
-                    + excess.ToString("F1") + " " + resource.label + " lost to destination overflow.");
+                LogSC.Message($"Route {source.Name} -> {destination.Name}: {excess} {resource.label} lost to destination overflow.");
             }
 
             return transferred - excess;

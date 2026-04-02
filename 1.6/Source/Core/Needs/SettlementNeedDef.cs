@@ -44,7 +44,7 @@ namespace FactionColonies.SupplyChain
 
         public bool IsActiveForFaction(FactionFC faction)
         {
-            return minTechLevel == TechLevel.Undefined || faction.techLevel >= minTechLevel;
+            return minTechLevel == TechLevel.Undefined || faction?.techLevel >= minTechLevel;
         }
 
         public bool IsActiveForSettlement(WorldSettlementFC settlement)

@@ -322,7 +322,7 @@ namespace FactionColonies.SupplyChain
                 }
                 catch (Exception e)
                 {
-                    LogUtil.Error("INeedProvider " + comp.GetType().Name + " threw during need resolution: " + e);
+                    LogSC.Error("INeedProvider " + comp.GetType().Name + " threw during need resolution: " + e);
                 }
             }
         }

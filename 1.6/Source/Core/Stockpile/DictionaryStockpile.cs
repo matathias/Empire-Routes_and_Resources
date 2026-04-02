@@ -20,14 +20,12 @@ namespace FactionColonies.SupplyChain
 
         public double GetAmount(ResourceTypeDef resource)
         {
-            double val;
-            return stockpile.TryGetValue(resource, out val) ? val : 0.0;
+            return stockpile.TryGetValue(resource, out double val) ? val : 0.0;
         }
 
         public double GetCap(ResourceTypeDef resource)
         {
-            double val;
-            return caps.TryGetValue(resource, out val) ? val : 0.0;
+            return caps.TryGetValue(resource, out double val) ? val : 0.0;
         }
 
         public bool TryDraw(ResourceTypeDef resource, double amount, out double drawn)
@@ -36,8 +34,7 @@ namespace FactionColonies.SupplyChain
             if (amount <= 0)
                 return false;
 
-            double current;
-            if (!stockpile.TryGetValue(resource, out current) || current <= 0)
+            if (!stockpile.TryGetValue(resource, out double current) || current <= 0)
                 return false;
 
             drawn = Math.Min(amount, current);
@@ -50,12 +47,10 @@ namespace FactionColonies.SupplyChain
             if (amount <= 0)
                 return 0.0;
 
-            double current;
-            if (!stockpile.TryGetValue(resource, out current))
+            if (!stockpile.TryGetValue(resource, out double current))
                 current = 0.0;
 
-            double cap;
-            if (!caps.TryGetValue(resource, out cap))
+            if (!caps.TryGetValue(resource, out double cap))
                 cap = 0.0;
 
             double space = Math.Max(0, cap - current);

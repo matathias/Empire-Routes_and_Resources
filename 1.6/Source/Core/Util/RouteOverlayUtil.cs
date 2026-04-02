@@ -23,7 +23,7 @@ namespace FactionColonies.SupplyChain
         {
             get
             {
-                if (routeLineMat == null)
+                if (routeLineMat is null)
                     routeLineMat = MaterialPool.MatFrom(
                         GenDraw.LineTexPath, ShaderDatabase.WorldOverlayTransparent,
                         new Color(0.4f, 1f, 0.4f, 1f), 3590);
@@ -36,7 +36,7 @@ namespace FactionColonies.SupplyChain
         {
             get
             {
-                if (routeArrowMat == null)
+                if (routeArrowMat is null)
                     routeArrowMat = MaterialPool.MatFrom(
                         "UI/Widgets/ArrowRight", ShaderDatabase.WorldOverlayTransparent,
                         new Color(0.2f, 0.8f, 0.2f, 0.9f), 3591);
@@ -145,7 +145,7 @@ namespace FactionColonies.SupplyChain
         /// </summary>
         public static bool DrawRouteLabel(SupplyRoute route, WorldGrid grid, string label)
         {
-            if (label == null) return false;
+            if (label is null) return false;
 
             Vector3 mid = Vector3.Lerp(
                 grid.GetTileCenter(route.source.Tile),

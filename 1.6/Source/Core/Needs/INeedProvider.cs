@@ -25,10 +25,7 @@ namespace FactionColonies.SupplyChain
         public double demanded;
         public double fulfilled;
 
-        public float Satisfaction
-        {
-            get { return demanded > 0 ? (float)(fulfilled / demanded) : 1f; }
-        }
+        public float Satisfaction => demanded > 0 ? (float)(fulfilled / demanded) : 1f;
     }
 
     /// <summary>

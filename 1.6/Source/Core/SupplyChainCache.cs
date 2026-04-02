@@ -75,19 +75,9 @@ namespace FactionColonies.SupplyChain
         {
             if (settlement == null) return null;
 
-            WorldObjectComp_SupplyChain cached;
-            if (!_compCache.TryGetValue(settlement, out cached))
+            if (!_compCache.TryGetValue(settlement, out WorldObjectComp_SupplyChain cached))
             {
-                cached = null;
-                foreach (WorldObjectComp comp in settlement.AllComps)
-                {
-                    WorldObjectComp_SupplyChain sc = comp as WorldObjectComp_SupplyChain;
-                    if (sc != null)
-                    {
-                        cached = sc;
-                        break;
-                    }
-                }
+                cached = settlement.GetComponent<WorldObjectComp_SupplyChain>();
                 _compCache[settlement] = cached;
             }
             return cached;
