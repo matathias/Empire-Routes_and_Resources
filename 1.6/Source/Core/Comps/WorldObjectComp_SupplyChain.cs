@@ -16,7 +16,7 @@ namespace FactionColonies.SupplyChain
         }
     }
 
-    public class WorldObjectComp_SupplyChain : WorldObjectComp, ISettlementWindowOverview, IStatModifierProvider, ITitheBudgetModifier
+    public class WorldObjectComp_SupplyChain : WorldObjectComp, ISettlementWindowOverview, IStatModifierProvider, ITitheBudgetModifier, ISettlementPostLoadInit
     {
         private const string ALLOC_KEY_PREFIX = "SupplyChain.";
 
@@ -721,14 +721,16 @@ namespace FactionColonies.SupplyChain
             Scribe_Values.Look(ref connectedPartners, "connectedPartners", 0);
             Scribe_Values.Look(ref hubScore, "hubScore", 0);
             Scribe_Values.Look(ref hasCompletedFirstTax, "hasCompletedFirstTax", false);
+        }
 
-            if (Scribe.mode == LoadSaveMode.PostLoadInit)
-            {
-                if (allocations.Count > 0)
-                    ReRegisterAllocations();
+        // --- ISettlementPostLoadInit ---
 
-                RebuildNeedStates();
-            }
+        public void PostSettlementLoadInit(WorldSettlementFC settlement)
+        {
+            if (allocations.Count > 0)
+                ReRegisterAllocations();
+            
+            RebuildNeedStates();
         }
 
         // --- ISettlementWindowOverview ---
