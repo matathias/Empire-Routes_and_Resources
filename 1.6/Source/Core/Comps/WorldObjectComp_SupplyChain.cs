@@ -38,6 +38,8 @@ namespace FactionColonies.SupplyChain
 
         // Needs
         private List<NeedState> needStates = new List<NeedState>();
+        private bool hasCompletedFirstTax;
+        public bool HasCompletedFirstTax => hasCompletedFirstTax;
 
         // Trade network
         private int connectedPartners;
@@ -304,16 +306,19 @@ namespace FactionColonies.SupplyChain
 
             if (stat.aggregation == FCStatAggregation.Additive)
             {
-                // 1. Penalties for unmet needs
-                foreach (NeedState state in needStates)
+                // 1. Penalties for unmet needs (waived during founding grace period)
+                if (hasCompletedFirstTax)
                 {
-                    if (state.penalties is null || state.demanded <= 0 || state.fulfilled >= state.demanded)
-                        continue;
-                    double shortfall = state.demanded - state.fulfilled;
-                    foreach (NeedPenalty penalty in state.penalties)
+                    foreach (NeedState state in needStates)
                     {
-                        if (penalty.stat == stat)
-                            value += penalty.penaltyPerUnit * shortfall;
+                        if (state.penalties is null || state.demanded <= 0 || state.fulfilled >= state.demanded)
+                            continue;
+                        double shortfall = state.demanded - state.fulfilled;
+                        foreach (NeedPenalty penalty in state.penalties)
+                        {
+                            if (penalty.stat == stat)
+                                value += penalty.penaltyPerUnit * shortfall;
+                        }
                     }
                 }
 
@@ -368,30 +373,33 @@ namespace FactionColonies.SupplyChain
         {
             string desc = null;
 
-            // Penalty descriptions
-            foreach (NeedState state in needStates)
+            // Penalty descriptions (waived during founding grace period)
+            if (hasCompletedFirstTax)
             {
-                if (state.penalties is null || state.demanded <= 0 || state.fulfilled >= state.demanded)
-                    continue;
-                double shortfall = state.demanded - state.fulfilled;
-                foreach (NeedPenalty penalty in state.penalties)
+                foreach (NeedState state in needStates)
                 {
-                    if (penalty.stat != stat) continue;
-                    double val = penalty.penaltyPerUnit * shortfall;
-                    if (val <= 0) continue;
-                    val = Math.Round(val, 2);
+                    if (state.penalties is null || state.demanded <= 0 || state.fulfilled >= state.demanded)
+                        continue;
+                    double shortfall = state.demanded - state.fulfilled;
+                    foreach (NeedPenalty penalty in state.penalties)
+                    {
+                        if (penalty.stat != stat) continue;
+                        double val = penalty.penaltyPerUnit * shortfall;
+                        if (val <= 0) continue;
+                        val = Math.Round(val, 2);
 
-                    bool invert = stat.invertedForDisplay;
-                    /* Due to the weirdness of unrest, we actually want to invert the inversion for unrest values */
-                    /* Should *really* replace unrest with "stability" or something... */
-                    if (stat == FCStatDefOf.unrestGainedBase ||
-                        stat == FCStatDefOf.unrestGainedMultiplier ||
-                        stat == FCStatDefOf.unrestLostBase ||
-                        stat == FCStatDefOf.unrestLostMultiplier)
-                        invert = !invert;
+                        bool invert = stat.invertedForDisplay;
+                        /* Due to the weirdness of unrest, we actually want to invert the inversion for unrest values */
+                        /* Should *really* replace unrest with "stability" or something... */
+                        if (stat == FCStatDefOf.unrestGainedBase ||
+                            stat == FCStatDefOf.unrestGainedMultiplier ||
+                            stat == FCStatDefOf.unrestLostBase ||
+                            stat == FCStatDefOf.unrestLostMultiplier)
+                            invert = !invert;
 
-                    string line = "SC_UnmetNeedPenalty".Translate(state.label, TextUtil.ColorizeAdditiveBonus(val, hardinvert: invert));
-                    desc = desc is null ? line : desc + "\n" + line;
+                        string line = "SC_UnmetNeedPenalty".Translate(state.label, TextUtil.ColorizeAdditiveBonus(val, hardinvert: invert));
+                        desc = desc is null ? line : desc + "\n" + line;
+                    }
                 }
             }
 
@@ -556,6 +564,7 @@ namespace FactionColonies.SupplyChain
         {
             isTaxTime = false;
             actualTitheDrawn.Clear();
+            hasCompletedFirstTax = true;
         }
 
         // --- Allocation Management ---
@@ -711,6 +720,7 @@ namespace FactionColonies.SupplyChain
 
             Scribe_Values.Look(ref connectedPartners, "connectedPartners", 0);
             Scribe_Values.Look(ref hubScore, "hubScore", 0);
+            Scribe_Values.Look(ref hasCompletedFirstTax, "hasCompletedFirstTax", false);
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
@@ -826,6 +836,8 @@ namespace FactionColonies.SupplyChain
         private const float StatusCellPad = 8f;
         private const float StatusBarGap = 4f;
         private static readonly Color StatusNetStable = new Color(0.5f, 0.5f, 0.5f);
+        private static readonly Color GracePeriodText = new Color(0.5f, 0.85f, 1f);
+        private static readonly TaggedString CachedFoundingGrace = "SC_FoundingGrace".Translate();
 
         private float MeasureStockpileStatusBar(float width)
         {
@@ -1726,7 +1738,10 @@ namespace FactionColonies.SupplyChain
                     float newVal = Widgets.HorizontalSlider(
                         new Rect(cx + 150f, curY + 8f, 240f, rowHeight - 16f),
                         sliderVal, 0f, (float)maxAlloc, false,
-                        null, null, null, 0.5f);
+                        null, null, null, 0.1f);
+
+                    if (newVal > (float)maxAlloc)
+                        newVal = (float)maxAlloc;
 
                     if (Math.Abs(newVal - sliderVal) > 0.01f)
                     {
@@ -1799,6 +1814,16 @@ namespace FactionColonies.SupplyChain
             Widgets.Label(new Rect(AccentW + 6f, curY, viewRect.width, 30f), "SC_SettlementNeeds".Translate());
             Text.Font = GameFont.Small;
             curY += 34f;
+
+            if (!hasCompletedFirstTax)
+            {
+                Text.Anchor = TextAnchor.MiddleCenter;
+                GUI.color = GracePeriodText;
+                Widgets.Label(new Rect(AccentW + 6f, curY, viewRect.width - AccentW - 12f, 22f), CachedFoundingGrace);
+                GUI.color = Color.white;
+                Text.Anchor = TextAnchor.UpperLeft;
+                curY += 24f;
+            }
 
             int idx = 0;
             foreach (NeedState state in needStates)
@@ -1922,7 +1947,10 @@ namespace FactionColonies.SupplyChain
                     switch (needDef.scaling)
                     {
                         case NeedScaling.PerWorker:
-                            scalingDesc = needDef.baseAmount.ToString("F1") + " per worker x " + ws.workers + " = " + state.demanded.ToString("F1");
+                            string popLabel = (SupplyChainSettings.useMaxWorkersForNeeds && ws.workersMax > ws.workers)
+                                ? ws.workersMax.ToString("F0") + " " + (string)"SC_MaxWorkersSuffix".Translate()
+                                : ws.workers.ToString("F0");
+                            scalingDesc = needDef.baseAmount.ToString("F1") + " per worker x " + popLabel + " = " + state.demanded.ToString("F1");
                             break;
                         case NeedScaling.PerLevel:
                             scalingDesc = needDef.baseAmount.ToString("F1") + " per level x " + ws.settlementLevel + " = " + state.demanded.ToString("F1");
@@ -1945,7 +1973,10 @@ namespace FactionColonies.SupplyChain
                 tip += "\n\n" + (string)"SC_NeedProjectionExplain".Translate(
                     (projected * 100f).ToString("F0"));
                 double projectedShortfall = state.demanded * (1.0 - projected);
-                tip += "\n\nProjected penalties:";
+                if (!hasCompletedFirstTax)
+                    tip += "\n\n" + (string)"SC_ProjectedPenaltiesWaived".Translate();
+                else
+                    tip += "\n\n" + (string)"SC_ProjectedPenalties".Translate();
                 foreach (NeedPenalty penalty in state.penalties)
                 {
                     double penaltyVal = penalty.penaltyPerUnit * projectedShortfall;

@@ -3,6 +3,7 @@ using RimWorld;
 using RimWorld.Planet;
 using UnityEngine;
 using Verse;
+using System;
 
 namespace FactionColonies.SupplyChain
 {
@@ -1177,8 +1178,9 @@ namespace FactionColonies.SupplyChain
             const float arrowSize = 16f;
             float contentX = accentW + 4f;
             float labelEndX = contentX + 172f;
-            float amountTextW = 150f;
-            float barWidth = viewRect.width - labelEndX - arrowSize - 8f - amountTextW - 4f;
+            float amountTextW = 90f;
+            float netFlowW = 60f;
+            float barWidth = viewRect.width - labelEndX - arrowSize - 8f - amountTextW - netFlowW - 4f;
             if (barWidth < 100f) barWidth = 100f;
 
             int resIdx = 0;
@@ -1226,8 +1228,18 @@ namespace FactionColonies.SupplyChain
                     GUI.color = Color.white;
                 }
 
-                Widgets.Label(new Rect(arrowX + arrowSize + 4f, drawY, amountTextW, barHeight),
+                float amountX = arrowX + arrowSize + 4f;
+                Widgets.Label(new Rect(amountX, drawY, amountTextW, barHeight),
                     "SC_StockpileAmount".Translate(amount.ToString("F1"), cap.ToString("F0")));
+
+                // Net flow readout
+                double net = simpleFlow.Net;
+                if (net > 0.01 || net < -0.01)
+                {
+                    Text.Anchor = TextAnchor.MiddleRight;
+                    Widgets.Label(new Rect(amountX + amountTextW, drawY, netFlowW, barHeight), TextUtil.ColorizeAdditiveBonus(Math.Round(net, 2)));
+                    Text.Anchor = TextAnchor.MiddleLeft;
+                }
 
                 int numSettlements = simpleFaction != null ? simpleFaction.settlements.Count : 0;
                 double baseCap = numSettlements * SupplyChainSettings.baseCapPerSettlement;

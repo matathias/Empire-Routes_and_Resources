@@ -147,4 +147,10 @@
     <SC_TaxEfficiencyDesc>Needs satisfaction ({0}%): x{1}% tax efficiency</SC_TaxEfficiencyDesc>
     <SC_SellRateNetworkDesc>Trade network: x{0}% sell rate</SC_SellRateNetworkDesc>
 
+    <!-- Grace Period -->
+    <SC_FoundingGrace>Founding grace period: penalties waived until first tax</SC_FoundingGrace>
+    <SC_ProjectedPenalties>Projected penalties:</SC_ProjectedPenalties>
+    <SC_ProjectedPenaltiesWaived>Projected penalties (currently waived):</SC_ProjectedPenaltiesWaived>
+    <SC_MaxWorkersSuffix>(max)</SC_MaxWorkersSuffix>
+
 </LanguageData>
