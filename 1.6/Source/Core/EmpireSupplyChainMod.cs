@@ -1,3 +1,4 @@
+using FactionColonies;
 using HarmonyLib;
 using System.Reflection;
 using UnityEngine;
@@ -97,6 +98,10 @@ namespace FactionColonies.SupplyChain
                 localCapBuffer = localCapBase.ToString("F0");
             ls.TextFieldNumeric(ref localCapBase, ref localCapBuffer, 10f, 500f);
 
+            ls.Gap(12f);
+            if (ls.ButtonText("SC_OpenPatchNotes".Translate()))
+                Find.WindowStack.Add(new PatchNotesDisplayWindow("matathias.empire.supplychain", "SC_PatchTitle".Translate()));
+
             ls.End();
         }
     }
@@ -122,6 +127,16 @@ namespace FactionColonies.SupplyChain
         public EmpireSupplyChainMod(ModContentPack content) : base(content)
         {
             settings = GetSettings<SupplyChainSettings>();
+            
+            string modVersion = content?.ModMetaData?.ModVersion;
+            if (modVersion.NullOrEmpty())
+            {
+                LogSC.MessageForce("Did not load a mod version");
+            }
+            else
+            {
+                LogSC.MessageForce($"v{modVersion}");
+            }
         }
 
         public override string SettingsCategory() => "SC_SettingsCategory".Translate();
