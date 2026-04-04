@@ -38,6 +38,7 @@ namespace FactionColonies.SupplyChain
 
         // Needs
         private List<NeedState> needStates = new List<NeedState>();
+        private bool hasAnyShortfall;
         private bool hasCompletedFirstTax;
         public bool HasCompletedFirstTax => hasCompletedFirstTax;
 
@@ -178,6 +179,7 @@ namespace FactionColonies.SupplyChain
         public void SetNeedStates(List<NeedState> states)
         {
             needStates = states ?? new List<NeedState>();
+            UpdateHasAnyShortfall();
             statModsDirty = true;
         }
 
@@ -274,6 +276,20 @@ namespace FactionColonies.SupplyChain
             }
 
             needStates = newStates;
+            UpdateHasAnyShortfall();
+        }
+
+        private void UpdateHasAnyShortfall()
+        {
+            hasAnyShortfall = false;
+            foreach (NeedState state in needStates)
+            {
+                if (state.demanded > 0 && state.fulfilled < state.demanded)
+                {
+                    hasAnyShortfall = true;
+                    return;
+                }
+            }
         }
 
         // --- IStatModifierProvider ---
@@ -306,6 +322,17 @@ namespace FactionColonies.SupplyChain
 
             if (stat.aggregation == FCStatAggregation.Additive)
             {
+                // 0. Suppress natural stat stabilization when any need is unmet
+                if (hasCompletedFirstTax && hasAnyShortfall)
+                {
+                    if (stat == FCStatDefOf.happinessGainedBase)
+                        value -= FCSettings.happinessBaseGain;
+                    else if (stat == FCStatDefOf.loyaltyGainedBase)
+                        value -= FCSettings.loyaltyBaseGain;
+                    else if (stat == FCStatDefOf.unrestLostBase)
+                        value -= FCSettings.unrestBaseLost;
+                }
+
                 // 1. Penalties for unmet needs (waived during founding grace period)
                 if (hasCompletedFirstTax)
                 {
@@ -372,6 +399,15 @@ namespace FactionColonies.SupplyChain
         public string GetStatModifierDesc(FCStatDef stat)
         {
             string desc = null;
+
+            // Stabilization suppression description
+            if (hasCompletedFirstTax && hasAnyShortfall &&
+                (stat == FCStatDefOf.happinessGainedBase ||
+                 stat == FCStatDefOf.loyaltyGainedBase ||
+                 stat == FCStatDefOf.unrestLostBase))
+            {
+                desc = "SC_StabilizationSuppressed".Translate();
+            }
 
             // Penalty descriptions (waived during founding grace period)
             if (hasCompletedFirstTax)
@@ -717,6 +753,7 @@ namespace FactionColonies.SupplyChain
             Scribe_Collections.Look(ref needStates, "needStates", LookMode.Deep);
             if (needStates is null)
                 needStates = new List<NeedState>();
+            UpdateHasAnyShortfall();
 
             Scribe_Values.Look(ref connectedPartners, "connectedPartners", 0);
             Scribe_Values.Look(ref hubScore, "hubScore", 0);
@@ -727,6 +764,12 @@ namespace FactionColonies.SupplyChain
 
         public void PostSettlementLoadInit(WorldSettlementFC settlement)
         {
+            if (settlement is null)
+            {
+                LogSC.Warning($"PostSettlementLoadInit encountered null settlement");
+                return;
+            }
+            LogSC.Message($"Running PostSettlementLoadInit on settlement {settlement.Name} for Routes & Resources");
             if (allocations.Count > 0)
                 ReRegisterAllocations();
             

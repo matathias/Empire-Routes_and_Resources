@@ -136,6 +136,9 @@
     <SC_Stat_RouteEfficiencyBonus>Reduces resource losses on supply routes originating from this settlement.</SC_Stat_RouteEfficiencyBonus>
     <SC_Stat_TaxEfficiency>Supply chain satisfaction improves tax collection efficiency at this settlement.</SC_Stat_TaxEfficiency>
 
+    <!-- Stabilization Suppression -->
+    <SC_StabilizationSuppressed>Needs unsatisfied — natural stabilization suspended</SC_StabilizationSuppressed>
+
     <!-- Surplus Bonuses -->
     <SC_SurplusBonus>{0} surplus: +{1}</SC_SurplusBonus>
 
