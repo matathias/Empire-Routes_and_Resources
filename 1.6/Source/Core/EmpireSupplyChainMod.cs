@@ -11,18 +11,18 @@ namespace FactionColonies.SupplyChain
         private static bool printDebug = false;
         public static bool PrintDebug => printDebug;
 
-        private const double DEFAULT_DISTANCE_NORMALIZING_DAYS = 1.0;
+        private const float DEFAULT_DISTANCE_NORMALIZING_DAYS = 3f;
 
         public static SupplyChainMode mode = SupplyChainMode.Simple;
         public static float overflowPenaltyRate = 0.5f;
-        public static double baseCapPerSettlement = 50.0;
-        public static double routeDecayPerDay = 0.1;
-        public static double localCapBase = 50.0;
+        public static int baseCapPerSettlement = 50;
+        public static float routeDecayPerDay = 0.1f;
+        public static int localCapBase = 50;
         public static bool animateRouteArrows = false;
         public static bool useMaxWorkersForNeeds = false;
         public static int freeSettlementThreshold = 3;
-        public static double distanceNormalizingDays = DEFAULT_DISTANCE_NORMALIZING_DAYS;
-        public static int baseSilverSurcharge = 500;
+        public static float distanceNormalizingDays = DEFAULT_DISTANCE_NORMALIZING_DAYS;
+        public static int baseSilverSurcharge = (int)FCSettings.silverToCreateSettlement; //1000, as of 2026-04-05
 
         private static string capBuffer = null;
         private static string routeDecayBuffer = null;
@@ -37,9 +37,9 @@ namespace FactionColonies.SupplyChain
             Scribe_Values.Look(ref mode, "mode", SupplyChainMode.Simple);
             Scribe_Values.Look(ref printDebug, "printDebug", false);
             Scribe_Values.Look(ref overflowPenaltyRate, "overflowPenaltyRate", 0.5f);
-            Scribe_Values.Look(ref baseCapPerSettlement, "baseCapPerSettlement", 50.0);
-            Scribe_Values.Look(ref routeDecayPerDay, "routeDecayPerDay", 0.1);
-            Scribe_Values.Look(ref localCapBase, "localCapBase", 50.0);
+            Scribe_Values.Look(ref baseCapPerSettlement, "baseCapPerSettlement", 50);
+            Scribe_Values.Look(ref routeDecayPerDay, "routeDecayPerDay", 0.1f);
+            Scribe_Values.Look(ref localCapBase, "localCapBase", 50);
             Scribe_Values.Look(ref animateRouteArrows, "animateRouteArrows", false);
             Scribe_Values.Look(ref useMaxWorkersForNeeds, "useMaxWorkersForNeeds", false);
             Scribe_Values.Look(ref freeSettlementThreshold, "freeSettlementThreshold", 3);

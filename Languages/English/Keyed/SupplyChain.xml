@@ -164,7 +164,7 @@
     <SC_FoundingCostInsufficient>Insufficient {0} ({1}/{2}) in {3}</SC_FoundingCostInsufficient>
     <SC_FoundingCostNone>none</SC_FoundingCostNone>
     <SC_FoundingSourceTitle>Founding Resources</SC_FoundingSourceTitle>
-    <SC_FoundingSourceButton>Source: {0}</SC_FoundingSourceButton>
+    <SC_FoundingSourceButton>Source:</SC_FoundingSourceButton>
     <SC_FoundingDistanceMult>Distance multiplier: ×{0}</SC_FoundingDistanceMult>
 
     <!-- Founding Cost Settings -->

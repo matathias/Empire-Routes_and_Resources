@@ -22,7 +22,7 @@ namespace FactionColonies.SupplyChain
         private WorldComponent_SupplyChain worldComp;
         private FoundingCostExtension cachedExt;
 
-        public override Vector2 InitialSize => new Vector2(WindowWidth, 300f);
+        public override Vector2 InitialSize => new Vector2(WindowWidth, 350f);
 
         public FCWindow_FoundingSource()
         {
@@ -57,14 +57,14 @@ namespace FactionColonies.SupplyChain
 
         public override void DoWindowContents(Rect inRect)
         {
-            if (validator == null || worldComp == null)
+            if (validator is null || worldComp is null || worldComp.Mode == SupplyChainMode.Simple)
             {
                 Close();
                 return;
             }
 
             CreateColonyWindowFc createWindow = Find.WindowStack.WindowOfType<CreateColonyWindowFc>();
-            if (createWindow == null)
+            if (createWindow is null)
             {
                 Close();
                 return;
@@ -78,18 +78,18 @@ namespace FactionColonies.SupplyChain
             {
                 lastSettlementType = settlementType;
                 cachedExt = settlementType?.GetModExtension<FoundingCostExtension>();
-                if (cachedExt == null || cachedExt.resourceCosts == null || cachedExt.resourceCosts.Count == 0)
+                if (cachedExt?.resourceCosts is null || cachedExt.resourceCosts.Count == 0)
                 {
                     Close();
                     return;
                 }
             }
-            else if (cachedExt == null)
+            else if (cachedExt is null)
             {
                 cachedExt = settlementType?.GetModExtension<FoundingCostExtension>();
             }
 
-            if (cachedExt == null || cachedExt.resourceCosts == null || cachedExt.resourceCosts.Count == 0)
+            if (cachedExt?.resourceCosts is null || cachedExt.resourceCosts.Count == 0)
             {
                 Close();
                 return;
@@ -104,19 +104,24 @@ namespace FactionColonies.SupplyChain
             }
 
             float curY = 0f;
+            
+            WorldSettlementFC source = validator.GetEffectiveSource(currentTile);
+            string sourceName = source?.Name ?? "SC_FoundingCostNone".Translate();
 
             // Title
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.MiddleCenter;
-            Widgets.Label(new Rect(0, curY, inRect.width, ButtonHeight), "SC_FoundingSourceTitle".Translate());
-            curY += ButtonHeight + Padding;
+            Rect titleRect = new Rect(0, curY, inRect.width, ButtonHeight);
+            UIUtil.DrawColoredHighlight(titleRect, source?.settlementDef?.accentColor ?? Color.white);
+            Widgets.Label(titleRect, "SC_FoundingSourceTitle".Translate());
+            curY += ButtonHeight + 5f;
 
             // Source settlement selector button
-            WorldSettlementFC source = validator.GetEffectiveSource(currentTile);
-            string sourceName = source?.Name ?? "SC_FoundingCostNone".Translate();
 
+            Widgets.Label(new Rect(0, curY, inRect.width, 25f), "SC_FoundingSourceButton".Translate());
+            curY += 30f;
             Text.Anchor = TextAnchor.MiddleCenter;
-            if (Widgets.ButtonText(new Rect(0, curY, inRect.width, ButtonHeight), "SC_FoundingSourceButton".Translate(sourceName)))
+            if (Widgets.ButtonText(new Rect(0, curY, inRect.width, ButtonHeight), sourceName))
             {
                 ShowSourceMenu(currentTile);
             }
@@ -141,8 +146,12 @@ namespace FactionColonies.SupplyChain
                 bool sufficient = have >= needed;
 
                 // Resource label
-                GUI.color = sufficient ? Color.white : Color.red;
-                Widgets.Label(new Rect(Padding, curY, inRect.width * 0.45f, RowHeight), entry.resource.LabelCap);
+                float resourceImgSize = RowHeight;
+                float resourceImxgX = 2f;
+                Rect resourceImgRect = new Rect(resourceImxgX, curY, resourceImgSize, resourceImgSize);
+                Widgets.ButtonImage(resourceImgRect, entry.resource.Icon);
+                GUI.color = sufficient ? AccentUtil.Income : AccentUtil.Expense;
+                Widgets.Label(new Rect(resourceImgRect.xMax + Padding, curY, inRect.width * 0.45f, RowHeight), entry.resource.LabelCap);
 
                 // Amount: have / needed
                 Text.Anchor = TextAnchor.MiddleRight;
@@ -183,7 +192,7 @@ namespace FactionColonies.SupplyChain
             {
                 WorldSettlementFC settlement = faction.settlements[i];
                 WorldObjectComp_SupplyChain comp = SupplyChainCache.GetSettlementComp(settlement);
-                IStockpile stockpile = comp != null ? comp.GetStockpile() : null;
+                IStockpile stockpile = comp?.GetStockpile();
 
                 string label = settlement.Name;
                 if (stockpile != null && cachedExt != null)
@@ -217,10 +226,10 @@ namespace FactionColonies.SupplyChain
                 return worldComp.Stockpile;
 
             WorldSettlementFC source = validator.GetEffectiveSource(tile);
-            if (source == null) return null;
+            if (source is null) return null;
 
             WorldObjectComp_SupplyChain comp = SupplyChainCache.GetSettlementComp(source);
-            return comp != null ? comp.GetStockpile() : null;
+            return comp?.GetStockpile();
         }
 
         /// <summary>
@@ -229,19 +238,18 @@ namespace FactionColonies.SupplyChain
         public static void TryOpen()
         {
             WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
-            if (wc == null || wc.Mode != SupplyChainMode.Complex) return;
-            if (wc.FoundingValidator == null) return;
+            if (wc is null || wc.Mode != SupplyChainMode.Complex) return;
+            if (wc.FoundingValidator is null) return;
 
             FactionFC faction = FactionCache.FactionComp;
-            if (faction == null) return;
+            if (faction is null) return;
             int count = faction.settlements.Count + faction.settlementCaravansList.Count;
             if (count < SupplyChainSettings.freeSettlementThreshold) return;
 
             CreateColonyWindowFc createWindow = Find.WindowStack.WindowOfType<CreateColonyWindowFc>();
-            if (createWindow == null) return;
 
-            FoundingCostExtension ext = createWindow.currentSettlementType?.GetModExtension<FoundingCostExtension>();
-            if (ext == null || ext.resourceCosts == null || ext.resourceCosts.Count == 0) return;
+            FoundingCostExtension ext = createWindow?.currentSettlementType?.GetModExtension<FoundingCostExtension>();
+            if (ext?.resourceCosts is null || ext.resourceCosts.Count == 0) return;
 
             // Don't open duplicate
             if (Find.WindowStack.WindowOfType<FCWindow_FoundingSource>() != null) return;

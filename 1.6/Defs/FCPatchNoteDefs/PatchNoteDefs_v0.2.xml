@@ -28,4 +28,18 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SCPatchBase">
+		<defName>SC_0_2_2</defName>
+		<label>Update create new settlement UI</label>
+		<description>Some updates to the complex-mode create new settlement UI.</description>
+		<releaseDate>2026-04-05</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+		<li>Updates the additional complex-mode-only window in the create new settlement UI</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>
