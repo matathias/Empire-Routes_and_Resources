@@ -158,4 +158,19 @@
     <SC_ProjectedPenaltiesWaived>Projected penalties (currently waived):</SC_ProjectedPenaltiesWaived>
     <SC_MaxWorkersSuffix>(max)</SC_MaxWorkersSuffix>
 
+    <!-- Founding Cost -->
+    <SC_FoundingCostFrom>{0} from {1}</SC_FoundingCostFrom>
+    <SC_FoundingCostFactionStockpile>faction stockpile</SC_FoundingCostFactionStockpile>
+    <SC_FoundingCostInsufficient>Insufficient {0} ({1}/{2}) in {3}</SC_FoundingCostInsufficient>
+    <SC_FoundingCostNone>none</SC_FoundingCostNone>
+    <SC_FoundingSourceTitle>Founding Resources</SC_FoundingSourceTitle>
+    <SC_FoundingSourceButton>Source: {0}</SC_FoundingSourceButton>
+    <SC_FoundingDistanceMult>Distance multiplier: ×{0}</SC_FoundingDistanceMult>
+
+    <!-- Founding Cost Settings -->
+    <SC_SettingsFoundingHeader>— Founding Costs —</SC_SettingsFoundingHeader>
+    <SC_SettingsFoundingThreshold>Free founding threshold: {0} (resource costs waived below this)</SC_SettingsFoundingThreshold>
+    <SC_SettingsDistanceNorm>Distance normalizing days: {0} (smaller values = harsher distance scaling for settlement founding cost)</SC_SettingsDistanceNorm>
+    <SC_SettingsBaseSurcharge>Base silver surcharge: {0} (multiplied by distance factor)</SC_SettingsBaseSurcharge>
+
 </LanguageData>

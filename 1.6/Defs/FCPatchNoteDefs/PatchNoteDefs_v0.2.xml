@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+	<FactionColonies.PatchNoteDef ParentName="SCPatchBase">
+		<defName>SC_0_2_0</defName>
+		<label>Settlement Cost Change</label>
+		<description>Changes settlement costs to be primarily based on distance, and adds resource costs as well.</description>
+		<releaseDate>2026-04-04</releaseDate>
+		<patchNoteType>Minor</patchNoteType>
+		<patchNoteLines>
+		<li>Settlement costs are based on distance instead of number of settlements in the empire</li>
+		<li>After founding a configurable number of settlements (default 3), further settlements require resources in addition to silver</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
+</Defs>

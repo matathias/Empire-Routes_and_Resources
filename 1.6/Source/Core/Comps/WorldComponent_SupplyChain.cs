@@ -73,9 +73,12 @@ namespace FactionColonies.SupplyChain
         {
         }
 
+        private FoundingCostValidator foundingValidator;
+
         public SupplyChainMode Mode => mode;
         public IStockpile Stockpile => stockpile;
         public List<SupplyRoute> SupplyRoutes => supplyRoutes;
+        public FoundingCostValidator FoundingValidator => foundingValidator;
         
         // --- Lifecycle ---
 
@@ -147,6 +150,10 @@ namespace FactionColonies.SupplyChain
             }
             BuildingFilterRegistry.Register(filterStockpileCap);
             BuildingFilterRegistry.Register(filterBuildingNeeds);
+
+            if (foundingValidator is null)
+                foundingValidator = new FoundingCostValidator(this);
+            FoundingValidatorRegistry.Register(foundingValidator);
         }
 
         public override void WorldComponentTick()

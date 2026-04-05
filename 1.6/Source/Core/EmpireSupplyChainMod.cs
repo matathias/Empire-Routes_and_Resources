@@ -18,10 +18,16 @@ namespace FactionColonies.SupplyChain
         public static double localCapBase = 50.0;
         public static bool animateRouteArrows = false;
         public static bool useMaxWorkersForNeeds = false;
+        public static int freeSettlementThreshold = 3;
+        public static double distanceNormalizingDays = 3.0;
+        public static int baseSilverSurcharge = 500;
 
         private static string capBuffer = null;
         private static string routeDecayBuffer = null;
         private static string localCapBuffer = null;
+        private static string thresholdBuffer = null;
+        private static string distNormBuffer = null;
+        private static string surchargeBuffer = null;
 
         public override void ExposeData()
         {
@@ -34,6 +40,9 @@ namespace FactionColonies.SupplyChain
             Scribe_Values.Look(ref localCapBase, "localCapBase", 50.0);
             Scribe_Values.Look(ref animateRouteArrows, "animateRouteArrows", false);
             Scribe_Values.Look(ref useMaxWorkersForNeeds, "useMaxWorkersForNeeds", false);
+            Scribe_Values.Look(ref freeSettlementThreshold, "freeSettlementThreshold", 3);
+            Scribe_Values.Look(ref distanceNormalizingDays, "distanceNormalizingDays", 3.0);
+            Scribe_Values.Look(ref baseSilverSurcharge, "baseSilverSurcharge", 500);
         }
 
         public void DoWindowContents(Rect inRect)
@@ -97,6 +106,29 @@ namespace FactionColonies.SupplyChain
             if (localCapBuffer == null)
                 localCapBuffer = localCapBase.ToString("F0");
             ls.TextFieldNumeric(ref localCapBase, ref localCapBuffer, 10f, 500f);
+            ls.Gap(12f);
+
+            // Founding cost settings
+            ls.GapLine(12f);
+            ls.Label("SC_SettingsFoundingHeader".Translate());
+            ls.Gap(6f);
+
+            ls.Label("SC_SettingsFoundingThreshold".Translate(freeSettlementThreshold.ToString()));
+            if (thresholdBuffer == null)
+                thresholdBuffer = freeSettlementThreshold.ToString();
+            ls.TextFieldNumeric(ref freeSettlementThreshold, ref thresholdBuffer, 0, 20);
+            ls.Gap(6f);
+
+            ls.Label("SC_SettingsDistanceNorm".Translate(distanceNormalizingDays.ToString("F1")));
+            if (distNormBuffer == null)
+                distNormBuffer = distanceNormalizingDays.ToString("F1");
+            ls.TextFieldNumeric(ref distanceNormalizingDays, ref distNormBuffer, 1f, 30f);
+            ls.Gap(6f);
+
+            ls.Label("SC_SettingsBaseSurcharge".Translate(baseSilverSurcharge.ToString()));
+            if (surchargeBuffer == null)
+                surchargeBuffer = baseSilverSurcharge.ToString();
+            ls.TextFieldNumeric(ref baseSilverSurcharge, ref surchargeBuffer, 0, 5000);
 
             ls.Gap(12f);
             if (ls.ButtonText("SC_OpenPatchNotes".Translate()))
