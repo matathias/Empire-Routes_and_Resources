@@ -11,6 +11,8 @@ namespace FactionColonies.SupplyChain
         private static bool printDebug = false;
         public static bool PrintDebug => printDebug;
 
+        private const double DEFAULT_DISTANCE_NORMALIZING_DAYS = 1.0;
+
         public static SupplyChainMode mode = SupplyChainMode.Simple;
         public static float overflowPenaltyRate = 0.5f;
         public static double baseCapPerSettlement = 50.0;
@@ -19,7 +21,7 @@ namespace FactionColonies.SupplyChain
         public static bool animateRouteArrows = false;
         public static bool useMaxWorkersForNeeds = false;
         public static int freeSettlementThreshold = 3;
-        public static double distanceNormalizingDays = 3.0;
+        public static double distanceNormalizingDays = DEFAULT_DISTANCE_NORMALIZING_DAYS;
         public static int baseSilverSurcharge = 500;
 
         private static string capBuffer = null;
@@ -41,7 +43,7 @@ namespace FactionColonies.SupplyChain
             Scribe_Values.Look(ref animateRouteArrows, "animateRouteArrows", false);
             Scribe_Values.Look(ref useMaxWorkersForNeeds, "useMaxWorkersForNeeds", false);
             Scribe_Values.Look(ref freeSettlementThreshold, "freeSettlementThreshold", 3);
-            Scribe_Values.Look(ref distanceNormalizingDays, "distanceNormalizingDays", 3.0);
+            Scribe_Values.Look(ref distanceNormalizingDays, "distanceNormalizingDays", DEFAULT_DISTANCE_NORMALIZING_DAYS);
             Scribe_Values.Look(ref baseSilverSurcharge, "baseSilverSurcharge", 500);
         }
 
@@ -122,7 +124,7 @@ namespace FactionColonies.SupplyChain
             ls.Label("SC_SettingsDistanceNorm".Translate(distanceNormalizingDays.ToString("F1")));
             if (distNormBuffer == null)
                 distNormBuffer = distanceNormalizingDays.ToString("F1");
-            ls.TextFieldNumeric(ref distanceNormalizingDays, ref distNormBuffer, 1f, 30f);
+            ls.TextFieldNumeric(ref distanceNormalizingDays, ref distNormBuffer, 0.001f, 100f);
             ls.Gap(6f);
 
             ls.Label("SC_SettingsBaseSurcharge".Translate(baseSilverSurcharge.ToString()));

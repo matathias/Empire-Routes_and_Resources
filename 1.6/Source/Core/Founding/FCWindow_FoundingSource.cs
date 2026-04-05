@@ -18,7 +18,6 @@ namespace FactionColonies.SupplyChain
 
         private PlanetTile lastTile = PlanetTile.Invalid;
         private WorldSettlementDef lastSettlementType;
-        private double cachedDistMult = 1.0;
         private FoundingCostValidator validator;
         private WorldComponent_SupplyChain worldComp;
         private FoundingCostExtension cachedExt;
@@ -96,20 +95,12 @@ namespace FactionColonies.SupplyChain
                 return;
             }
 
-            // Update nearest and cached distance when tile changes
+            // Auto-select nearest source when tile changes (only if user hasn't explicitly picked)
             if (currentTile != lastTile)
             {
                 lastTile = currentTile;
-                if (currentTile.Valid)
-                {
-                    cachedDistMult = FoundingCostUtil.ComputeDistanceMultiplier(currentTile);
-                    if (!validator.UserSelectedSource)
-                        validator.SelectedSource = FoundingCostUtil.FindNearestSettlement(currentTile);
-                }
-                else
-                {
-                    cachedDistMult = 1.0;
-                }
+                if (!validator.UserSelectedSource && currentTile.Valid)
+                    validator.SelectedSource = FoundingCostUtil.FindNearestSettlement(currentTile);
             }
 
             float curY = 0f;
@@ -139,13 +130,14 @@ namespace FactionColonies.SupplyChain
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.MiddleLeft;
 
+            double distMult = FoundingCostUtil.ComputeDistanceMultiplier(currentTile);
             IStockpile stockpile = GetCurrentStockpile(currentTile);
 
             for (int i = 0; i < cachedExt.resourceCosts.Count; i++)
             {
                 ResourceCostEntry entry = cachedExt.resourceCosts[i];
-                double needed = entry.amount * cachedDistMult;
-                double have = stockpile != null ? stockpile.GetAmount(entry.resource) : 0;
+                double needed = entry.amount * distMult;
+                double have = stockpile?.GetAmount(entry.resource) ?? 0;
                 bool sufficient = have >= needed;
 
                 // Resource label
@@ -169,7 +161,7 @@ namespace FactionColonies.SupplyChain
             Text.Anchor = TextAnchor.MiddleCenter;
             GUI.color = new Color(0.7f, 0.7f, 0.7f);
             Widgets.Label(new Rect(0, curY, inRect.width, RowHeight),
-                "SC_FoundingDistanceMult".Translate(cachedDistMult.ToString("F1")));
+                "SC_FoundingDistanceMult".Translate(distMult.ToString("F1")));
             GUI.color = Color.white;
             curY += RowHeight + Padding;
 
@@ -196,11 +188,12 @@ namespace FactionColonies.SupplyChain
                 string label = settlement.Name;
                 if (stockpile != null && cachedExt != null)
                 {
+                    double menuDistMult = FoundingCostUtil.ComputeDistanceMultiplier(targetTile);
                     int sufficient = 0;
                     for (int j = 0; j < cachedExt.resourceCosts.Count; j++)
                     {
                         ResourceCostEntry entry = cachedExt.resourceCosts[j];
-                        double needed = entry.amount * cachedDistMult;
+                        double needed = entry.amount * menuDistMult;
                         if (stockpile.GetAmount(entry.resource) >= needed) sufficient++;
                     }
                     label += " (" + sufficient + "/" + cachedExt.resourceCosts.Count + ")";

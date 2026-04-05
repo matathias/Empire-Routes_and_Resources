@@ -14,4 +14,18 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SCPatchBase">
+		<defName>SC_0_2_1</defName>
+		<label>Performance Improvement</label>
+		<description>Improves performance of the new distance-based settlement cost calculations.</description>
+		<releaseDate>2026-04-05</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+		<li>Uses caching to cut down on pathfinding checks</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>
