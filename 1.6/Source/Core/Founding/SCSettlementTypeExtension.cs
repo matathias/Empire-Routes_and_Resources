@@ -13,8 +13,7 @@ namespace FactionColonies.SupplyChain
         {
             int baseCost = (int)FCSettings.silverToCreateSettlement;
 
-            // Only check completed settlements — caravans in transit have no tile to measure distance from
-            if (faction is null || faction.settlements.Count == 0)
+            if (faction is null)
                 return baseCost;
 
             CreateColonyWindowFc window = Find.WindowStack.WindowOfType<CreateColonyWindowFc>();
@@ -23,7 +22,16 @@ namespace FactionColonies.SupplyChain
             if (!tile.Valid)
                 return baseCost;
 
+            // Distance measured from nearest settlement, or player's capital if none exist
             return baseCost + FoundingCostUtil.ComputeSilverSurcharge(tile);
+        }
+
+        public override int GetCreationTime(PlanetTile destination)
+        {
+            WorldSettlementFC nearest = FoundingCostUtil.FindNearestSettlement(destination);
+            PlanetTile origin = FoundingCostUtil.GetSourceTile(nearest);
+
+            return TravelUtil.ReturnTicksToArrive(origin, destination);
         }
     }
 }

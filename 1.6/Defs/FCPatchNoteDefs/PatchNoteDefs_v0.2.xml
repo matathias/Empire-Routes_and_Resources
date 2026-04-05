@@ -42,4 +42,18 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SCPatchBase">
+		<defName>SC_0_2_3</defName>
+		<label>Distance fixes</label>
+		<description>If there are no Empire settlements, then the distance calculations fall back onto one of the player&apos;s active maps.</description>
+		<releaseDate>2026-04-05</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+		<li>Uses player&apos;s map for distance-based calculations if no Empire settlements exist</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>

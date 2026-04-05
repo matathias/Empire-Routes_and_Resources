@@ -118,7 +118,7 @@ namespace FactionColonies.SupplyChain
             ls.Label("SC_SettingsFoundingThreshold".Translate(freeSettlementThreshold.ToString()));
             if (thresholdBuffer == null)
                 thresholdBuffer = freeSettlementThreshold.ToString();
-            ls.TextFieldNumeric(ref freeSettlementThreshold, ref thresholdBuffer, 0, 20);
+            ls.TextFieldNumeric(ref freeSettlementThreshold, ref thresholdBuffer, 0, 1000);
             ls.Gap(6f);
 
             ls.Label("SC_SettingsDistanceNorm".Translate(distanceNormalizingDays.ToString("F1")));
@@ -130,7 +130,7 @@ namespace FactionColonies.SupplyChain
             ls.Label("SC_SettingsBaseSurcharge".Translate(baseSilverSurcharge.ToString()));
             if (surchargeBuffer == null)
                 surchargeBuffer = baseSilverSurcharge.ToString();
-            ls.TextFieldNumeric(ref baseSilverSurcharge, ref surchargeBuffer, 0, 5000);
+            ls.TextFieldNumeric(ref baseSilverSurcharge, ref surchargeBuffer, 0, 100000);
 
             ls.Gap(12f);
             if (ls.ButtonText("SC_OpenPatchNotes".Translate()))

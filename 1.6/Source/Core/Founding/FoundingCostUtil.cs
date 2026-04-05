@@ -1,6 +1,7 @@
 using RimWorld;
 using RimWorld.Planet;
 using System.Collections.Generic;
+using Verse;
 
 namespace FactionColonies.SupplyChain
 {
@@ -17,7 +18,7 @@ namespace FactionColonies.SupplyChain
         public static int ComputeSilverSurcharge(PlanetTile targetTile)
         {
             EnsureCacheValid(targetTile);
-            if (cachedNearest is null) return 0;
+            if (cachedTravelDays <= 0) return 0;
 
             double multiplier = cachedTravelDays / SupplyChainSettings.distanceNormalizingDays;
             return (int)(SupplyChainSettings.baseSilverSurcharge * multiplier);
@@ -25,12 +26,12 @@ namespace FactionColonies.SupplyChain
 
         /// <summary>
         /// Returns the distance multiplier for resource costs at <paramref name="targetTile"/>.
-        /// 1.0 means no scaling (no settlements exist). At normalizingDays travel -> 2.0.
+        /// 1.0 means no scaling (no origin available). At normalizingDays travel -> 2.0.
         /// </summary>
         public static double ComputeDistanceMultiplier(PlanetTile targetTile)
         {
             EnsureCacheValid(targetTile);
-            if (cachedNearest is null) return 1.0;
+            if (cachedTravelDays <= 0) return 1.0;
 
             return 1.0 + (cachedTravelDays / SupplyChainSettings.distanceNormalizingDays);
         }
@@ -64,9 +65,22 @@ namespace FactionColonies.SupplyChain
             cachedTile = targetTile;
             cachedSettlementCount = currentCount;
             cachedNearest = FindNearestSettlementUncached(targetTile);
-            cachedTravelDays = cachedNearest != null
-                ? TravelDaysTo(cachedNearest.Tile, targetTile)
+
+            // Use nearest settlement tile, or fall back to player's capital
+            PlanetTile originTile = GetSourceTile(cachedNearest);
+
+            cachedTravelDays = originTile.Valid
+                ? TravelDaysTo(originTile, targetTile)
                 : 0.0;
+        }
+
+        public static PlanetTile GetSourceTile(WorldSettlementFC settlement)
+        {
+            PlanetTile tile = settlement?.Tile ?? FactionCache.FactionComp?.capitalLocation ?? PlanetTile.Invalid;
+            if (tile == PlanetTile.Invalid)
+                tile = Find.AnyPlayerHomeMap.Tile;
+
+            return tile;
         }
 
         private static WorldSettlementFC FindNearestSettlementUncached(PlanetTile targetTile)

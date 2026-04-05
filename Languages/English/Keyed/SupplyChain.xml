@@ -166,6 +166,7 @@
     <SC_FoundingSourceTitle>Founding Resources</SC_FoundingSourceTitle>
     <SC_FoundingSourceButton>Source:</SC_FoundingSourceButton>
     <SC_FoundingDistanceMult>Distance multiplier: ×{0}</SC_FoundingDistanceMult>
+    <SC_NoStockpile>You have no stockpile to pull from!</SC_NoStockpile>
 
     <!-- Founding Cost Settings -->
     <SC_SettingsFoundingHeader>— Founding Costs —</SC_SettingsFoundingHeader>

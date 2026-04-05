@@ -37,11 +37,17 @@ namespace FactionColonies.SupplyChain
             if (ext?.resourceCosts is null || ext.resourceCosts.Count == 0) return true;
             if (IsBelowThreshold()) return true;
 
+            StringBuilder sb = null;
             double distMult = FoundingCostUtil.ComputeDistanceMultiplier(tile);
             IStockpile stockpile = GetStockpile(tile);
-            if (stockpile is null) return true;
+            if (stockpile is null)
+            {
+                sb = new StringBuilder();
+                sb.Append("SC_NoStockpile".Translate());
+                reason = sb.ToString();
+                return false;
+            }
 
-            StringBuilder sb = null;
             bool allowed = true;
 
             for (int i = 0; i < ext.resourceCosts.Count; i++)
