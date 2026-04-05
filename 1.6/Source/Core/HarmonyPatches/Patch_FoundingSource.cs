@@ -3,8 +3,8 @@ using HarmonyLib;
 namespace FactionColonies.SupplyChain
 {
     [HarmonyPatch(typeof(CreateColonyWindowFc))]
-    [HarmonyPatch("PreOpen")]
-    public static class Patch_CreateColony_PreOpen
+    [HarmonyPatch("PostOpen")]
+    public static class Patch_CreateColony_PostOpen
     {
         public static void Postfix()
         {
