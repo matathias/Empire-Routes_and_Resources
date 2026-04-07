@@ -7,7 +7,6 @@ namespace FactionColonies.SupplyChain
     [StaticConstructorOnStartup]
     public static class RouteOverlayUtil
     {
-        private const float PlanetRadius = 100f;
         private const float LineAlt = 0.08f;
         private const float ArrowAlt = 0.09f;
         private const int MaxSegments = 25;
@@ -50,7 +49,7 @@ namespace FactionColonies.SupplyChain
         /// Draw a line between two world positions that curves along the planet surface.
         /// Subdivides into short segments to prevent clipping through the globe.
         /// </summary>
-        public static void DrawWorldLineOnSurface(Vector3 a, Vector3 b, Material mat, float widthFactor)
+        public static void DrawWorldLineOnSurface(Vector3 a, Vector3 b, Material mat, float widthFactor, float sphereRadius)
         {
             float dist = Vector3.Distance(a, b);
             if (dist < 0.001f) return;
@@ -62,8 +61,8 @@ namespace FactionColonies.SupplyChain
             {
                 Vector3 from = Vector3.Lerp(a, b, (float)i / segments);
                 Vector3 to = Vector3.Lerp(a, b, (float)(i + 1) / segments);
-                from = from.normalized * (PlanetRadius + LineAlt);
-                to = to.normalized * (PlanetRadius + LineAlt);
+                from = from.normalized * (sphereRadius + LineAlt);
+                to = to.normalized * (sphereRadius + LineAlt);
                 GenDraw.DrawWorldLineBetween(from, to, mat, widthFactor);
             }
         }
@@ -71,10 +70,10 @@ namespace FactionColonies.SupplyChain
         /// <summary>
         /// Draw a direction arrow at 60% along the route (closer to destination).
         /// </summary>
-        public static void DrawDirectionArrow(Vector3 source, Vector3 dest)
+        public static void DrawDirectionArrow(Vector3 source, Vector3 dest, float sphereRadius)
         {
             Vector3 arrowPos = Vector3.Lerp(source, dest, 0.6f);
-            arrowPos = arrowPos.normalized * (PlanetRadius + ArrowAlt);
+            arrowPos = arrowPos.normalized * (sphereRadius + ArrowAlt);
 
             Vector3 normal = arrowPos.normalized;
             Vector3 defaultFwd = Vector3.Cross(normal, Vector3.up).normalized;
@@ -91,7 +90,7 @@ namespace FactionColonies.SupplyChain
         /// <summary>
         /// Draw multiple arrows flowing from source to destination.
         /// </summary>
-        public static void DrawFlowArrows(Vector3 source, Vector3 dest)
+        public static void DrawFlowArrows(Vector3 source, Vector3 dest, float sphereRadius)
         {
             float time = Time.time * FlowSpeed;
             float arrowSize = Find.WorldGrid.AverageTileSize * 0.5f;
@@ -102,7 +101,7 @@ namespace FactionColonies.SupplyChain
                 float tClamped = 0.1f + t * 0.8f;
 
                 Vector3 arrowPos = Vector3.Lerp(source, dest, tClamped);
-                arrowPos = arrowPos.normalized * (PlanetRadius + ArrowAlt);
+                arrowPos = arrowPos.normalized * (sphereRadius + ArrowAlt);
 
                 Vector3 normal = arrowPos.normalized;
                 Vector3 defaultFwd = Vector3.Cross(normal, Vector3.up).normalized;
@@ -122,20 +121,23 @@ namespace FactionColonies.SupplyChain
         /// </summary>
         public static void DrawRoute(SupplyRoute route, WorldGrid grid)
         {
+            if (route.source.Tile.Layer != route.destination.Tile.Layer) return;
+
             Vector3 posA = grid.GetTileCenter(route.source.Tile);
             Vector3 posB = grid.GetTileCenter(route.destination.Tile);
 
             // Cull routes entirely behind the globe
             if (!IsVisibleToCamera(posA) && !IsVisibleToCamera(posB)) return;
 
-            DrawWorldLineOnSurface(posA, posB, RouteLineMat, 1.2f);
+            float sphereRadius = posA.magnitude;
+            DrawWorldLineOnSurface(posA, posB, RouteLineMat, 1.2f, sphereRadius);
 
             if (Find.WorldCameraDriver.altitude < ArrowAltitudeCutoff)
             {
                 if (SupplyChainSettings.animateRouteArrows)
-                    DrawFlowArrows(posA, posB);
+                    DrawFlowArrows(posA, posB, sphereRadius);
                 else
-                    DrawDirectionArrow(posA, posB);
+                    DrawDirectionArrow(posA, posB, sphereRadius);
             }
         }
 
@@ -146,11 +148,12 @@ namespace FactionColonies.SupplyChain
         public static bool DrawRouteLabel(SupplyRoute route, WorldGrid grid, string label)
         {
             if (label is null) return false;
+            if (route.source.Tile.Layer != route.destination.Tile.Layer) return false;
 
-            Vector3 mid = Vector3.Lerp(
-                grid.GetTileCenter(route.source.Tile),
+            Vector3 posA = grid.GetTileCenter(route.source.Tile);
+            Vector3 mid = Vector3.Lerp(posA,
                 grid.GetTileCenter(route.destination.Tile), 0.6f);
-            mid = mid.normalized * PlanetRadius;
+            mid = mid.normalized * posA.magnitude;
 
             if (!IsVisibleToCamera(mid)) return false;
 

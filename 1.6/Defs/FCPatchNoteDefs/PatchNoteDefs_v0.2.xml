@@ -56,4 +56,19 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SCPatchBase">
+		<defName>SC_0_2_4</defName>
+		<label>Route drawing fix</label>
+		<description>Small change to world-map route drawing.</description>
+		<releaseDate>2026-04-05</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+			<li>Routes between settlements on different planet layers are no longer drawn</li>
+			<li>Bugfix: routes between settlements in orbit were drawn on the planet's surface instead</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>
