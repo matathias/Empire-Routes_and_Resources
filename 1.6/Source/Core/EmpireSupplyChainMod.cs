@@ -30,6 +30,7 @@ namespace FactionColonies.SupplyChain
         private static string thresholdBuffer = null;
         private static string distNormBuffer = null;
         private static string surchargeBuffer = null;
+        private static Vector2 scrollPos;
 
         public override void ExposeData()
         {
@@ -50,7 +51,9 @@ namespace FactionColonies.SupplyChain
         public void DoWindowContents(Rect inRect)
         {
             Listing_Standard ls = new Listing_Standard();
-            ls.Begin(inRect);
+            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, 700f);
+            Widgets.BeginScrollView(inRect, ref scrollPos, viewRect);
+            ls.Begin(viewRect);
 
             // Mode toggle
             string modeLabel = mode == SupplyChainMode.Simple ? "Simple" : "Complex";
@@ -137,6 +140,7 @@ namespace FactionColonies.SupplyChain
                 Find.WindowStack.Add(new PatchNotesDisplayWindow("matathias.empire.supplychain", "SC_PatchTitle".Translate()));
 
             ls.End();
+            Widgets.EndScrollView();
         }
     }
 

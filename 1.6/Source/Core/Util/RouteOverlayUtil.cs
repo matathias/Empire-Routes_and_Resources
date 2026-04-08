@@ -1,3 +1,4 @@
+using RimWorld;
 using RimWorld.Planet;
 using UnityEngine;
 using Verse;
@@ -27,6 +28,19 @@ namespace FactionColonies.SupplyChain
                         GenDraw.LineTexPath, ShaderDatabase.WorldOverlayTransparent,
                         new Color(0.4f, 1f, 0.4f, 1f), 3590);
                 return routeLineMat;
+            }
+        }
+
+        private static Material orbitalRouteLineMat;
+        public static Material OrbitalRouteLineMat
+        {
+            get
+            {
+                if (orbitalRouteLineMat is null)
+                    orbitalRouteLineMat = MaterialPool.MatFrom(
+                        GenDraw.LineTexPath, ShaderDatabase.WorldOverlayTransparent,
+                        new Color(0.6f, 1f, 0.6f, 1f), 3590);
+                return orbitalRouteLineMat;
             }
         }
 
@@ -70,7 +84,7 @@ namespace FactionColonies.SupplyChain
         /// <summary>
         /// Draw a direction arrow at 60% along the route (closer to destination).
         /// </summary>
-        public static void DrawDirectionArrow(Vector3 source, Vector3 dest, float sphereRadius)
+        public static void DrawDirectionArrow(Vector3 source, Vector3 dest, float sphereRadius, float sizeMultiplier = 0.6f)
         {
             Vector3 arrowPos = Vector3.Lerp(source, dest, 0.6f);
             arrowPos = arrowPos.normalized * (sphereRadius + ArrowAlt);
@@ -83,17 +97,17 @@ namespace FactionColonies.SupplyChain
             WorldRendererUtility.GetTangentialVectorFacing(arrowPos, dest, out Vector3 desiredFwd, out Vector3 _);
             float angle = Vector3.SignedAngle(defaultFwd, desiredFwd, normal) - 90f;
 
-            float size = Find.WorldGrid.AverageTileSize * 0.6f;
+            float size = Find.WorldGrid.AverageTileSize * sizeMultiplier;
             WorldRendererUtility.DrawQuadTangentialToPlanet(arrowPos, size, 0.01f, RouteArrowMat, angle);
         }
 
         /// <summary>
         /// Draw multiple arrows flowing from source to destination.
         /// </summary>
-        public static void DrawFlowArrows(Vector3 source, Vector3 dest, float sphereRadius)
+        public static void DrawFlowArrows(Vector3 source, Vector3 dest, float sphereRadius, float sizeMultiplier = 0.5f)
         {
             float time = Time.time * FlowSpeed;
-            float arrowSize = Find.WorldGrid.AverageTileSize * 0.5f;
+            float arrowSize = Find.WorldGrid.AverageTileSize * sizeMultiplier;
 
             for (int i = 0; i < FlowArrowCount; i++)
             {
@@ -122,6 +136,7 @@ namespace FactionColonies.SupplyChain
         public static void DrawRoute(SupplyRoute route, WorldGrid grid)
         {
             if (route.source.Tile.Layer != route.destination.Tile.Layer) return;
+            if (route.source.Tile.Layer != PlanetLayer.Selected) return;
 
             Vector3 posA = grid.GetTileCenter(route.source.Tile);
             Vector3 posB = grid.GetTileCenter(route.destination.Tile);
@@ -129,15 +144,19 @@ namespace FactionColonies.SupplyChain
             // Cull routes entirely behind the globe
             if (!IsVisibleToCamera(posA) && !IsVisibleToCamera(posB)) return;
 
+            bool isOrbital = route.source.Tile.Layer != Find.WorldGrid.PlanetLayers[0];
+            Material mat = isOrbital ? OrbitalRouteLineMat : RouteLineMat;
+            float width = isOrbital ? 10.0f : 1.2f;
+
             float sphereRadius = posA.magnitude;
-            DrawWorldLineOnSurface(posA, posB, RouteLineMat, 1.2f, sphereRadius);
+            DrawWorldLineOnSurface(posA, posB, mat, width, sphereRadius);
 
             if (Find.WorldCameraDriver.altitude < ArrowAltitudeCutoff)
             {
                 if (SupplyChainSettings.animateRouteArrows)
-                    DrawFlowArrows(posA, posB, sphereRadius);
+                    DrawFlowArrows(posA, posB, sphereRadius, isOrbital ? 2.5f : 0.5f);
                 else
-                    DrawDirectionArrow(posA, posB, sphereRadius);
+                    DrawDirectionArrow(posA, posB, sphereRadius, isOrbital ? 3f : 0.6f);
             }
         }
 
@@ -149,6 +168,7 @@ namespace FactionColonies.SupplyChain
         {
             if (label is null) return false;
             if (route.source.Tile.Layer != route.destination.Tile.Layer) return false;
+            if (route.source.Tile.Layer != PlanetLayer.Selected) return false;
 
             Vector3 posA = grid.GetTileCenter(route.source.Tile);
             Vector3 mid = Vector3.Lerp(posA,

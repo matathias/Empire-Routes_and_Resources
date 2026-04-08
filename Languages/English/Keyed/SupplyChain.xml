@@ -169,7 +169,7 @@
     <SC_NoStockpile>You have no stockpile to pull from!</SC_NoStockpile>
 
     <!-- Founding Cost Settings -->
-    <SC_SettingsFoundingHeader>— Founding Costs —</SC_SettingsFoundingHeader>
+    <SC_SettingsFoundingHeader>Founding Costs</SC_SettingsFoundingHeader>
     <SC_SettingsFoundingThreshold>Free founding threshold: {0} (resource costs waived below this)</SC_SettingsFoundingThreshold>
     <SC_SettingsDistanceNorm>Distance normalizing days: {0} (smaller values = harsher distance scaling for settlement founding cost)</SC_SettingsDistanceNorm>
     <SC_SettingsBaseSurcharge>Base silver surcharge: {0} (multiplied by distance factor)</SC_SettingsBaseSurcharge>
