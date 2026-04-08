@@ -11,8 +11,6 @@ namespace FactionColonies.SupplyChain
         private const float LineAlt = 0.08f;
         private const float ArrowAlt = 0.09f;
         private const int MaxSegments = 25;
-        private const float ArrowAltitudeCutoff = 500f;
-        private const float LabelAltitudeCutoff = 500f;
         private const int FlowArrowCount = 3;
         private const float FlowSpeed = 0.4f;
 
@@ -151,13 +149,10 @@ namespace FactionColonies.SupplyChain
             float sphereRadius = posA.magnitude;
             DrawWorldLineOnSurface(posA, posB, mat, width, sphereRadius);
 
-            if (Find.WorldCameraDriver.altitude < ArrowAltitudeCutoff)
-            {
-                if (SupplyChainSettings.animateRouteArrows)
-                    DrawFlowArrows(posA, posB, sphereRadius, isOrbital ? 2.5f : 0.5f);
-                else
-                    DrawDirectionArrow(posA, posB, sphereRadius, isOrbital ? 3f : 0.6f);
-            }
+            if (SupplyChainSettings.animateRouteArrows)
+                DrawFlowArrows(posA, posB, sphereRadius, isOrbital ? 2.5f : 0.5f);
+            else
+                DrawDirectionArrow(posA, posB, sphereRadius, isOrbital ? 3f : 0.6f);
         }
 
         /// <summary>
@@ -202,11 +197,12 @@ namespace FactionColonies.SupplyChain
         }
 
         /// <summary>
-        /// Returns true if the camera is close enough to render labels.
+        /// Returns true if labels should be rendered.
+        /// Per-route layer filtering is handled by DrawRouteLabel.
         /// </summary>
         public static bool ShouldDrawLabels()
         {
-            return Find.WorldCameraDriver.altitude < LabelAltitudeCutoff;
+            return true;
         }
     }
 }
