@@ -375,7 +375,7 @@ namespace FactionColonies.SupplyChain
 
         private static ulong FlowKey(int settlementTile, ushort resourceIndex)
         {
-            return ((ulong)(uint)settlementTile << 16) | resourceIndex;
+            return ((ulong)settlementTile << 16) | resourceIndex;
         }
 
         internal FlowBreakdown GetCachedFlow(WorldSettlementFC settlement, WorldObjectComp_SupplyChain comp, ResourceTypeDef def)

@@ -1780,13 +1780,19 @@ namespace FactionColonies.SupplyChain
                 if (rawProd > 0)
                 {
                     float sliderVal = (float)currentAlloc;
+                    // Snap max down to the 0.1 rounding grid so the slider's
+                    // internal rounding never pushes the value above max
+                    // (which causes an infinite audio-cue loop).
+                    float maxSlider = Mathf.Floor((float)maxAlloc * 10f) / 10f;
+                    if (maxSlider < 0f) maxSlider = 0f;
+
                     float newVal = Widgets.HorizontalSlider(
                         new Rect(cx + 150f, curY + 8f, 240f, rowHeight - 16f),
-                        sliderVal, 0f, (float)maxAlloc, false,
+                        sliderVal, 0f, maxSlider, false,
                         null, null, null, 0.1f);
 
-                    if (newVal > (float)maxAlloc)
-                        newVal = (float)maxAlloc;
+                    if (newVal > maxSlider)
+                        newVal = maxSlider;
 
                     if (Math.Abs(newVal - sliderVal) > 0.01f)
                     {

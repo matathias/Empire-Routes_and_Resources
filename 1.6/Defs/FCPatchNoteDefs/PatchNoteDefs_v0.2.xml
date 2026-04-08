@@ -71,4 +71,18 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SCPatchBase">
+		<defName>SC_0_2_5</defName>
+		<label>Slider Bugfix</label>
+		<description>Fixes an issue where settlement sliders at max could produce constant ticking noises.</description>
+		<releaseDate>2026-04-07</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+		<li>Bugfix: settlement sliders set to max can produce constant drag-sliding noises</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>
