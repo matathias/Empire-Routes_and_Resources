@@ -1779,7 +1779,7 @@ namespace FactionColonies.SupplyChain
 
                 if (rawProd > 0)
                 {
-                    float sliderVal = (float)currentAlloc;
+                    float sliderVal = (float)Math.Round(currentAlloc,1);
                     // Snap max down to the 0.1 rounding grid so the slider's
                     // internal rounding never pushes the value above max
                     // (which causes an infinite audio-cue loop).
@@ -1790,6 +1790,8 @@ namespace FactionColonies.SupplyChain
                         new Rect(cx + 150f, curY + 8f, 240f, rowHeight - 16f),
                         sliderVal, 0f, maxSlider, false,
                         null, null, null, 0.1f);
+
+                    newVal = MathF.Round(newVal, 1);
 
                     if (newVal > maxSlider)
                         newVal = maxSlider;
