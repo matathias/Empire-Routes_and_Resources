@@ -636,37 +636,6 @@
 		</value>
 	</Operation>
 
-	<!-- SyntheticWoodFactory — remove x0.5 Logging multiplier, add Logging need -->
-	<Operation Class="PatchOperationRemove">
-		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="SyntheticWoodFactory"]/statModifiers/li[stat="RTD_Logging_ProductionMultiplier"]</xpath>
-	</Operation>
-	<Operation Class="PatchOperationSequence">
-		<success>Always</success>
-		<operations>
-			<li Class="PatchOperationTest">
-				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="SyntheticWoodFactory"]/modExtensions</xpath>
-				<success>Invert</success>
-			</li>
-			<li Class="PatchOperationAdd">
-				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="SyntheticWoodFactory"]</xpath>
-				<value><modExtensions/></value>
-			</li>
-		</operations>
-	</Operation>
-	<Operation Class="PatchOperationAdd">
-		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="SyntheticWoodFactory"]/modExtensions</xpath>
-		<value>
-			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
-				<inputs>
-					<li><resource>RTD_Logging</resource><amount>1.0</amount></li>
-				</inputs>
-				<penalties>
-					<li><stat>prosperityLostBase</stat><penaltyPerUnit>2.5</penaltyPerUnit><label>raw material crisis</label></li>
-				</penalties>
-			</li>
-		</value>
-	</Operation>
-
 	<!-- AmmunitionMines — remove x0.85 Mining multiplier, add Mining need -->
 	<Operation Class="PatchOperationRemove">
 		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="AmmunitionMines"]/statModifiers/li[stat="RTD_Mining_ProductionMultiplier"]</xpath>
