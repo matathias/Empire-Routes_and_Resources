@@ -729,7 +729,7 @@ namespace FactionColonies.SupplyChain
             {
                 if (kv.Value <= 0) continue;
 
-                float silver = (float)(kv.Value * FCSettings.silverPerResource * SupplyChainSettings.overflowPenaltyRate);
+                float silver = FormulaUtil.OverflowSilver(kv.Value);
                 DistributeSilver(silver, kv.Key, contributions, faction);
 
                 LogSC.Message($"Overflow auto-sell: {kv.Value} {kv.Key.label} -> {silver} silver");
@@ -775,7 +775,7 @@ namespace FactionColonies.SupplyChain
                     // Overflow: auto-sell excess at penalty rate (pool resources cap silently)
                     if (excess > 0 && !resource.def.isPoolResource)
                     {
-                        float silver = (float)(excess * FCSettings.silverPerResource * SupplyChainSettings.overflowPenaltyRate);
+                        float silver = FormulaUtil.OverflowSilver(excess);
                         settlement.AddOneTimeSilverIncome(silver);
                         LogSC.Message($"Local overflow at {settlement.Name}: {excess} {resource.def.label} -> {silver} silver");
                     }
@@ -920,7 +920,7 @@ namespace FactionColonies.SupplyChain
 
                         if (drawn > 0)
                         {
-                            float silver = (float)(drawn * FCSettings.silverPerResource * SupplyChainSettings.overflowPenaltyRate);
+                            float silver = FormulaUtil.OverflowSilver(drawn);
                             settlement.AddOneTimeSilverIncome(silver);
                         }
                     }
@@ -1364,7 +1364,7 @@ namespace FactionColonies.SupplyChain
             Widgets.Label(new Rect(0f, drawY, viewRect.width, 40f),
                 "SC_OverflowInfo".Translate(
                     SupplyChainSettings.overflowPenaltyRate.ToString("P0"),
-                    (FCSettings.silverPerResource * SupplyChainSettings.overflowPenaltyRate).ToString("F0")));
+                    FormulaUtil.OverflowSilver(1).ToString("F0")));
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
 

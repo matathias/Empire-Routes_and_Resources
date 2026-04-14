@@ -65,7 +65,7 @@ namespace FactionColonies.SupplyChain
 
             cachedTravelTicks = TravelUtil.ReturnTicksToArrive(source.Tile, destination.Tile);
             double travelDays = cachedTravelTicks / (double)GenDate.TicksPerDay;
-            double baseEfficiency = 1.0 / (1.0 + travelDays * SupplyChainSettings.routeDecayPerDay);
+            double baseEfficiency = FormulaUtil.RouteEfficiency(travelDays);
 
             // Apply route efficiency bonus stat from source settlement
             FCStatDef routeEffStat = SCStatDefOf.SC_RouteEfficiencyBonus;

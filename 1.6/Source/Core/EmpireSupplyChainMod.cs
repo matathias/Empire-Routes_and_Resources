@@ -92,7 +92,7 @@ namespace FactionColonies.SupplyChain
 
             ls.Label("SC_SettingsOverflowRate".Translate(
                 overflowPenaltyRate.ToString("P0"),
-                (FCSettings.silverPerResource * overflowPenaltyRate).ToString("F0")));
+                FormulaUtil.OverflowSilver(1).ToString("F0")));
             overflowPenaltyRate = ls.Slider(overflowPenaltyRate, 0.1f, 1.0f);
             ls.Gap(12f);
 
@@ -104,7 +104,7 @@ namespace FactionColonies.SupplyChain
 
             ls.Label("SC_SettingsRouteDecay".Translate(
                 routeDecayPerDay.ToString("F2"),
-                (1.0 / (1.0 + 5.0 * routeDecayPerDay) * 100).ToString("F0")));
+                (FormulaUtil.RouteEfficiency(5.0) * 100).ToString("F0")));
             if (routeDecayBuffer == null)
                 routeDecayBuffer = routeDecayPerDay.ToString("F2");
             ls.TextFieldNumeric(ref routeDecayPerDay, ref routeDecayBuffer, 0.01f, 1f);

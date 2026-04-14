@@ -51,8 +51,7 @@ namespace FactionColonies.SupplyChain
                                 double drawn;
                                 stockpile.TryDraw(r, loss, out drawn);
                                 if (convertToSilver && drawn > 0)
-                                    silverAccum += (float)(drawn * FCSettings.silverPerResource
-                                        * SupplyChainSettings.overflowPenaltyRate);
+                                    silverAccum += FormulaUtil.OverflowSilver(drawn);
                                 if (debug)
                                     LogSC.Message("[Empire-SupplyChain] Stockpile event: "
                                         + settlement.Name + " " + r.label

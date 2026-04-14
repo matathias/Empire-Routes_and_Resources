@@ -365,9 +365,9 @@ namespace FactionColonies.SupplyChain
 
                 // 3. Trade network bonuses (Complex mode only — 0 in Simple)
                 if (stat == FCStatDefOf.happinessGainedBase)
-                    value += 0.5 * Math.Min(connectedPartners, 5);
+                    value += FormulaUtil.HappinessNetworkBonus(connectedPartners);
                 else if (stat == FCStatDefOf.prosperityGainedBase)
-                    value += 1.0 * Math.Min(hubScore, 3);
+                    value += FormulaUtil.ProsperityNetworkBonus(hubScore);
             }
             else // Multiplicative
             {
@@ -382,14 +382,14 @@ namespace FactionColonies.SupplyChain
                         if (state.demanded > 0) { sum += state.Satisfaction; count++; }
                     }
                     if (count > 0)
-                        value = 1.0 + 0.20 * (sum / count);
+                        value = FormulaUtil.TaxEfficiency(sum / count);
                 }
 
                 // Network sell rate: 1.0 + 0.10*min(partners,5) + 0.10*min(hub,3)
                 FCStatDef sellStat = SCStatDefOf.SC_SellRateMultiplier;
                 if (stat == sellStat && (connectedPartners > 0 || hubScore > 0))
                 {
-                    value = 1.0 + 0.10 * Math.Min(connectedPartners, 5) + 0.10 * Math.Min(hubScore, 3);
+                    value = FormulaUtil.SellRateMultiplier(connectedPartners, hubScore);
                 }
             }
 
@@ -460,13 +460,13 @@ namespace FactionColonies.SupplyChain
             // Network bonus descriptions
             if (stat == FCStatDefOf.happinessGainedBase && connectedPartners > 0)
             {
-                double val = 0.5 * Math.Min(connectedPartners, 5);
+                double val = FormulaUtil.HappinessNetworkBonus(connectedPartners);
                 string line = "SC_NetworkPartnerBonus".Translate(connectedPartners.ToString(), val.ToString("F1"));
                 desc = desc is null ? line : desc + "\n" + line;
             }
             if (stat == FCStatDefOf.prosperityGainedBase && hubScore > 0)
             {
-                double val = 1.0 * Math.Min(hubScore, 3);
+                double val = FormulaUtil.ProsperityNetworkBonus(hubScore);
                 string line = "SC_NetworkHubBonus".Translate(hubScore.ToString(), val.ToString("F1"));
                 desc = desc is null ? line : desc + "\n" + line;
             }
@@ -484,7 +484,7 @@ namespace FactionColonies.SupplyChain
                 if (count > 0)
                 {
                     double avgSat = sum / count;
-                    double mult = 1.0 + 0.20 * avgSat;
+                    double mult = FormulaUtil.TaxEfficiency(avgSat);
                     string line = "SC_TaxEfficiencyDesc".Translate(
                         (avgSat * 100).ToString("F0"), (mult * 100).ToString("F0"));
                     desc = desc is null ? line : desc + "\n" + line;
@@ -495,7 +495,7 @@ namespace FactionColonies.SupplyChain
             FCStatDef sellStat = SCStatDefOf.SC_SellRateMultiplier;
             if (stat == sellStat && (connectedPartners > 0 || hubScore > 0))
             {
-                double mult = 1.0 + 0.10 * Math.Min(connectedPartners, 5) + 0.10 * Math.Min(hubScore, 3);
+                double mult = FormulaUtil.SellRateMultiplier(connectedPartners, hubScore);
                 string line = "SC_SellRateNetworkDesc".Translate((mult * 100).ToString("F0"));
                 desc = desc is null ? line : desc + "\n" + line;
             }
