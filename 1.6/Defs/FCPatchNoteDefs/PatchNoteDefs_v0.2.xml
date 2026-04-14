@@ -172,4 +172,18 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SCPatchBase">
+		<defName>SC_0_2_12</defName>
+		<label>Auto-max allocations</label>
+		<description>Adds ability to set a settlement&apos;s resource to automatically allocate all production to stockpiling.</description>
+		<releaseDate>2026-04-14</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+		<li>Adds ability to set a settlement&apos;s resource to automatically allocate all production to stockpiling</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>

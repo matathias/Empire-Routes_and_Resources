@@ -672,6 +672,10 @@ namespace FactionColonies.SupplyChain
 
         private void PreTaxResolution_Simple(FactionFC faction)
         {
+            // Sync auto-max allocations to current production before reading any allocation values.
+            foreach (WorldSettlementFC settlement in faction.settlements)
+                GetComp(settlement)?.SyncAllAutoMaxAllocations();
+
             RecalculateCaps();
 
             // No trade network in Simple mode — clear any stale network info
@@ -750,6 +754,10 @@ namespace FactionColonies.SupplyChain
 
         private void PreTaxResolution_Complex(FactionFC faction)
         {
+            // Sync auto-max allocations to current production before reading any allocation values.
+            foreach (WorldSettlementFC settlement in faction.settlements)
+                GetComp(settlement)?.SyncAllAutoMaxAllocations();
+
             // 1. Recalculate local caps (only if buildings changed)
             foreach (WorldSettlementFC settlement in faction.settlements)
             {

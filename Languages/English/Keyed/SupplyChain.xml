@@ -97,6 +97,9 @@
     <SC_Units>{0} units</SC_Units>
     <SC_SilverDiverted>-{0} silver</SC_SilverDiverted>
     <SC_NoProduction>No Production</SC_NoProduction>
+    <SC_MaxBadge>MAX</SC_MaxBadge>
+    <SC_AutoMax>Auto</SC_AutoMax>
+    <SC_AutoMaxTooltip>Auto-max: when enabled, this resource always allocates the maximum currently-available production. The allocation follows production up and down automatically and is refreshed at each tax cycle.</SC_AutoMaxTooltip>
     <SC_SettlementNeeds>Settlement Needs</SC_SettlementNeeds>
     <SC_SatisfactionDisplay>{0}% ({1} / {2})</SC_SatisfactionDisplay>
     <SC_SatisfactionProjected>{0}% projected (last: {1}%)</SC_SatisfactionProjected>

@@ -21,6 +21,9 @@ namespace FactionColonies.SupplyChain
         private const string ALLOC_KEY_PREFIX = "SupplyChain.";
 
         private Dictionary<ResourceTypeDef, double> allocations = new Dictionary<ResourceTypeDef, double>();
+        private HashSet<ResourceTypeDef> autoMaxResources = new HashSet<ResourceTypeDef>();
+        // Manual value snapshot taken when auto-max is enabled; restored when the player turns it off.
+        private Dictionary<ResourceTypeDef, double> autoMaxFallback = new Dictionary<ResourceTypeDef, double>();
 
         // Tithe injection: how many stockpile units per resource to convert to tithe budget
         private Dictionary<ResourceTypeDef, double> titheInjections = new Dictionary<ResourceTypeDef, double>();
@@ -607,7 +610,103 @@ namespace FactionColonies.SupplyChain
 
         public double GetAllocation(ResourceTypeDef def)
         {
+            if (autoMaxResources.Contains(def))
+            {
+                ResourceFC resource = WorldSettlement?.GetResource(def);
+                if (resource != null)
+                    return LiveMaxFor(resource);
+            }
             return allocations.TryGetValue(def, out double val) ? val : 0.0;
+        }
+
+        public bool IsAutoMax(ResourceTypeDef def)
+        {
+            return autoMaxResources.Contains(def);
+        }
+
+        /// <summary>
+        /// Returns the headroom this comp can claim for the given resource if its current
+        /// registered amount were ignored: rawProduction minus other submods' allocations.
+        /// </summary>
+        private double LiveMaxFor(ResourceFC resource)
+        {
+            if (resource is null) return 0;
+            double ownRegistered = allocations.TryGetValue(resource.def, out double v) ? v : 0;
+            double available = resource.rawTotalProduction - (resource.totalStockpileAllocation - ownRegistered);
+            if (available < 0) return 0;
+            return available;
+        }
+
+        /// <summary>
+        /// Re-registers this comp's allocation for an auto-max resource at the current live max.
+        /// Clears the registration if production has dropped to zero. Mirrors the new value
+        /// into the local allocations dict for downstream UI/flow consumers.
+        /// </summary>
+        private void SyncAutoMaxAllocation(ResourceTypeDef def)
+        {
+            if (!autoMaxResources.Contains(def)) return;
+            ResourceFC resource = WorldSettlement?.GetResource(def);
+            if (resource is null)
+            {
+                autoMaxResources.Remove(def);
+                return;
+            }
+
+            double live = LiveMaxFor(resource);
+            string key = ALLOC_KEY_PREFIX + def.defName;
+
+            if (live <= 0)
+            {
+                resource.ClearStockpileAllocation(key);
+                allocations[def] = 0;
+                SupplyChainCache.Comp?.DirtyFlowCache();
+                return;
+            }
+
+            bool ok = resource.SetStockpileAllocation(key, live, () => OnEvicted(def));
+            if (ok)
+            {
+                allocations[def] = live;
+                SupplyChainCache.Comp?.DirtyFlowCache();
+            }
+        }
+
+        /// <summary>
+        /// Re-registers all auto-max allocations on this comp at the current live max.
+        /// Called at the top of each tax cycle and on load.
+        /// </summary>
+        public void SyncAllAutoMaxAllocations()
+        {
+            if (autoMaxResources.Count == 0) return;
+            List<ResourceTypeDef> snapshot = new List<ResourceTypeDef>(autoMaxResources);
+            foreach (ResourceTypeDef def in snapshot)
+                SyncAutoMaxAllocation(def);
+        }
+
+        /// <summary>
+        /// Toggles auto-max for a resource. Turning on immediately syncs to the live max;
+        /// turning off restores the player's last manual value (clamped by SetAllocation).
+        /// </summary>
+        public void SetAutoMax(ResourceTypeDef def, bool enabled)
+        {
+            if (def is null) return;
+            if (enabled)
+            {
+                if (autoMaxResources.Add(def))
+                {
+                    autoMaxFallback[def] = allocations.TryGetValue(def, out double v) ? v : 0;
+                    SyncAutoMaxAllocation(def);
+                }
+            }
+            else
+            {
+                if (autoMaxResources.Remove(def))
+                {
+                    double fallback = autoMaxFallback.TryGetValue(def, out double v) ? v : 0;
+                    autoMaxFallback.Remove(def);
+                    SetAllocation(def, fallback);
+                }
+            }
         }
 
         public bool SetAllocation(ResourceTypeDef def, double amount)
@@ -704,6 +803,9 @@ namespace FactionColonies.SupplyChain
                 foreach (KeyValuePair<ResourceTypeDef, double> kv in toClamp)
                     allocations[kv.Key] = kv.Value;
             }
+
+            // Auto-max overrides any clamped value: pin to current production.
+            SyncAllAutoMaxAllocations();
         }
 
         // --- Gizmos & World Map Overlay ---
@@ -759,6 +861,14 @@ namespace FactionColonies.SupplyChain
             Scribe_Collections.Look(ref allocations, "scAllocations", LookMode.Def, LookMode.Value);
             if (allocations is null)
                 allocations = new Dictionary<ResourceTypeDef, double>();
+
+            Scribe_Collections.Look(ref autoMaxResources, "scAutoMax", LookMode.Def);
+            if (autoMaxResources is null)
+                autoMaxResources = new HashSet<ResourceTypeDef>();
+
+            Scribe_Collections.Look(ref autoMaxFallback, "scAutoMaxFallback", LookMode.Def, LookMode.Value);
+            if (autoMaxFallback is null)
+                autoMaxFallback = new Dictionary<ResourceTypeDef, double>();
 
             Scribe_Collections.Look(ref localStockpiles, "localStockpile", LookMode.Def, LookMode.Value);
             if (localStockpiles is null)
@@ -1817,7 +1927,32 @@ namespace FactionColonies.SupplyChain
                 Widgets.Label(new Rect(cx + 28f, curY, 120f, rowHeight),
                     def.label.CapitalizeFirst());
 
-                if (rawProd > 0)
+                bool autoMax = IsAutoMax(def);
+
+                if (autoMax)
+                {
+                    Rect badgeRect = new Rect(cx + 150f, curY + 6f, 240f, rowHeight - 12f);
+                    Color badgeBg = new Color(resColor.r * 0.45f, resColor.g * 0.45f, resColor.b * 0.45f, 0.85f);
+                    Widgets.DrawBoxSolid(badgeRect, badgeBg);
+                    Text.Anchor = TextAnchor.MiddleCenter;
+                    Widgets.Label(badgeRect, "SC_MaxBadge".Translate());
+                    Text.Anchor = TextAnchor.MiddleLeft;
+
+                    Widgets.Label(new Rect(cx + 400f, curY, 100f, rowHeight),
+                        currentAlloc.ToString("F1") + " / " + rawProd.ToString("F1"));
+
+                    float silverDiverted = (float)(currentAlloc * FCSettings.silverPerResource);
+                    if (silverDiverted >= 0.5f)
+                    {
+                        Text.Font = GameFont.Tiny;
+                        GUI.color = new Color(1f, 0.7f, 0.3f);
+                        Widgets.Label(new Rect(cx + 505f, curY, 100f, rowHeight),
+                            "SC_SilverDiverted".Translate(silverDiverted.ToString("F0")));
+                        GUI.color = Color.white;
+                        Text.Font = GameFont.Small;
+                    }
+                }
+                else if (rawProd > 0)
                 {
                     float sliderVal = (float)Math.Round(currentAlloc,1);
                     // Snap max down to the 0.1 rounding grid so the slider's
@@ -1863,6 +1998,22 @@ namespace FactionColonies.SupplyChain
                     Text.Anchor = TextAnchor.MiddleLeft;
                     GUI.color = Color.white;
                 }
+
+                // Auto-max toggle (always shown, far right)
+                const float autoBoxSize = 22f;
+                Vector2 autoBoxPos = new Vector2(cx + 615f, curY + (rowHeight - autoBoxSize) / 2f);
+                Rect autoBoxRect = new Rect(autoBoxPos.x, autoBoxPos.y, autoBoxSize, autoBoxSize);
+                bool autoMaxNow = autoMax;
+                Widgets.Checkbox(autoBoxPos, ref autoMaxNow, autoBoxSize);
+                TooltipHandler.TipRegion(autoBoxRect, "SC_AutoMaxTooltip".Translate());
+                if (autoMaxNow != autoMax)
+                {
+                    SetAutoMax(def, autoMaxNow);
+                }
+                Text.Font = GameFont.Tiny;
+                Widgets.Label(new Rect(cx + 615f + autoBoxSize + 2f, curY, 40f, rowHeight),
+                    "SC_AutoMax".Translate());
+                Text.Font = GameFont.Small;
 
                 Text.Anchor = TextAnchor.UpperLeft;
                 curY += rowHeight;
