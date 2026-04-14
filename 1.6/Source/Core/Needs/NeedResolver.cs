@@ -27,14 +27,13 @@ namespace FactionColonies.SupplyChain
                 if (faction != null && !needDef.IsActiveForFaction(faction)) continue;
                 if (!needDef.IsActiveForSettlement(settlement)) continue;
 
-                double demand = needDef.CalculateDemand(settlement);
-
-                double drawn;
-                stockpile.TryDraw(needDef.resource, demand, out drawn);
-
-                states.Add(new NeedState(needDef.defName, needDef.resource, demand, drawn,
-                    needDef.label.CapitalizeFirst(), NeedCategory.Base, needDef.penalties,
-                    needDef.surplusBonuses, needDef.maxSurplusRatio));
+                needDef.BuildNeedStates(settlement, faction, 0.0, delegate(NeedState ns)
+                {
+                    double drawn;
+                    stockpile.TryDraw(ns.resource, ns.demanded, out drawn);
+                    ns.fulfilled = drawn;
+                    states.Add(ns);
+                });
             }
 
             // 2. Building needs
@@ -79,20 +78,23 @@ namespace FactionColonies.SupplyChain
                     if (!needDef.IsActiveForFaction(faction)) continue;
                     if (!needDef.IsActiveForSettlement(settlement)) continue;
 
-                    double demand = needDef.CalculateDemand(settlement);
-
-                    allDemands.Add(new NeedDemandEntry
+                    WorldSettlementFC capturedSettlement = settlement;
+                    WorldObjectComp_SupplyChain capturedComp = comp;
+                    needDef.BuildNeedStates(settlement, faction, 0.0, delegate(NeedState ns)
                     {
-                        settlement = settlement,
-                        comp = comp,
-                        needId = needDef.defName,
-                        resource = needDef.resource,
-                        demand = demand,
-                        label = needDef.label.CapitalizeFirst(),
-                        category = NeedCategory.Base,
-                        penalties = needDef.penalties,
-                        surplusBonuses = needDef.surplusBonuses,
-                        maxSurplusRatio = needDef.maxSurplusRatio
+                        allDemands.Add(new NeedDemandEntry
+                        {
+                            settlement = capturedSettlement,
+                            comp = capturedComp,
+                            needId = ns.needId,
+                            resource = ns.resource,
+                            demand = ns.demanded,
+                            label = ns.label,
+                            category = NeedCategory.Base,
+                            penalties = ns.penalties,
+                            surplusBonuses = ns.surplusBonuses,
+                            maxSurplusRatio = ns.maxSurplusRatio
+                        });
                     });
                 }
 

@@ -5,7 +5,9 @@
 		<defName>Need_Power</defName>
 		<label>power</label>
 		<description>Settlements require power to maintain infrastructure and keep buildings running.</description>
-		<resource>RTD_Power</resource>
+		<resources>
+			<li><resource>RTD_Power</resource></li>
+		</resources>
 		<baseAmount>0.25</baseAmount>
 		<scaling>PerLevel</scaling>
 		<minTechLevel>Industrial</minTechLevel>
@@ -35,7 +37,9 @@
 		<defName>Need_Medicine</defName>
 		<label>medicine</label>
 		<description>Workers need access to medicine to stay healthy and productive.</description>
-		<resource>RTD_Medicine</resource>
+		<resources>
+			<li><resource>RTD_Medicine</resource></li>
+		</resources>
 		<baseAmount>0.15</baseAmount>
 		<scaling>PerWorker</scaling>
 		<penalties>
@@ -59,7 +63,30 @@
 		<defName>Need_BuildingMaterials</defName>
 		<label>building materials</label>
 		<description>Settlements require a steady supply of building materials for maintenance and repairs.</description>
-		<resource>RTD_Logging</resource>
+		<resources>
+			<li>
+				<resource>RTD_Logging</resource>
+				<weightsByTech>
+					<Neolithic>1.0</Neolithic>
+					<Medieval>0.75</Medieval>
+					<Industrial>0.5</Industrial>
+					<Spacer>0.25</Spacer>
+					<Ultra>0.0</Ultra>
+					<Archotech>0.0</Archotech>
+				</weightsByTech>
+			</li>
+			<li>
+				<resource>RTD_Mining</resource>
+				<weightsByTech>
+					<Neolithic>0.0</Neolithic>
+					<Medieval>0.25</Medieval>
+					<Industrial>0.5</Industrial>
+					<Spacer>0.75</Spacer>
+					<Ultra>1.0</Ultra>
+					<Archotech>1.0</Archotech>
+				</weightsByTech>
+			</li>
+		</resources>
 		<baseAmount>0.2</baseAmount>
 		<scaling>PerLevel</scaling>
 		<penalties>

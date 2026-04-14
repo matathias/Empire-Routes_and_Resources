@@ -493,11 +493,12 @@ namespace FactionColonies.SupplyChain
         {
             FactionFC faction = FactionCache.FactionComp;
             if (faction is null || settlement is null) return;
+            TechLevel tech = faction.techLevel;
             foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
             {
                 if (!needDef.IsActiveForFaction(faction)) continue;
-                if (needDef.resource == def)
-                    flow.baseNeeds += needDef.CalculateDemand(settlement);
+                if (needDef.UsesResource(def))
+                    flow.baseNeeds += needDef.CalculateDemand(settlement) * needDef.GetResourceFraction(tech, def);
             }
 
             if (settlement.BuildingsComp != null)
@@ -1906,9 +1907,11 @@ namespace FactionColonies.SupplyChain
                     {
                         foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
                         {
-                            if (needDef.resource == newRouteResource)
+                            if (needDef.UsesResource(newRouteResource))
                             {
-                                double demand = needDef.CalculateDemand(captured);
+                                double demand = needDef.CalculateDemand(captured)
+                                    * needDef.GetResourceFraction(FactionCache.FactionComp != null
+                                        ? FactionCache.FactionComp.techLevel : TechLevel.Undefined, newRouteResource);
                                 label += " (need: " + demand.ToString("F1") + "/period)";
                                 break;
                             }

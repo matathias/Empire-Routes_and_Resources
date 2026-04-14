@@ -5,7 +5,9 @@
         <defName>Need_Food</defName>
         <label>food</label>
         <description>Workers need food to stay healthy and productive.</description>
-        <resource>RTD_Food</resource>
+        <resources>
+            <li><resource>RTD_Food</resource></li>
+        </resources>
         <baseAmount>0.5</baseAmount>
         <scaling>PerWorker</scaling>
         <penalties>

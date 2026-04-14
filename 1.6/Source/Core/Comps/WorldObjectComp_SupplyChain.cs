@@ -231,15 +231,14 @@ namespace FactionColonies.SupplyChain
                 if (!needDef.IsActiveForFaction(faction)) continue;
                 if (!needDef.IsActiveForSettlement(ws)) continue;
 
-                double demand = needDef.CalculateDemand(ws);
-                prevFulfilled.TryGetValue(needDef.defName, out double fulfilled);
-                prevSurplusRatio.TryGetValue(needDef.defName, out double prevSurplus);
-                NeedState ns = new NeedState(needDef.defName, needDef.resource, demand, fulfilled,
-                    needDef.label.CapitalizeFirst(), NeedCategory.Base, needDef.penalties,
-                    needDef.surplusBonuses, needDef.maxSurplusRatio,
-                    needDef: needDef);
-                ns.surplusRatio = prevSurplus;
-                newStates.Add(ns);
+                needDef.BuildNeedStates(ws, faction, 0.0, delegate(NeedState ns)
+                {
+                    prevFulfilled.TryGetValue(ns.needId, out double fulfilled);
+                    prevSurplusRatio.TryGetValue(ns.needId, out double prevSurplus);
+                    ns.fulfilled = fulfilled;
+                    ns.surplusRatio = prevSurplus;
+                    newStates.Add(ns);
+                });
             }
 
             // 2. Building needs (from BuildingNeedExtension)
@@ -1744,9 +1743,11 @@ namespace FactionColonies.SupplyChain
                             // Show need info for destination
                             foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
                             {
-                                if (needDef.resource == newRouteResource)
+                                if (needDef.UsesResource(newRouteResource))
                                 {
-                                    double demand = needDef.CalculateDemand(captured);
+                                    double demand = needDef.CalculateDemand(captured)
+                                        * needDef.GetResourceFraction(FactionCache.FactionComp != null
+                                            ? FactionCache.FactionComp.techLevel : TechLevel.Undefined, newRouteResource);
                                     label += " (need: " + demand.ToString("F1") + ")";
                                     break;
                                 }
@@ -1846,9 +1847,11 @@ namespace FactionColonies.SupplyChain
                         {
                             foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
                             {
-                                if (needDef.resource == newRouteResource)
+                                if (needDef.UsesResource(newRouteResource))
                                 {
-                                    double demand = needDef.CalculateDemand(captured);
+                                    double demand = needDef.CalculateDemand(captured)
+                                        * needDef.GetResourceFraction(FactionCache.FactionComp != null
+                                            ? FactionCache.FactionComp.techLevel : TechLevel.Undefined, newRouteResource);
                                     label += " (need: " + demand.ToString("F1") + ")";
                                     break;
                                 }

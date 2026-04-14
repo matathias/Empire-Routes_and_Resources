@@ -186,4 +186,19 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SCPatchBase">
+		<defName>SC_0_2_13</defName>
+		<label>Techlevel-variable needs</label>
+		<description>Adds the ability to vary a need&apos;s resource by techlevel, and converts the &quot;building materials&quot; need to use this system</description>
+		<releaseDate>2026-04-14</releaseDate>
+		<patchNoteType>Minor</patchNoteType>
+		<patchNoteLines>
+		<li>Adds the ability to vary a need&apos;s resource by techlevel</li>
+		<li>The Building Materials need now requires both logging and mining, the exact distribution depending on tech level</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>
