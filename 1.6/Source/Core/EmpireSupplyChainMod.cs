@@ -23,6 +23,7 @@ namespace FactionColonies.SupplyChain
         public static int freeSettlementThreshold = 3;
         public static float distanceNormalizingDays = DEFAULT_DISTANCE_NORMALIZING_DAYS;
         public static int baseSilverSurcharge = (int)FCSettings.silverToCreateSettlement; //1000, as of 2026-04-05
+        public static float resourceCostMultiplier = 1.0f;
 
         private static string capBuffer = null;
         private static string routeDecayBuffer = null;
@@ -30,6 +31,7 @@ namespace FactionColonies.SupplyChain
         private static string thresholdBuffer = null;
         private static string distNormBuffer = null;
         private static string surchargeBuffer = null;
+        private static string resourceCostMultBuffer = null;
         private static Vector2 scrollPos;
 
         public override void ExposeData()
@@ -46,12 +48,13 @@ namespace FactionColonies.SupplyChain
             Scribe_Values.Look(ref freeSettlementThreshold, "freeSettlementThreshold", 3);
             Scribe_Values.Look(ref distanceNormalizingDays, "distanceNormalizingDays", DEFAULT_DISTANCE_NORMALIZING_DAYS);
             Scribe_Values.Look(ref baseSilverSurcharge, "baseSilverSurcharge", 500);
+            Scribe_Values.Look(ref resourceCostMultiplier, "resourceCostMultiplier", 1.0f);
         }
 
         public void DoWindowContents(Rect inRect)
         {
             Listing_Standard ls = new Listing_Standard();
-            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, 700f);
+            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, 750f);
             Widgets.BeginScrollView(inRect, ref scrollPos, viewRect);
             ls.Begin(viewRect);
 
@@ -134,6 +137,12 @@ namespace FactionColonies.SupplyChain
             if (surchargeBuffer == null)
                 surchargeBuffer = baseSilverSurcharge.ToString();
             ls.TextFieldNumeric(ref baseSilverSurcharge, ref surchargeBuffer, 0, 100000);
+            ls.Gap(6f);
+
+            ls.Label("SC_SettingsResourceMultiplier".Translate(resourceCostMultiplier.ToString("F2")));
+            if (resourceCostMultBuffer is null)
+                resourceCostMultBuffer = resourceCostMultiplier.ToString("F2");
+            ls.TextFieldNumeric(ref resourceCostMultiplier, ref resourceCostMultBuffer, 0.1f, 10f);
 
             ls.Gap(12f);
             if (ls.ButtonText("SC_OpenPatchNotes".Translate()))

@@ -173,5 +173,16 @@
     <SC_SettingsFoundingThreshold>Free founding threshold: {0} (resource costs waived below this)</SC_SettingsFoundingThreshold>
     <SC_SettingsDistanceNorm>Distance normalizing days: {0} (smaller values = harsher distance scaling for settlement founding cost)</SC_SettingsDistanceNorm>
     <SC_SettingsBaseSurcharge>Base silver surcharge: {0} (multiplied by distance factor)</SC_SettingsBaseSurcharge>
+    <SC_SettingsResourceMultiplier>Resource cost multiplier: {0} (scales all founding resource amounts)</SC_SettingsResourceMultiplier>
+
+    <!-- Threshold Letter -->
+    <SC_ThresholdLetterTitle>Resource Costs Now Apply</SC_ThresholdLetterTitle>
+    <SC_ThresholdLetterBody>Your empire has reached {0} settlements. From now on, founding new settlements will require resources from your stockpile in addition to the silver cost.\n\nYou can view the required resources in the settlement creation window.</SC_ThresholdLetterBody>
+
+    <!-- Buy Resources -->
+    <SC_BuyOption>{0}x {1}: {2} silver</SC_BuyOption>
+    <SC_BuyReason>Purchased {0}</SC_BuyReason>
+    <SC_CannotBuyNoSilver>Cannot buy {0}: not enough silver.</SC_CannotBuyNoSilver>
+    <SC_CannotBuyFull>Cannot buy {0}: stockpile is full.</SC_CannotBuyFull>
 
 </LanguageData>

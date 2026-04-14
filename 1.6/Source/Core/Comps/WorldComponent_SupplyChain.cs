@@ -69,6 +69,8 @@ namespace FactionColonies.SupplyChain
         private float newRouteAmount;
         private ResourceTypeDef routeFilterResource;
 
+        private bool thresholdLetterSent;
+
         public WorldComponent_SupplyChain(World world) : base(world)
         {
         }
@@ -276,6 +278,7 @@ namespace FactionColonies.SupplyChain
 
             Scribe_Collections.Look(ref supplyRoutes, "supplyRoutes", LookMode.Deep);
             Scribe_Collections.Look(ref dormantRoutes, "dormantRoutes", LookMode.Deep);
+            Scribe_Values.Look(ref thresholdLetterSent, "thresholdLetterSent", false);
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
@@ -1021,6 +1024,24 @@ namespace FactionColonies.SupplyChain
             resourceColumnsDirty = true;
 
             GetComp(settlement)?.RebuildNeedStates();
+
+            if (!thresholdLetterSent)
+            {
+                FactionFC faction = FactionCache.FactionComp;
+                if (faction is object)
+                {
+                    int count = faction.settlements.Count + faction.settlementCaravansList.Count;
+                    if (count >= SupplyChainSettings.freeSettlementThreshold)
+                    {
+                        thresholdLetterSent = true;
+                        Find.LetterStack.ReceiveLetter(
+                            "SC_ThresholdLetterTitle".Translate(),
+                            "SC_ThresholdLetterBody".Translate(
+                                SupplyChainSettings.freeSettlementThreshold.ToString()),
+                            LetterDefOf.NeutralEvent);
+                    }
+                }
+            }
         }
 
         public void OnSettlementRemoved(WorldSettlementFC settlement)
@@ -1187,7 +1208,8 @@ namespace FactionColonies.SupplyChain
             float labelEndX = contentX + 172f;
             float amountTextW = 90f;
             float netFlowW = 60f;
-            float barWidth = viewRect.width - labelEndX - arrowSize - 8f - amountTextW - netFlowW - 4f;
+            const float buyBtnW = 22f;
+            float barWidth = viewRect.width - labelEndX - arrowSize - 8f - amountTextW - netFlowW - buyBtnW - 8f;
             if (barWidth < 100f) barWidth = 100f;
 
             int resIdx = 0;
@@ -1247,6 +1269,17 @@ namespace FactionColonies.SupplyChain
                     Widgets.Label(new Rect(amountX + amountTextW, drawY, netFlowW, barHeight), TextUtil.ColorizeAdditiveBonus(Math.Round(net, 2)));
                     Text.Anchor = TextAnchor.MiddleLeft;
                 }
+
+                // Buy button
+                float buyX = viewRect.width - buyBtnW - 2f;
+                Rect buyRect = new Rect(buyX, drawY + 3f, buyBtnW, barHeight - 6f);
+                Text.Font = GameFont.Tiny;
+                if (Widgets.ButtonText(buyRect, "$"))
+                {
+                    ResourceTypeDef capturedDef = def;
+                    UIUtilSC.ShowBuyMenu(capturedDef, stockpile, delegate { DirtyFlowCache(); });
+                }
+                Text.Font = GameFont.Small;
 
                 int numSettlements = simpleFaction != null ? simpleFaction.settlements.Count : 0;
                 double baseCap = numSettlements * SupplyChainSettings.baseCapPerSettlement;

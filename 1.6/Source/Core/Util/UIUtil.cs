@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using RimWorld;
 using UnityEngine;
 using Verse;
 using static FactionColonies.SupplyChain.WorldComponent_SupplyChain;
@@ -76,6 +74,55 @@ namespace FactionColonies.SupplyChain
             }
 
             return tip;
+        }
+
+        /// <summary>
+        /// Shows a float menu for purchasing <paramref name="def"/> units with silver,
+        /// crediting the given <paramref name="stockpile"/>. Call <paramref name="onPurchased"/>
+        /// after a successful purchase to dirty caches.
+        /// </summary>
+        internal static void ShowBuyMenu(ResourceTypeDef def, IStockpile stockpile, Action onPurchased)
+        {
+            int silverAvailable = PaymentUtil.GetSilver();
+            double cap = stockpile.GetCap(def);
+            double current = stockpile.GetAmount(def);
+            double space = Math.Max(0, cap - current);
+            int maxAffordable = silverAvailable / FCSettings.silverPerResource;
+            int maxBuyable = (int)Math.Min(maxAffordable, space);
+
+            if (maxBuyable <= 0)
+            {
+                string reason = silverAvailable < FCSettings.silverPerResource
+                    ? "SC_CannotBuyNoSilver".Translate(def.LabelCap)
+                    : "SC_CannotBuyFull".Translate(def.LabelCap);
+                Messages.Message(reason, MessageTypeDefOf.RejectInput, false);
+                return;
+            }
+
+            List<FloatMenuOption> options = new List<FloatMenuOption>();
+            HashSet<int> seen = new HashSet<int>();
+            int[] presets = { 1, 5, 10, maxBuyable };
+
+            for (int i = 0; i < presets.Length; i++)
+            {
+                int qty = presets[i];
+                if (qty <= 0 || qty > maxBuyable || !seen.Add(qty)) continue;
+
+                int cost = qty * FCSettings.silverPerResource;
+                int capturedQty = qty;
+                options.Add(new FloatMenuOption(
+                    "SC_BuyOption".Translate(capturedQty.ToString(), def.LabelCap, cost.ToString()),
+                    delegate
+                    {
+                        if (PaymentUtil.PaySilver(cost, "SC_BuyReason".Translate(def.LabelCap)))
+                        {
+                            stockpile.Credit(def, capturedQty);
+                            onPurchased?.Invoke();
+                        }
+                    }));
+            }
+
+            Find.WindowStack.Add(new FloatMenu(options));
         }
     }
 }

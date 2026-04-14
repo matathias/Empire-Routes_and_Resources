@@ -53,7 +53,7 @@ namespace FactionColonies.SupplyChain
             for (int i = 0; i < ext.resourceCosts.Count; i++)
             {
                 ResourceCostEntry entry = ext.resourceCosts[i];
-                double needed = entry.amount * distMult;
+                double needed = FormulaUtil.ResourceCost(entry.amount, distMult);
                 double have = stockpile.GetAmount(entry.resource);
 
                 if (have < needed)
@@ -86,7 +86,7 @@ namespace FactionColonies.SupplyChain
             for (int i = 0; i < ext.resourceCosts.Count; i++)
             {
                 ResourceCostEntry entry = ext.resourceCosts[i];
-                double needed = entry.amount * distMult;
+                double needed = FormulaUtil.ResourceCost(entry.amount, distMult);
                 if (i > 0) sb.Append(", ");
                 sb.Append(needed.ToString("F0"));
                 sb.Append(" ");
@@ -109,7 +109,7 @@ namespace FactionColonies.SupplyChain
             for (int i = 0; i < ext.resourceCosts.Count; i++)
             {
                 ResourceCostEntry entry = ext.resourceCosts[i];
-                double needed = entry.amount * distMult;
+                double needed = FormulaUtil.ResourceCost(entry.amount, distMult);
                 stockpile.TryDraw(entry.resource, needed, out _);
             }
         }

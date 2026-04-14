@@ -128,4 +128,20 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SCPatchBase">
+		<defName>SC_0_2_9</defName>
+		<label>Settlement founding changes</label>
+		<description>Adds a couple of minor features to ease the difficulty spike of needing resources to found settlements after the grace threshold.</description>
+		<releaseDate>2026-04-13</releaseDate>
+		<patchNoteType>Minor</patchNoteType>
+		<patchNoteLines>
+		<li>Once the player has passed the threshold where further settlements require resources to found, they will receive a letter stating as such</li>
+		<li>There is now a mod setting to scale the resource cost of founding a settlement</li>
+		<li>You can now spend silver to fill a resource stockpile</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>

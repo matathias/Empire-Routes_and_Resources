@@ -1088,8 +1088,9 @@ namespace FactionColonies.SupplyChain
             curY += 34f;
 
             const float arrowSize = 16f;
+            const float buyBtnW = 22f;
             float contentX = AccentW + 4f;
-            float barWidth = viewRect.width - contentX - 28f - 100f - arrowSize - 8f - 150f - 4f;
+            float barWidth = viewRect.width - contentX - 28f - 100f - arrowSize - 8f - 150f - buyBtnW - 8f;
             if (barWidth < 100f) barWidth = 100f;
 
             int idx = 0;
@@ -1145,6 +1146,19 @@ namespace FactionColonies.SupplyChain
 
                 Widgets.Label(new Rect(arrowX + arrowSize + 4f, curY, 150f, barHeight),
                     "SC_StockpileAmount".Translate(amount.ToString("F1"), cap.ToString("F0")));
+
+                // Buy button
+                float buyX = viewRect.width - buyBtnW - 2f;
+                Rect buyRect = new Rect(buyX, curY + 3f, buyBtnW, barHeight - 6f);
+                Text.Font = GameFont.Tiny;
+                if (Widgets.ButtonText(buyRect, "$"))
+                {
+                    ResourceTypeDef capturedDef = def;
+                    DictionaryStockpile capturedStockpile = localStockpileDict;
+                    UIUtilSC.ShowBuyMenu(capturedDef, capturedStockpile,
+                        delegate { SupplyChainCache.Comp?.DirtyFlowCache(); });
+                }
+                Text.Font = GameFont.Small;
 
                 TooltipHandler.TipRegion(rowRect, UIUtilSC.BuildFlowTooltip(def, amount, cap, flow));
                 Text.Anchor = TextAnchor.UpperLeft;
