@@ -158,4 +158,18 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SCPatchBase">
+		<defName>SC_0_2_11</defName>
+		<label>Resource allocation changes</label>
+		<description>Changes the allocation checks during loading to be less strict; if an allocation would be greater than current production, then instead of evicting the allocation entirely, we just clamp it to the current production.</description>
+		<releaseDate>2026-04-14</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+		<li>Changes ReRegisterAllocations to be less strict with evicting allocations</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>

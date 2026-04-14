@@ -652,6 +652,8 @@ namespace FactionColonies.SupplyChain
             if (ws is null) return;
 
             List<ResourceTypeDef> toRemove = null;
+            List<KeyValuePair<ResourceTypeDef, double>> toClamp = null;
+
             foreach (KeyValuePair<ResourceTypeDef, double> kv in allocations)
             {
                 if (kv.Value <= 0) continue;
@@ -663,13 +665,32 @@ namespace FactionColonies.SupplyChain
                     continue;
                 }
 
+                double available = resource.rawTotalProduction - resource.totalStockpileAllocation;
+                double clamped = Math.Min(kv.Value, Math.Max(0.0, available));
+
+                if (clamped <= 0)
+                {
+                    if (toRemove is null) toRemove = new List<ResourceTypeDef>();
+                    toRemove.Add(kv.Key);
+                    LogSC.Warning($"Clearing allocation for {kv.Key.label} at {ws.Name}: current production is 0 (was {kv.Value:F1}).");
+                    continue;
+                }
+
                 string key = ALLOC_KEY_PREFIX + kv.Key.defName;
-                bool ok = resource.SetStockpileAllocation(key, kv.Value, () => OnEvicted(kv.Key));
+                bool ok = resource.SetStockpileAllocation(key, clamped, () => OnEvicted(kv.Key));
                 if (!ok)
                 {
                     if (toRemove is null) toRemove = new List<ResourceTypeDef>();
                     toRemove.Add(kv.Key);
-                    LogSC.Warning($"Could not re-register allocation for {kv.Key.label} at {ws.Name} (exceeds production). Clearing.");
+                    LogSC.Error($"Unexpected: could not re-register clamped allocation for {kv.Key.label} at {ws.Name} (clamped={clamped:F1}, available={available:F1}). Clearing.");
+                    continue;
+                }
+
+                if (clamped < kv.Value)
+                {
+                    if (toClamp is null) toClamp = new List<KeyValuePair<ResourceTypeDef, double>>();
+                    toClamp.Add(new KeyValuePair<ResourceTypeDef, double>(kv.Key, clamped));
+                    LogSC.Warning($"Reduced allocation for {kv.Key.label} at {ws.Name} from {kv.Value:F1} to {clamped:F1} to fit current production.");
                 }
             }
 
@@ -677,6 +698,11 @@ namespace FactionColonies.SupplyChain
             {
                 foreach (ResourceTypeDef def in toRemove)
                     allocations.Remove(def);
+            }
+            if (toClamp != null)
+            {
+                foreach (KeyValuePair<ResourceTypeDef, double> kv in toClamp)
+                    allocations[kv.Key] = kv.Value;
             }
         }
 
