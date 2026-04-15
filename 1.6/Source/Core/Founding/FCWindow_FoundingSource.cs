@@ -20,7 +20,7 @@ namespace FactionColonies.SupplyChain
         private WorldSettlementDef lastSettlementType;
         private FoundingCostValidator validator;
         private WorldComponent_SupplyChain worldComp;
-        private FoundingCostExtension cachedExt;
+        private List<FCResourceCost> cachedCosts;
 
         public override Vector2 InitialSize => new Vector2(WindowWidth, 350f);
 
@@ -77,19 +77,19 @@ namespace FactionColonies.SupplyChain
             if (settlementType != lastSettlementType)
             {
                 lastSettlementType = settlementType;
-                cachedExt = settlementType?.GetModExtension<FoundingCostExtension>();
-                if (cachedExt?.resourceCosts is null || cachedExt.resourceCosts.Count == 0)
+                cachedCosts = FoundingCostUtil.GetFoundingResourceCosts(settlementType);
+                if (cachedCosts is null || cachedCosts.Count == 0)
                 {
                     Close();
                     return;
                 }
             }
-            else if (cachedExt is null)
+            else if (cachedCosts is null)
             {
-                cachedExt = settlementType?.GetModExtension<FoundingCostExtension>();
+                cachedCosts = FoundingCostUtil.GetFoundingResourceCosts(settlementType);
             }
 
-            if (cachedExt?.resourceCosts is null || cachedExt.resourceCosts.Count == 0)
+            if (cachedCosts is null || cachedCosts.Count == 0)
             {
                 Close();
                 return;
@@ -138,9 +138,9 @@ namespace FactionColonies.SupplyChain
             double distMult = FoundingCostUtil.ComputeDistanceMultiplier(currentTile);
             IStockpile stockpile = GetCurrentStockpile(currentTile);
 
-            for (int i = 0; i < cachedExt.resourceCosts.Count; i++)
+            for (int i = 0; i < cachedCosts.Count; i++)
             {
-                ResourceCostEntry entry = cachedExt.resourceCosts[i];
+                FCResourceCost entry = cachedCosts[i];
                 double needed = FormulaUtil.ResourceCost(entry.amount, distMult);
                 double have = stockpile?.GetAmount(entry.resource) ?? 0;
                 bool sufficient = have >= needed;
@@ -195,17 +195,16 @@ namespace FactionColonies.SupplyChain
                 IStockpile stockpile = comp?.GetStockpile();
 
                 string label = settlement.Name;
-                if (stockpile != null && cachedExt != null)
+                if (stockpile != null && cachedCosts != null)
                 {
                     double menuDistMult = FoundingCostUtil.ComputeDistanceMultiplier(targetTile);
                     int sufficient = 0;
-                    for (int j = 0; j < cachedExt.resourceCosts.Count; j++)
+                    foreach (FCResourceCost entry in cachedCosts)
                     {
-                        ResourceCostEntry entry = cachedExt.resourceCosts[j];
                         double needed = FormulaUtil.ResourceCost(entry.amount, menuDistMult);
                         if (stockpile.GetAmount(entry.resource) >= needed) sufficient++;
                     }
-                    label += " (" + sufficient + "/" + cachedExt.resourceCosts.Count + ")";
+                    label += $" ({sufficient}/{cachedCosts.Count})";
                 }
 
                 WorldSettlementFC capturedSettlement = settlement;
@@ -248,8 +247,8 @@ namespace FactionColonies.SupplyChain
 
             CreateColonyWindowFc createWindow = Find.WindowStack.WindowOfType<CreateColonyWindowFc>();
 
-            FoundingCostExtension ext = createWindow?.currentSettlementType?.GetModExtension<FoundingCostExtension>();
-            if (ext?.resourceCosts is null || ext.resourceCosts.Count == 0) return;
+            List<FCResourceCost> costs = FoundingCostUtil.GetFoundingResourceCosts(createWindow?.currentSettlementType);
+            if (costs is null || costs.Count == 0) return;
 
             // Don't open duplicate
             if (Find.WindowStack.WindowOfType<FCWindow_FoundingSource>() != null) return;

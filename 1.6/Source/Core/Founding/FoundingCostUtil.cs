@@ -13,6 +13,16 @@ namespace FactionColonies.SupplyChain
         private static int cachedSettlementCount;
 
         /// <summary>
+        /// Returns the per-type founding resource costs declared on the settlement def's
+        /// <see cref="SCSettlementTypeExtension"/>, or null if no costs are configured.
+        /// </summary>
+        public static List<FCResourceCost> GetFoundingResourceCosts(WorldSettlementDef type)
+        {
+            SCSettlementTypeExtension ext = type?.GetSettlementTypeExtension() as SCSettlementTypeExtension;
+            return ext?.GetFoundingResourceCosts();
+        }
+
+        /// <summary>
         /// Computes the distance-based silver surcharge for founding at <paramref name="targetTile"/>.
         /// </summary>
         public static int ComputeSilverSurcharge(PlanetTile targetTile)
@@ -91,9 +101,8 @@ namespace FactionColonies.SupplyChain
             WorldSettlementFC nearest = null;
             int bestTicks = int.MaxValue;
 
-            for (int i = 0; i < settlements.Count; i++)
+            foreach (WorldSettlementFC s in settlements)
             {
-                WorldSettlementFC s = settlements[i];
                 if (s is null || !s.Tile.Valid) continue;
 
                 int ticks = TravelUtil.ReturnTicksToArrive(s.Tile, targetTile);

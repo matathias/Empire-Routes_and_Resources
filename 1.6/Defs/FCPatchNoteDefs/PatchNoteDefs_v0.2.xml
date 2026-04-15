@@ -201,4 +201,18 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SCPatchBase">
+		<defName>SC_0_2_14</defName>
+		<label>Founding Cost Rework</label>
+		<description>Rework how founding costs are implemented to make it easier for child defs to declare their own costs.</description>
+		<releaseDate>2026-04-14</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+		<li>Remove the FoundingCostExtension and adds a foundingResourceCosts field to SCSettlementTypeExtension</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>

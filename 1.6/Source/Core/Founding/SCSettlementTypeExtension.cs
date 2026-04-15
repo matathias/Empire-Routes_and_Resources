@@ -1,14 +1,28 @@
+using System.Collections.Generic;
 using RimWorld.Planet;
 using Verse;
 
 namespace FactionColonies.SupplyChain
 {
+    public class FCResourceCost
+    {
+        public ResourceTypeDef resource;
+        public double amount;
+    }
+
     /// <summary>
     /// Replaces the base mod's count-based settlement cost scaling with distance-based scaling.
     /// XML-patched onto settlement defs in place of the base <see cref="SettlementTypeExtension"/>.
     /// </summary>
     public class SCSettlementTypeExtension : SettlementTypeExtension
     {
+        public List<FCResourceCost> foundingResourceCosts = new List<FCResourceCost>();
+
+        public virtual List<FCResourceCost> GetFoundingResourceCosts()
+        {
+            return foundingResourceCosts;
+        }
+
         public override int GetCreationCost()
         {
             int baseCost = (int)FCSettings.silverToCreateSettlement;

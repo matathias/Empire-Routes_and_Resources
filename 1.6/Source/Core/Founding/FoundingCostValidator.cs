@@ -1,4 +1,5 @@
 using RimWorld.Planet;
+using System.Collections.Generic;
 using System.Text;
 using Verse;
 
@@ -33,8 +34,8 @@ namespace FactionColonies.SupplyChain
         {
             reason = null;
 
-            FoundingCostExtension ext = type.GetModExtension<FoundingCostExtension>();
-            if (ext?.resourceCosts is null || ext.resourceCosts.Count == 0) return true;
+            List<FCResourceCost> costs = FoundingCostUtil.GetFoundingResourceCosts(type);
+            if (costs is null || costs.Count == 0) return true;
             if (IsBelowThreshold()) return true;
 
             StringBuilder sb = null;
@@ -50,9 +51,8 @@ namespace FactionColonies.SupplyChain
 
             bool allowed = true;
 
-            for (int i = 0; i < ext.resourceCosts.Count; i++)
+            foreach (FCResourceCost entry in costs)
             {
-                ResourceCostEntry entry = ext.resourceCosts[i];
                 double needed = FormulaUtil.ResourceCost(entry.amount, distMult);
                 double have = stockpile.GetAmount(entry.resource);
 
@@ -76,16 +76,16 @@ namespace FactionColonies.SupplyChain
 
         public string GetAdditionalCostDescription(PlanetTile tile, WorldSettlementDef type)
         {
-            FoundingCostExtension ext = type.GetModExtension<FoundingCostExtension>();
-            if (ext?.resourceCosts is null || ext.resourceCosts.Count == 0) return null;
+            List<FCResourceCost> costs = FoundingCostUtil.GetFoundingResourceCosts(type);
+            if (costs is null || costs.Count == 0) return null;
             if (IsBelowThreshold()) return null;
 
             double distMult = FoundingCostUtil.ComputeDistanceMultiplier(tile);
 
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < ext.resourceCosts.Count; i++)
+            for (int i = 0; i < costs.Count; i++)
             {
-                ResourceCostEntry entry = ext.resourceCosts[i];
+                FCResourceCost entry = costs[i];
                 double needed = FormulaUtil.ResourceCost(entry.amount, distMult);
                 if (i > 0) sb.Append(", ");
                 sb.Append(needed.ToString("F0"));
@@ -98,17 +98,16 @@ namespace FactionColonies.SupplyChain
 
         public void OnSettlementFounded(PlanetTile tile, WorldSettlementDef type)
         {
-            FoundingCostExtension ext = type.GetModExtension<FoundingCostExtension>();
-            if (ext?.resourceCosts is null || ext.resourceCosts.Count == 0) return;
+            List<FCResourceCost> costs = FoundingCostUtil.GetFoundingResourceCosts(type);
+            if (costs is null || costs.Count == 0) return;
             if (IsBelowThreshold()) return;
 
             double distMult = FoundingCostUtil.ComputeDistanceMultiplier(tile);
             IStockpile stockpile = GetStockpile(tile);
             if (stockpile is null) return;
 
-            for (int i = 0; i < ext.resourceCosts.Count; i++)
+            foreach (FCResourceCost entry in costs)
             {
-                ResourceCostEntry entry = ext.resourceCosts[i];
                 double needed = FormulaUtil.ResourceCost(entry.amount, distMult);
                 stockpile.TryDraw(entry.resource, needed, out _);
             }

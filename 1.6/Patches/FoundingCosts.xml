@@ -1,27 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Patch>
 
-  <!-- Replace base SettlementTypeExtension with SCSettlementTypeExtension (distance-based cost) -->
+  <!-- Replace base SettlementTypeExtension with SCSettlementTypeExtension
+       (distance-based silver cost + default resource costs) -->
   <Operation Class="PatchOperationRemove">
     <xpath>/Defs/FactionColonies.WorldSettlementDef[@Name="WorldSettlementDef_Surface"]/modExtensions/li[@Class="FactionColonies.SettlementTypeExtension"]</xpath>
   </Operation>
   <Operation Class="PatchOperationAdd">
     <xpath>/Defs/FactionColonies.WorldSettlementDef[@Name="WorldSettlementDef_Surface"]/modExtensions</xpath>
     <value>
-      <li Class="FactionColonies.SupplyChain.SCSettlementTypeExtension" />
-    </value>
-  </Operation>
-
-  <!-- Add founding resource costs to default surface settlement -->
-  <Operation Class="PatchOperationAdd">
-    <xpath>/Defs/FactionColonies.WorldSettlementDef[@Name="WorldSettlementDef_Surface"]/modExtensions</xpath>
-    <value>
-      <li Class="FactionColonies.SupplyChain.FoundingCostExtension">
-        <resourceCosts>
+      <li Class="FactionColonies.SupplyChain.SCSettlementTypeExtension">
+        <foundingResourceCosts>
           <li><resource>RTD_Food</resource><amount>10</amount></li>
           <li><resource>RTD_Logging</resource><amount>6</amount></li>
           <li><resource>RTD_Mining</resource><amount>4</amount></li>
-        </resourceCosts>
+        </foundingResourceCosts>
       </li>
     </value>
   </Operation>
