@@ -98,7 +98,6 @@
     <SC_SilverDiverted>-{0} silver</SC_SilverDiverted>
     <SC_NoProduction>No Production</SC_NoProduction>
     <SC_MaxBadge>MAX</SC_MaxBadge>
-    <SC_AutoMax>Auto</SC_AutoMax>
     <SC_AutoMaxTooltip>Auto-max: when enabled, this resource always allocates the maximum currently-available production. The allocation follows production up and down automatically and is refreshed at each tax cycle.</SC_AutoMaxTooltip>
     <SC_SettlementNeeds>Settlement Needs</SC_SettlementNeeds>
     <SC_SatisfactionDisplay>{0}% ({1} / {2})</SC_SatisfactionDisplay>
@@ -183,7 +182,8 @@
     <SC_ThresholdLetterBody>Your empire has reached {0} settlements. From now on, founding new settlements will require resources from your stockpile in addition to the silver cost.\n\nYou can view the required resources in the settlement creation window.</SC_ThresholdLetterBody>
 
     <!-- Buy Resources -->
-    <SC_BuyOption>{0}x {1}: {2} silver</SC_BuyOption>
+    <SC_BuyOption>Buy {0}x {1}: {2} silver</SC_BuyOption>
+    <SC_BuyTooltip>Pay silver to add this resource to the stockpile.</SC_BuyTooltip>
     <SC_BuyReason>Purchased {0}</SC_BuyReason>
     <SC_CannotBuyNoSilver>Cannot buy {0}: not enough silver.</SC_CannotBuyNoSilver>
     <SC_CannotBuyFull>Cannot buy {0}: stockpile is full.</SC_CannotBuyFull>

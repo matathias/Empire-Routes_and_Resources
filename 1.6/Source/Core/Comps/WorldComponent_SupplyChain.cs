@@ -1288,6 +1288,7 @@ namespace FactionColonies.SupplyChain
                     ResourceTypeDef capturedDef = def;
                     UIUtilSC.ShowBuyMenu(capturedDef, stockpile, delegate { DirtyFlowCache(); });
                 }
+                TooltipHandler.TipRegion(buyRect, "SC_BuyTooltip".Translate());
                 Text.Font = GameFont.Small;
 
                 int numSettlements = simpleFaction != null ? simpleFaction.settlements.Count : 0;

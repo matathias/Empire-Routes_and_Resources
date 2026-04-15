@@ -1293,6 +1293,7 @@ namespace FactionColonies.SupplyChain
                     UIUtilSC.ShowBuyMenu(capturedDef, capturedStockpile,
                         delegate { SupplyChainCache.Comp?.DirtyFlowCache(); });
                 }
+                TooltipHandler.TipRegion(buyRect, "SC_BuyTooltip".Translate());
                 Text.Font = GameFont.Small;
 
                 TooltipHandler.TipRegion(rowRect, UIUtilSC.BuildFlowTooltip(def, amount, cap, flow));
@@ -1941,7 +1942,7 @@ namespace FactionColonies.SupplyChain
                     Widgets.Label(badgeRect, "SC_MaxBadge".Translate());
                     Text.Anchor = TextAnchor.MiddleLeft;
 
-                    Widgets.Label(new Rect(cx + 400f, curY, 100f, rowHeight),
+                    Widgets.Label(new Rect(cx + 400f, curY, 90f, rowHeight),
                         currentAlloc.ToString("F1") + " / " + rawProd.ToString("F1"));
 
                     float silverDiverted = (float)(currentAlloc * FCSettings.silverPerResource);
@@ -1949,7 +1950,7 @@ namespace FactionColonies.SupplyChain
                     {
                         Text.Font = GameFont.Tiny;
                         GUI.color = new Color(1f, 0.7f, 0.3f);
-                        Widgets.Label(new Rect(cx + 505f, curY, 100f, rowHeight),
+                        Widgets.Label(new Rect(cx + 525f, curY, 80f, rowHeight),
                             "SC_SilverDiverted".Translate(silverDiverted.ToString("F0")));
                         GUI.color = Color.white;
                         Text.Font = GameFont.Small;
@@ -1979,7 +1980,7 @@ namespace FactionColonies.SupplyChain
                         SetAllocation(def, newVal);
                     }
 
-                    Widgets.Label(new Rect(cx + 400f, curY, 100f, rowHeight),
+                    Widgets.Label(new Rect(cx + 400f, curY, 90f, rowHeight),
                         currentAlloc.ToString("F1") + " / " + rawProd.ToString("F1"));
 
                     float silverDiverted = (float)(currentAlloc * FCSettings.silverPerResource);
@@ -1987,7 +1988,7 @@ namespace FactionColonies.SupplyChain
                     {
                         Text.Font = GameFont.Tiny;
                         GUI.color = new Color(1f, 0.7f, 0.3f);
-                        Widgets.Label(new Rect(cx + 505f, curY, 100f, rowHeight),
+                        Widgets.Label(new Rect(cx + 525f, curY, 80f, rowHeight),
                             "SC_SilverDiverted".Translate(silverDiverted.ToString("F0")));
                         GUI.color = Color.white;
                         Text.Font = GameFont.Small;
@@ -2002,9 +2003,9 @@ namespace FactionColonies.SupplyChain
                     GUI.color = Color.white;
                 }
 
-                // Auto-max toggle (always shown, far right)
+                // Auto-max toggle (between number and silver slots, inside the visible row)
                 const float autoBoxSize = 22f;
-                Vector2 autoBoxPos = new Vector2(cx + 615f, curY + (rowHeight - autoBoxSize) / 2f);
+                Vector2 autoBoxPos = new Vector2(cx + 495f, curY + (rowHeight - autoBoxSize) / 2f);
                 Rect autoBoxRect = new Rect(autoBoxPos.x, autoBoxPos.y, autoBoxSize, autoBoxSize);
                 bool autoMaxNow = autoMax;
                 Widgets.Checkbox(autoBoxPos, ref autoMaxNow, autoBoxSize);
@@ -2013,10 +2014,6 @@ namespace FactionColonies.SupplyChain
                 {
                     SetAutoMax(def, autoMaxNow);
                 }
-                Text.Font = GameFont.Tiny;
-                Widgets.Label(new Rect(cx + 615f + autoBoxSize + 2f, curY, 40f, rowHeight),
-                    "SC_AutoMax".Translate());
-                Text.Font = GameFont.Small;
 
                 Text.Anchor = TextAnchor.UpperLeft;
                 curY += rowHeight;
