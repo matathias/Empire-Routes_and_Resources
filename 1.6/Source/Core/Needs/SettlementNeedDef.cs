@@ -27,47 +27,57 @@ namespace FactionColonies.SupplyChain
     }
 
     /// <summary>
+    /// One entry in a SettlementNeedResourceInput.weightsByTech list.
+    /// </summary>
+    public class TechLevelWeight
+    {
+        public TechLevel level;
+        public float weight;
+    }
+
+    /// <summary>
     /// One resource entry inside a SettlementNeedDef. Optional weightsByTech lets a need
-    /// shift its consumption mix as the faction's tech level changes (e.g. wood → metal).
+    /// shift its consumption mix as the faction's tech level changes (e.g. wood -> metal).
     /// </summary>
     public class SettlementNeedResourceInput
     {
         public ResourceTypeDef resource;
         public float weight = 1f;
-        public Dictionary<TechLevel, float> weightsByTech;
+        public List<TechLevelWeight> weightsByTech;
 
         public float GetWeightAt(TechLevel tech)
         {
             if (weightsByTech is null || weightsByTech.Count == 0)
                 return weight;
 
-            float w;
-            if (weightsByTech.TryGetValue(tech, out w))
-                return w;
+            // Exact match
+            foreach (TechLevelWeight t in weightsByTech)
+            {
+                if (t.level == tech) return t.weight;
+            }
 
             // Fall back to the nearest lower defined key.
             float fallback = -1f;
-            int bestKey = -1;
-            foreach (KeyValuePair<TechLevel, float> kv in weightsByTech)
+            TechLevel bestKey = TechLevel.Undefined;
+            foreach (TechLevelWeight t in weightsByTech)
             {
-                int k = (int)kv.Key;
-                if (k <= (int)tech && k > bestKey)
+                if (t.level <= tech && t.level > bestKey)
                 {
-                    bestKey = k;
-                    fallback = kv.Value;
+                    bestKey = t.level;
+                    fallback = t.weight;
                 }
             }
             if (fallback >= 0f) return fallback;
 
             // No lower key — use the smallest defined key as a floor.
-            int smallestKey = int.MaxValue;
+            TechLevel smallestKey = TechLevel.Archotech;
             float smallestVal = weight;
-            foreach (KeyValuePair<TechLevel, float> kv in weightsByTech)
+            foreach (TechLevelWeight t in weightsByTech)
             {
-                if ((int)kv.Key < smallestKey)
+                if (t.level < smallestKey)
                 {
-                    smallestKey = (int)kv.Key;
-                    smallestVal = kv.Value;
+                    smallestKey = t.level;
+                    smallestVal = t.weight;
                 }
             }
             return smallestVal;
@@ -133,9 +143,8 @@ namespace FactionColonies.SupplyChain
 
             double total = 0.0;
             List<double> weights = new List<double>(resources.Count);
-            for (int i = 0; i < resources.Count; i++)
+            foreach (SettlementNeedResourceInput entry in resources)
             {
-                SettlementNeedResourceInput entry = resources[i];
                 if (entry?.resource is null) { weights.Add(0.0); continue; }
                 double w = entry.GetWeightAt(tech);
                 if (w < 0.0) w = 0.0;
@@ -145,14 +154,15 @@ namespace FactionColonies.SupplyChain
 
             if (total <= 0.0)
             {
-                for (int i = 0; i < resources.Count; i++)
+                foreach (SettlementNeedResourceInput t in resources)
                 {
-                    if (resources[i]?.resource != null)
+                    if (t?.resource != null)
                     {
-                        result.Add(new KeyValuePair<ResourceTypeDef, double>(resources[i].resource, 1.0));
+                        result.Add(new KeyValuePair<ResourceTypeDef, double>(t.resource, 1.0));
                         return result;
                     }
                 }
+
                 return result;
             }
 
@@ -171,9 +181,9 @@ namespace FactionColonies.SupplyChain
         public double GetResourceFraction(TechLevel tech, ResourceTypeDef r)
         {
             List<KeyValuePair<ResourceTypeDef, double>> split = GetResourceSplit(tech);
-            for (int i = 0; i < split.Count; i++)
+            foreach (KeyValuePair<ResourceTypeDef, double> t in split)
             {
-                if (split[i].Key == r) return split[i].Value;
+                if (t.Key == r) return t.Value;
             }
             return 0.0;
         }
@@ -181,9 +191,9 @@ namespace FactionColonies.SupplyChain
         public bool UsesResource(ResourceTypeDef r)
         {
             if (resources is null) return false;
-            for (int i = 0; i < resources.Count; i++)
+            foreach (SettlementNeedResourceInput t in resources)
             {
-                if (resources[i]?.resource == r) return true;
+                if (t?.resource == r) return true;
             }
             return false;
         }
@@ -259,7 +269,7 @@ namespace FactionColonies.SupplyChain
                 for (int i = 0; i < resources.Count; i++)
                 {
                     SettlementNeedResourceInput entry = resources[i];
-                    if (entry is null || entry.resource is null)
+                    if (entry?.resource is null)
                     {
                         yield return "SettlementNeedDef " + defName + " resource entry " + i + " is null";
                         continue;
@@ -267,8 +277,8 @@ namespace FactionColonies.SupplyChain
                     anyValid = true;
                     if (entry.weightsByTech != null && entry.weightsByTech.Count > 0)
                     {
-                        foreach (KeyValuePair<TechLevel, float> kv in entry.weightsByTech)
-                            if (kv.Value > 0f) { anyNonzero = true; break; }
+                        foreach (var t in entry.weightsByTech)
+                            if (t.weight > 0f) { anyNonzero = true; break; }
                     }
                     else if (entry.weight > 0f)
                     {

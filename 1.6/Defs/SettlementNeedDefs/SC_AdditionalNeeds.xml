@@ -67,23 +67,23 @@
 			<li>
 				<resource>RTD_Logging</resource>
 				<weightsByTech>
-					<Neolithic>1.0</Neolithic>
-					<Medieval>0.75</Medieval>
-					<Industrial>0.5</Industrial>
-					<Spacer>0.25</Spacer>
-					<Ultra>0.0</Ultra>
-					<Archotech>0.0</Archotech>
+					<li><level>Neolithic</level><weight>1.0</weight></li>
+					<li><level>Medieval</level><weight>0.75</weight></li>
+					<li><level>Industrial</level><weight>0.5</weight></li>
+					<li><level>Spacer</level><weight>0.25</weight></li>
+					<li><level>Ultra</level><weight>0.0</weight></li>
+					<li><level>Archotech</level><weight>0.0</weight></li>
 				</weightsByTech>
 			</li>
 			<li>
 				<resource>RTD_Mining</resource>
 				<weightsByTech>
-					<Neolithic>0.0</Neolithic>
-					<Medieval>0.25</Medieval>
-					<Industrial>0.5</Industrial>
-					<Spacer>0.75</Spacer>
-					<Ultra>1.0</Ultra>
-					<Archotech>1.0</Archotech>
+					<li><level>Neolithic</level><weight>0.0</weight></li>
+					<li><level>Medieval</level><weight>0.25</weight></li>
+					<li><level>Industrial</level><weight>0.5</weight></li>
+					<li><level>Spacer</level><weight>0.75</weight></li>
+					<li><level>Ultra</level><weight>1.0</weight></li>
+					<li><level>Archotech</level><weight>1.0</weight></li>
 				</weightsByTech>
 			</li>
 		</resources>
