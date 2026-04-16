@@ -215,4 +215,18 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SCPatchBase">
+		<defName>SC_0_2_15</defName>
+		<label>UI Update</label>
+		<description>Updates the resource need companion window in the Found New Settlement screen to take into account the new tile modifier companion window from the base mod.</description>
+		<releaseDate>2026-04-15</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+		<li>Shifts the horizontal position of the resource need companion window based on whether the base mod&apos;s tile modifier companion window is open</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>
