@@ -54,8 +54,7 @@ namespace FactionColonies.SupplyChain
         public void DoWindowContents(Rect inRect)
         {
             Listing_Standard ls = new Listing_Standard();
-            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, 750f);
-            Widgets.BeginScrollView(inRect, ref scrollPos, viewRect);
+            Rect viewRect = ScrollUtil.BeginScrollView(inRect, ref scrollPos, 750f);
             ls.Begin(viewRect);
 
             // Mode toggle
@@ -149,7 +148,7 @@ namespace FactionColonies.SupplyChain
                 Find.WindowStack.Add(new PatchNotesDisplayWindow("matathias.empire.supplychain", "SC_PatchTitle".Translate()));
 
             ls.End();
-            Widgets.EndScrollView();
+            ScrollUtil.EndScrollView();
         }
     }
 

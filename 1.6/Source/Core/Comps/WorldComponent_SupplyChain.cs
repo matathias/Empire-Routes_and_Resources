@@ -1205,8 +1205,7 @@ namespace FactionColonies.SupplyChain
                 + 20f;                                // bottom padding
 
             Rect scrollArea = new Rect(inner.x, curY, inner.width, inner.yMax - curY);
-            Rect viewRect = new Rect(0f, 0f, scrollArea.width - 16f, totalHeight);
-            Widgets.BeginScrollView(scrollArea, ref scrollPosSimple, viewRect);
+            Rect viewRect = ScrollUtil.BeginScrollView(scrollArea, ref scrollPosSimple, totalHeight);
             float drawY = 0f;
 
             // Resource bars — scale bar to fill available width
@@ -1465,7 +1464,7 @@ namespace FactionColonies.SupplyChain
                 Text.Font = GameFont.Small;
             }
 
-            Widgets.EndScrollView();
+            ScrollUtil.EndScrollView();
         }
 
         // --- Complex Mode Faction Tab ---
@@ -1588,9 +1587,8 @@ namespace FactionColonies.SupplyChain
             Rect scrollRect = new Rect(rect.x, rect.y + headerH, rect.width, rect.height - headerH);
             int settlementCount = faction.settlements.Count;
             float totalHeight = settlementCount * (settRowH + rowGap) + 20f;
-            Rect viewRect = new Rect(0f, 0f, scrollRect.width - 16f, totalHeight);
 
-            Widgets.BeginScrollView(scrollRect, ref scrollPosStockpiles, viewRect);
+            Rect viewRect = ScrollUtil.BeginScrollView(scrollRect, ref scrollPosStockpiles, totalHeight);
             float curY = 4f;
 
             int sIdx = 0;
@@ -1692,7 +1690,7 @@ namespace FactionColonies.SupplyChain
                 sIdx++;
             }
 
-            Widgets.EndScrollView();
+            ScrollUtil.EndScrollView();
         }
 
         private void DrawComplexRoutes(Rect rect)
@@ -1704,8 +1702,7 @@ namespace FactionColonies.SupplyChain
             FactionFC faction = FactionCache.FactionComp;
             float totalHeight = supplyRoutes.Count * (routeRowH + rowGap) + 150f;
 
-            Rect viewRect = new Rect(0f, 0f, rect.width - 16f, totalHeight);
-            Widgets.BeginScrollView(rect, ref scrollPosRoutes, viewRect);
+            Rect viewRect = ScrollUtil.BeginScrollView(rect, ref scrollPosRoutes, totalHeight);
             float curY = 4f;
             float rowW = viewRect.width;
 
@@ -1839,7 +1836,7 @@ namespace FactionColonies.SupplyChain
                 DirtyFlowCache();
             }
 
-            Widgets.EndScrollView();
+            ScrollUtil.EndScrollView();
         }
 
         // --- Add Route Row (Complex mode) ---

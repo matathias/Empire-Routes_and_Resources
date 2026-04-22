@@ -229,4 +229,18 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SCPatchBase">
+		<defName>SC_0_2_16</defName>
+		<label>UI Update</label>
+		<description>Update to use the ScrollUtil scrollbars from the base mod.</description>
+		<releaseDate>2026-04-21</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+		<li>Update to use ScrollUtil scrollviews from the base mod</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>
