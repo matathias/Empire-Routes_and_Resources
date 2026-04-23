@@ -24,15 +24,15 @@ namespace FactionColonies.SupplyChain
         public bool showRouteLabels;
 
         // Pair caches: one representative route + one combined label per directed settlement pair
-        private Dictionary<long, SupplyRoute> pairRouteCache = new Dictionary<long, SupplyRoute>();
-        private Dictionary<long, string> pairLabelCache = new Dictionary<long, string>();
+        private Dictionary<DirectedPlanetTilePair, SupplyRoute> pairRouteCache = new Dictionary<DirectedPlanetTilePair, SupplyRoute>();
+        private Dictionary<DirectedPlanetTilePair, string> pairLabelCache = new Dictionary<DirectedPlanetTilePair, string>();
         private bool pairCacheDirty = true;
 
         private bool capsAndStockpilesDirty = true;
         private DictionaryStockpile stockpile;
 
-        // Flow cache: keyed by (settlementTile << 16 | resourceDefIndex)
-        private Dictionary<ulong, FlowBreakdown> flowCache = new Dictionary<ulong, FlowBreakdown>();
+        // Flow cache: keyed by (settlement PlanetTile, resourceDefIndex)
+        private Dictionary<PlanetTileResourceKey, FlowBreakdown> flowCache = new Dictionary<PlanetTileResourceKey, FlowBreakdown>();
         private bool flowCacheDirty = true;
 
         // Simple-mode flow cache: keyed by resource def index
@@ -171,11 +171,6 @@ namespace FactionColonies.SupplyChain
 
         // --- World Map Route Visualization ---
 
-        private static long MakePairKey(SupplyRoute route)
-        {
-            return ((long)route.source.Tile.tileId << 32) | ((long)route.destination.Tile.tileId & 0xFFFFFFFFL);
-        }
-
         internal void EnsurePairCaches()
         {
             if (!pairCacheDirty) return;
@@ -186,7 +181,7 @@ namespace FactionColonies.SupplyChain
             foreach (SupplyRoute route in supplyRoutes)
             {
                 if (!route.IsValid()) continue;
-                long key = MakePairKey(route);
+                DirectedPlanetTilePair key = new DirectedPlanetTilePair(route.source.Tile, route.destination.Tile);
 
                 pairRouteCache.TryAdd(key, route);
 
@@ -198,7 +193,7 @@ namespace FactionColonies.SupplyChain
             }
 
             // Append destination name to each label
-            foreach (long key in new List<long>(pairLabelCache.Keys))
+            foreach (DirectedPlanetTilePair key in new List<DirectedPlanetTilePair>(pairLabelCache.Keys))
             {
                 SupplyRoute rep = pairRouteCache[key];
                 pairLabelCache[key] = pairLabelCache[key] + "\n\u2192 " + rep.destination.Name;
@@ -229,7 +224,7 @@ namespace FactionColonies.SupplyChain
             GameFont prev = Text.Font;
             Text.Font = GameFont.Tiny;
 
-            foreach (KeyValuePair<long, SupplyRoute> kvp in pairRouteCache)
+            foreach (KeyValuePair<DirectedPlanetTilePair, SupplyRoute> kvp in pairRouteCache)
             {
                 SupplyRoute route = kvp.Value;
 
@@ -376,11 +371,6 @@ namespace FactionColonies.SupplyChain
             public double Net => production + routeIn - needs - routeOut - sellOrders - titheInjection;
         }
 
-        private static ulong FlowKey(int settlementTile, ushort resourceIndex)
-        {
-            return ((ulong)settlementTile << 16) | resourceIndex;
-        }
-
         internal FlowBreakdown GetCachedFlow(WorldSettlementFC settlement, WorldObjectComp_SupplyChain comp, ResourceTypeDef def)
         {
             if (flowCacheDirty)
@@ -390,7 +380,7 @@ namespace FactionColonies.SupplyChain
                 flowCacheDirty = false;
             }
 
-            ulong key = FlowKey(settlement.Tile, def.index);
+            PlanetTileResourceKey key = new PlanetTileResourceKey(settlement.Tile, def.index);
             if (!flowCache.TryGetValue(key, out FlowBreakdown flow))
             {
                 flow = CalculateFlow(settlement, comp, def);
