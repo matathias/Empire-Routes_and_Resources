@@ -90,6 +90,25 @@ namespace FactionColonies.SupplyChain
             }
         }
 
+        [EmpireTest("SC.Formula")]
+        public static void RouteEfficiency_DecreasesWithDistance()
+        {
+            var snap = SCTestHelper.SnapshotSettings();
+            try
+            {
+                SupplyChainSettings.routeDecayPerDay = 0.1f;
+                double near = FormulaUtil.RouteEfficiency(2.0);
+                double far = FormulaUtil.RouteEfficiency(8.0);
+                TestAssert.LessThan(far, near, "A longer route must have strictly lower efficiency");
+                TestAssert.LessThanOrEqual(near, 1.0, "Efficiency never exceeds 1.0");
+                TestAssert.GreaterThan(far, 0.0, "Efficiency stays positive for finite travel");
+            }
+            finally
+            {
+                SCTestHelper.RestoreSettings(snap);
+            }
+        }
+
         /*-*-*- OverflowSilver: amount * silverPerResource * overflowPenaltyRate -*-*-*/
 
         [EmpireTest("SC.Formula")]

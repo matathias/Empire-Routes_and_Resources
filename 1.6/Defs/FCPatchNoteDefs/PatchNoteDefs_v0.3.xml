@@ -123,4 +123,19 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SCPatchBase">
+		<defName>SC_0_3_8</defName>
+		<label>Settings Update</label>
+		<description>Adds the mod version to the mod settings.</description>
+		<releaseDate>2026-07-13</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+		<li>Add the mod version to the settings</li>
+		<li>Bugfix: if the founding cost multiplier is set to 0, then founding can sometimes still be rejected</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>

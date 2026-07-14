@@ -3,6 +3,7 @@
 
     <!-- Settings -->
     <SC_SettingsCategory>Empire: Routes &amp; Resources</SC_SettingsCategory>
+    <SC_ModVersion>Routes &amp; Resources Version: {0}</SC_ModVersion>
     <SC_PatchTitle>Patch Notes: Routes &amp; Resources</SC_PatchTitle>
     <SC_OpenPatchNotes>Open Patch Notes</SC_OpenPatchNotes>
     <SC_SettingsMode>Supply chain mode: {0}</SC_SettingsMode>

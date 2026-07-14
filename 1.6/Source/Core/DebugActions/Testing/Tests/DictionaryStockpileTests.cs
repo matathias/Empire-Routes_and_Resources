@@ -113,6 +113,24 @@ namespace FactionColonies.SupplyChain
         }
 
         [EmpireTest("SC.Stockpile")]
+        public static void CreditOverCap_ThenDrawAll_RoundTrips()
+        {
+            // The overflow contract end-to-end: crediting past the cap clamps and reports the excess,
+            // and a subsequent over-draw takes back exactly the capped amount, leaving nothing behind.
+            ResourceTypeDef r = Res();
+            DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 0.0, 100.0);
+
+            double excess = sp.Credit(r, 150.0);
+            TestAssert.AreEqual(50.0, excess, 0.001, "50 over the 100 cap is returned as excess");
+            TestAssert.AreEqual(100.0, sp.GetAmount(r), 0.001, "Stockpile fills to exactly the cap");
+
+            bool ok = sp.TryDraw(r, 1000.0, out double drawn);
+            TestAssert.IsTrue(ok, "Draw from a full stockpile succeeds");
+            TestAssert.AreEqual(100.0, drawn, 0.001, "Draw clamps to the capped amount");
+            TestAssert.AreEqual(0.0, sp.GetAmount(r), 0.001, "Stockpile empties after drawing everything");
+        }
+
+        [EmpireTest("SC.Stockpile")]
         public static void Credit_NegativeAmount_NoOp()
         {
             ResourceTypeDef r = Res();

@@ -22,7 +22,7 @@ namespace FactionColonies.SupplyChain
 
             TestAssert.DoesNotThrow(() => comp.PostDailyAccrual(f), "PostDailyAccrual threw");
 
-            AssertStockpilesNonNegative(f, comp, "PostDailyAccrual");
+            SCDestructiveTestUtil.AssertStockpilesNonNegative(f, comp, "PostDailyAccrual");
             DestructiveTestUtil.AssertEmpireInvariants(f, "PostDailyAccrual");
         }
 
@@ -45,8 +45,43 @@ namespace FactionColonies.SupplyChain
             // Deposit a modest per-day amount the way the base mod's realize callback would.
             TestAssert.DoesNotThrow(() => sc.Realize(r, 5.0, 5.0), "Realize threw");
 
-            AssertStockpilesNonNegative(f, comp, "Realize");
+            SCDestructiveTestUtil.AssertStockpilesNonNegative(f, comp, "Realize");
             DestructiveTestUtil.AssertEmpireInvariants(f, "Realize");
+        }
+
+        [EmpireDestructiveTest("SC.Destructive.Daily")]
+        public static void Realize_OverCap_ClampsLocalStockpile()
+        {
+            // A7: the daily realize deposit must never push a stockpile past its cap — the over-cap
+            // remainder is auto-sold to silver, and the stockpile lands exactly at the cap. Tested in
+            // Complex mode where each settlement has a bounded local cap we can read back.
+            FactionFC f = DestructiveTestUtil.RequireFaction();
+            WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
+            if (comp is null) TestAssert.Skip("No SupplyChain world component");
+            if (comp.Mode != SupplyChainMode.Complex)
+                TestAssert.Skip("Over-cap clamp is only observable on a per-settlement local stockpile (Complex mode)");
+
+            WorldSettlementFC s = SCDestructiveTestUtil.FirstOrTransient(f);
+            if (s is null) TestAssert.Skip("No settlement available");
+            WorldObjectComp_SupplyChain sc = SupplyChainCache.GetSettlementComp(s);
+            if (sc is null) TestAssert.Skip("No settlement comp");
+
+            ResourceTypeDef r = null;
+            foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs) { r = def; break; }
+            if (r is null) TestAssert.Skip("No resource defs");
+
+            IStockpile sp = sc.EnsureLocalStockpile();
+            double cap = sp.GetCap(r);
+            if (cap <= 0) TestAssert.Skip("Resource " + r.defName + " has no local cap headroom to test");
+
+            // Depositing far more than the cap must clamp to exactly the cap, never overflow it.
+            sc.Realize(r, cap * 2.0, cap * 2.0);
+
+            TestAssert.LessThanOrEqual(sp.GetAmount(r), cap + 0.001, "Realize must not push the stockpile past its cap");
+            TestAssert.GreaterThan(sp.GetAmount(r), cap - 0.001, "An over-cap deposit should fill the stockpile to exactly the cap");
+
+            SCDestructiveTestUtil.AssertStockpilesNonNegative(f, comp, "Realize_OverCap");
+            DestructiveTestUtil.AssertEmpireInvariants(f, "Realize_OverCap");
         }
 
         [EmpireDestructiveTest("SC.Destructive.Daily")]
@@ -111,26 +146,119 @@ namespace FactionColonies.SupplyChain
             TestAssert.Skip("No input-requiring building available to starve");
         }
 
-        private static void AssertStockpilesNonNegative(FactionFC f, WorldComponent_SupplyChain comp, string ctx)
+        [EmpireDestructiveTest("SC.Destructive.Daily")]
+        public static void BuildingDormancy_FullySupplied_StaysActiveAndDrawsInputs()
         {
-            if (comp.Mode == SupplyChainMode.Simple)
-            {
-                AssertOneStockpile(comp.Stockpile, ctx + ":Faction");
-                return;
-            }
+            // A4 (positive case): when every input is present in full, the building stays active AND its
+            // inputs are drawn down by exactly their per-day amount (against a throwaway fixture stockpile).
+            FactionFC f = DestructiveTestUtil.RequireFaction();
+            if (SupplyChainCache.Comp is null) TestAssert.Skip("No SupplyChain world component");
+
             foreach (WorldSettlementFC s in f.settlements)
             {
-                WorldObjectComp_SupplyChain sc = SupplyChainCache.GetSettlementComp(s);
-                if (sc is null) continue;
-                AssertOneStockpile(sc.GetStockpile(), ctx + ":" + s.Name);
+                if (s.BuildingsComp is null) continue;
+                List<BuildingFC> buildings = s.BuildingsComp.Buildings;
+                for (int slot = 0; slot < buildings.Count; slot++)
+                {
+                    BuildingFC b = buildings[slot];
+                    if (b.def is null || b.def == BuildingFCDefOf.Empty) continue;
+                    BuildingNeedExtension ext = SupplyChainCache.GetBuildingNeedExt(b.def);
+                    if (ext?.inputs is null || ext.inputs.Count == 0) continue;
+
+                    // Seed every input at twice its requirement in a throwaway stockpile.
+                    DictionaryStockpile sp = BuildInputStockpile(ext, 2.0);
+
+                    NeedResolver.ResolveBuildingDormancy(s, sp);
+
+                    TestAssert.IsTrue(buildings[slot].active,
+                        "A fully-supplied building (" + b.def.defName + ") should stay active");
+                    foreach (BuildingResourceInput input in ext.inputs)
+                    {
+                        if (input.resource is null || input.amount <= 0) continue;
+                        // Seeded 2x, one day's input drawn -> exactly amount remains.
+                        TestAssert.AreEqual(input.amount, sp.GetAmount(input.resource), 0.001,
+                            "An active building must draw exactly one period of " + input.resource.defName);
+                    }
+                    DestructiveTestUtil.AssertEmpireInvariants(f, "BuildingDormancy_FullySupplied");
+                    return;
+                }
             }
+            TestAssert.Skip("No input-requiring building available to supply");
         }
 
-        private static void AssertOneStockpile(IStockpile sp, string ctx)
+        [EmpireDestructiveTest("SC.Destructive.Daily")]
+        public static void BuildingDormancy_PartialInputs_DormantAndDrawsNothing()
         {
-            if (sp is null) return;
-            foreach (ResourceTypeDef r in SupplyChainCache.AllResourceTypeDefs)
-                TestAssert.GreaterThan(sp.GetAmount(r), -0.001, ctx + ": negative stockpile amount for " + r.defName);
+            // A4 (all-or-nothing): if ANY required input is short, the building goes dormant and draws
+            // NOTHING — the inputs it can afford stay in the pile for other buildings.
+            FactionFC f = DestructiveTestUtil.RequireFaction();
+            if (SupplyChainCache.Comp is null) TestAssert.Skip("No SupplyChain world component");
+
+            foreach (WorldSettlementFC s in f.settlements)
+            {
+                if (s.BuildingsComp is null) continue;
+                List<BuildingFC> buildings = s.BuildingsComp.Buildings;
+                for (int slot = 0; slot < buildings.Count; slot++)
+                {
+                    BuildingFC b = buildings[slot];
+                    if (b.def is null || b.def == BuildingFCDefOf.Empty) continue;
+                    BuildingNeedExtension ext = SupplyChainCache.GetBuildingNeedExt(b.def);
+                    if (ext?.inputs is null || ext.inputs.Count == 0) continue;
+
+                    // Find the first real input to short; skip buildings whose inputs are all null/zero.
+                    BuildingResourceInput shorted = null;
+                    foreach (BuildingResourceInput input in ext.inputs)
+                    {
+                        if (input.resource is null || input.amount <= 0) continue;
+                        shorted = input;
+                        break;
+                    }
+                    if (shorted is null) continue;
+
+                    // Seed every input abundantly EXCEPT the shorted one, which gets half its requirement.
+                    Dictionary<ResourceTypeDef, double> amounts = new Dictionary<ResourceTypeDef, double>();
+                    Dictionary<ResourceTypeDef, double> caps = new Dictionary<ResourceTypeDef, double>();
+                    foreach (BuildingResourceInput input in ext.inputs)
+                    {
+                        if (input.resource is null) continue;
+                        amounts[input.resource] = input == shorted ? shorted.amount * 0.5 : input.amount * 2.0;
+                        caps[input.resource] = 1e9;
+                    }
+                    DictionaryStockpile sp = new DictionaryStockpile(amounts, caps);
+
+                    // Snapshot the affordable inputs so we can prove none were drawn.
+                    Dictionary<ResourceTypeDef, double> before = new Dictionary<ResourceTypeDef, double>();
+                    foreach (BuildingResourceInput input in ext.inputs)
+                        if (input.resource != null)
+                            before[input.resource] = sp.GetAmount(input.resource);
+
+                    NeedResolver.ResolveBuildingDormancy(s, sp);
+
+                    TestAssert.IsFalse(buildings[slot].active,
+                        "A partially-supplied building (" + b.def.defName + ") should be dormant");
+                    foreach (KeyValuePair<ResourceTypeDef, double> kv in before)
+                        TestAssert.AreEqual(kv.Value, sp.GetAmount(kv.Key), 0.001,
+                            "A dormant building must draw NOTHING — " + kv.Key.defName + " should be untouched");
+
+                    DestructiveTestUtil.AssertEmpireInvariants(f, "BuildingDormancy_Partial");
+                    return;
+                }
+            }
+            TestAssert.Skip("No input-requiring building available to short");
+        }
+
+        /// <summary>Throwaway stockpile seeded with each of a building's inputs at (amount * factor).</summary>
+        private static DictionaryStockpile BuildInputStockpile(BuildingNeedExtension ext, double factor)
+        {
+            Dictionary<ResourceTypeDef, double> amounts = new Dictionary<ResourceTypeDef, double>();
+            Dictionary<ResourceTypeDef, double> caps = new Dictionary<ResourceTypeDef, double>();
+            foreach (BuildingResourceInput input in ext.inputs)
+            {
+                if (input.resource is null) continue;
+                amounts[input.resource] = input.amount * factor;
+                caps[input.resource] = 1e9;
+            }
+            return new DictionaryStockpile(amounts, caps);
         }
     }
 }

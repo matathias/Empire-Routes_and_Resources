@@ -20,34 +20,8 @@ namespace FactionColonies.SupplyChain
             TestAssert.DoesNotThrow(() => comp.PreTaxResolution(f), "PreTaxResolution threw");
             TestAssert.DoesNotThrow(() => comp.PostTaxResolution(f), "PostTaxResolution threw");
 
-            AssertStockpilesNonNegative(f, comp, "FullTaxCycle");
+            SCDestructiveTestUtil.AssertStockpilesNonNegative(f, comp, "FullTaxCycle");
             DestructiveTestUtil.AssertEmpireInvariants(f, "FullTaxCycle");
-        }
-
-        private static void AssertStockpilesNonNegative(FactionFC f, WorldComponent_SupplyChain comp, string ctx)
-        {
-            if (comp.Mode == SupplyChainMode.Simple)
-            {
-                AssertOneStockpile(comp.Stockpile, ctx + ":Faction");
-                return;
-            }
-
-            foreach (WorldSettlementFC s in f.settlements)
-            {
-                WorldObjectComp_SupplyChain sc = SupplyChainCache.GetSettlementComp(s);
-                if (sc is null) continue;
-                AssertOneStockpile(sc.GetStockpile(), ctx + ":" + s.Name);
-            }
-        }
-
-        private static void AssertOneStockpile(IStockpile sp, string ctx)
-        {
-            if (sp is null) return;
-            foreach (ResourceTypeDef r in SupplyChainCache.AllResourceTypeDefs)
-            {
-                // amount must never go negative; -0.001 tolerance for float noise.
-                TestAssert.GreaterThan(sp.GetAmount(r), -0.001, ctx + ": negative stockpile amount for " + r.defName);
-            }
         }
     }
 }

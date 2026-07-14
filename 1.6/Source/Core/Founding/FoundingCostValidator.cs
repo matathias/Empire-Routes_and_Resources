@@ -46,6 +46,7 @@ namespace FactionColonies.SupplyChain
             List<FCResourceCost> costs = FoundingCostUtil.GetFoundingResourceCosts(type);
             if (costs is null || costs.Count == 0) return true;
             if (IsBelowThreshold()) return true;
+            if (costMultiplier <= 0f) return true;  // fully-waived founding needs no resources (so no stockpile)
 
             StringBuilder sb = null;
             double distMult = FoundingCostUtil.ComputeDistanceMultiplier(tile);
@@ -89,6 +90,7 @@ namespace FactionColonies.SupplyChain
             List<FCResourceCost> costs = FoundingCostUtil.GetFoundingResourceCosts(type);
             if (costs is null || costs.Count == 0) return null;
             if (IsBelowThreshold()) return null;
+            if (costMultiplier <= 0f) return null;  // fully-waived founding has no cost line to show
 
             double distMult = FoundingCostUtil.ComputeDistanceMultiplier(tile);
 
@@ -112,6 +114,7 @@ namespace FactionColonies.SupplyChain
             List<FCResourceCost> costs = FoundingCostUtil.GetFoundingResourceCosts(type);
             if (costs is null || costs.Count == 0) return;
             if (IsBelowThreshold()) return;
+            if (costMultiplier <= 0f) return;  // fully-waived founding draws no resources
 
             double distMult = FoundingCostUtil.ComputeDistanceMultiplier(tile);
             IStockpile stockpile = GetStockpile(tile);

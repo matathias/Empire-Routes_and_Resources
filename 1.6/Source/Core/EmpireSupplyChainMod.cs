@@ -115,6 +115,9 @@ namespace FactionColonies.SupplyChain
             ls.Begin(listRect);
             Listing_StandardExtensions.ResetRowStripe();
 
+            ls.Label("SC_ModVersion".Translate(EmpireSupplyChainMod.GetModVersion()));
+            ls.Gap(10f);
+
             // Mode toggle
             string modeLabel = mode == SupplyChainMode.Simple ? "Simple" : "Complex";
             ls.Label("SC_SettingsMode".Translate(modeLabel));
@@ -290,6 +293,13 @@ namespace FactionColonies.SupplyChain
             {
                 LogSC.MessageForce($"v{modVersion}");
             }
+        }
+
+        public static string GetModVersion()
+        {
+            var mod = LoadedModManager.GetMod<EmpireSupplyChainMod>();
+            string version = mod?.Content?.ModMetaData?.ModVersion;
+            return version.NullOrEmpty() ? "Unknown" : version;
         }
 
         public override string SettingsCategory() => "SC_SettingsCategory".Translate();
