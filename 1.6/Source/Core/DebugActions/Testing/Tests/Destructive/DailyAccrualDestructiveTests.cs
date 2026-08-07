@@ -144,6 +144,111 @@ namespace FactionColonies.SupplyChain
         }
 
         [EmpireDestructiveTest("SC.Destructive.Daily")]
+        public static void DeliveryArrival_OverCap_DepositsUncapped()
+        {
+            // A route delivery lands via CompleteDelivery BEFORE needs draw in the daily consume pass, so —
+            // like the day's production — it must deposit the FULL credited amount uncapped, not clamp to
+            // cap and silently drop the remainder. Clamping at arrival was the cause of the player's
+            // static-stockpile / under-delivery report. Complex mode only (routes/local caps).
+            FactionFC f = DestructiveTestUtil.RequireFaction();
+            WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
+            if (comp is null) TestAssert.Skip("No SupplyChain world component");
+            if (comp.Mode != SupplyChainMode.Complex)
+                TestAssert.Skip("Route arrivals are only observable on a per-settlement local stockpile (Complex mode)");
+
+            WorldSettlementFC s = SCDestructiveTestUtil.FirstOrTransient(f);
+            if (s is null) TestAssert.Skip("No settlement available");
+            WorldObjectComp_SupplyChain sc = SupplyChainCache.GetSettlementComp(s);
+            if (sc is null) TestAssert.Skip("No settlement comp");
+
+            ResourceTypeDef r = null;
+            foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs) { if (!def.isPoolResource) { r = def; break; } }
+            if (r is null) TestAssert.Skip("No non-pool resource defs");
+
+            IStockpile sp = sc.EnsureLocalStockpile();
+            double cap = sp.GetCap(r);
+            if (cap <= 0) TestAssert.Skip("Resource " + r.defName + " has no local cap headroom to test");
+
+            // Start full so any arrival would overflow a capped credit.
+            sp.TryDraw(r, sp.GetAmount(r), out _);
+            sp.Add(r, cap);
+            double before = sp.GetAmount(r);
+
+            // Arrive a full cap's worth (efficiency 1.0 -> credited == cap) into the already-full stockpile.
+            PendingDelivery d = new PendingDelivery
+            {
+                loadId = -1001, source = s, destination = s, resource = r, amount = cap, efficiency = 1.0
+            };
+            comp.PendingDeliveries.Add(d);
+            comp.CompleteDelivery(d);
+
+            TestAssert.AreEqual(before + cap, sp.GetAmount(r), 0.001,
+                "Route arrival must deposit uncapped (surplus is swept after consumption, not clamped at arrival)");
+
+            // Restore a <= cap state so we don't leave this settlement massively over-cap for later tests.
+            comp.SweepOverflow(sp);
+
+            SCDestructiveTestUtil.AssertStockpilesNonNegative(f, comp, "DeliveryArrival_OverCap");
+            DestructiveTestUtil.AssertEmpireInvariants(f, "DeliveryArrival_OverCap");
+        }
+
+        [EmpireDestructiveTest("SC.Destructive.Daily")]
+        public static void DeliveryArrival_ThenConsume_GrowsStockpile()
+        {
+            // Exact player report: a settlement below cap, fed by a route whose incoming exceeds its
+            // consumption, must GROW day over day — not stay static. Old (capped-arrival) behavior clipped
+            // the delivery to the cap before needs drew, netting back to the starting amount. With the
+            // uncapped arrival + end-of-pass sweep, the stockpile grows by (incoming - consumption).
+            FactionFC f = DestructiveTestUtil.RequireFaction();
+            WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
+            if (comp is null) TestAssert.Skip("No SupplyChain world component");
+            if (comp.Mode != SupplyChainMode.Complex)
+                TestAssert.Skip("Local per-settlement stockpile is only observable in Complex mode");
+
+            WorldSettlementFC s = SCDestructiveTestUtil.FirstOrTransient(f);
+            if (s is null) TestAssert.Skip("No settlement available");
+            WorldObjectComp_SupplyChain sc = SupplyChainCache.GetSettlementComp(s);
+            if (sc is null) TestAssert.Skip("No settlement comp");
+
+            ResourceTypeDef r = null;
+            foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs) { if (!def.isPoolResource) { r = def; break; } }
+            if (r is null) TestAssert.Skip("No non-pool resource defs");
+
+            IStockpile sp = sc.EnsureLocalStockpile();
+            double cap = sp.GetCap(r);
+            if (cap <= 0) TestAssert.Skip("Resource " + r.defName + " has no local cap headroom to test");
+
+            // Scaled to the reported numbers at cap 50: start 37.5, incoming 16, consume 12.5. The
+            // arrival momentarily pushes over cap (37.5 + 16 = 53.5) — the fix is that consumption then
+            // reclaims it (down to 41) instead of the delivery being clipped to cap and lost.
+            double start = cap * 0.75;
+            double incoming = cap * 0.32;
+            double consume = cap * 0.25;
+
+            sp.TryDraw(r, sp.GetAmount(r), out _);
+            sp.Add(r, start);
+
+            PendingDelivery d = new PendingDelivery
+            {
+                loadId = -1002, source = s, destination = s, resource = r, amount = incoming, efficiency = 1.0
+            };
+            comp.PendingDeliveries.Add(d);
+            comp.CompleteDelivery(d);        // uncapped deposit (may exceed cap)
+
+            sp.TryDraw(r, consume, out _);   // needs draw from the now-filled stockpile
+            comp.SweepOverflow(sp);          // sell only the genuine over-cap surplus
+
+            double expected = System.Math.Min(cap, start + incoming - consume);
+            TestAssert.AreEqual(expected, sp.GetAmount(r), 0.5,
+                "arrival must let the stockpile grow by (incoming - consumption), bounded by cap");
+            TestAssert.GreaterThan(sp.GetAmount(r), start,
+                "a net-positive settlement must GROW its stockpile, not stay static at the starting amount");
+
+            SCDestructiveTestUtil.AssertStockpilesNonNegative(f, comp, "DeliveryArrival_ThenConsume");
+            DestructiveTestUtil.AssertEmpireInvariants(f, "DeliveryArrival_ThenConsume");
+        }
+
+        [EmpireDestructiveTest("SC.Destructive.Daily")]
         public static void SweepOverflow_PoolResource_ClampedButNotSold()
         {
             // Pool resources (power/research) can be diverted into a stockpile and auto-maxed, so the

@@ -1042,13 +1042,12 @@ namespace FactionColonies.SupplyChain
                 IStockpile destStockpile = destComp?.GetStockpile();
                 if (destStockpile is object)
                 {
-                    double credited = d.amount * d.efficiency;
+                    double credited = d.amount * d.efficiency;   // efficiency snapshot applied on arrival
                     if (credited > 0)
-                    {
-                        double excess = destStockpile.Credit(d.resource, credited);
-                        if (excess > 0)
-                            LogSC.Message($"Delivery to {d.destination.Name}: {excess} {d.resource.label} lost to destination overflow.");
-                    }
+                        // Deposit uncapped like the day's production (produce -> consume -> sweep): arrivals
+                        // land before needs draw, so the goods can cover today's consumption instead of being
+                        // clipped at the cap and lost. The daily overflow sweep sells any true surplus.
+                        destStockpile.Add(d.resource, credited);
                 }
             }
             DirtyFlowCache();
@@ -1286,18 +1285,6 @@ namespace FactionColonies.SupplyChain
                 CompleteDelivery(d);   // credit destination + remove from pendingDeliveries
             }
             DirtyFlowCache();
-        }
-
-        /// <summary>
-        /// Deposits a per-day production amount into the shared faction stockpile (Simple mode),
-        /// returning the over-cap excess. Caps are refreshed lazily here so the daily realize()
-        /// deposits clamp correctly. Called by WorldObjectComp_SupplyChain.Realize.
-        /// </summary>
-        public double CreditFaction(ResourceTypeDef def, double amount)
-        {
-            if (def is null || amount <= 0) return 0;
-            EnsureCapsAndStockpiles();
-            return stockpile != null ? stockpile.Credit(def, amount) : amount;
         }
 
         /// <summary>

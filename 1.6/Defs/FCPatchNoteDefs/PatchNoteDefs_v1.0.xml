@@ -97,4 +97,18 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SCPatchBase">
+		<defName>SC_1_0_7</defName>
+		<label>Route Delivery Fix</label>
+		<description>Fixes an issue where goods delivered through a route would be capped at the stockpile before being applied to needs.</description>
+		<releaseDate>2026-08-07</releaseDate>
+		<patchNoteType>Hotfix</patchNoteType>
+		<patchNoteLines>
+		<li>Bugfix: route deliveries were clamped to the stockpile cap as soon as they arrive, resulting in the complete loss of the excess</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>
