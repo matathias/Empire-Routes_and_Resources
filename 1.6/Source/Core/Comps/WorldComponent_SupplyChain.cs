@@ -1012,7 +1012,7 @@ namespace FactionColonies.SupplyChain
             List<PendingDelivery> arrived = null;
             foreach (PendingDelivery d in pendingDeliveries)
             {
-                if (d.caravan is object) continue;   // a live caravan drives this delivery's arrival
+                if (d.caravan is object && !d.caravan.Destroyed) continue;   // a live caravan drives this delivery's arrival
                 if (now < d.arrivalTick) continue;
                 if (arrived is null) arrived = new List<PendingDelivery>();
                 arrived.Add(d);
@@ -1089,7 +1089,7 @@ namespace FactionColonies.SupplyChain
             {
                 foreach (PendingDelivery d in pendingDeliveries)
                 {
-                    if (d.caravan is object) continue;
+                    if (d.caravan is object && !d.caravan.Destroyed) continue;
                     if (d.pathTiles != null && d.pathTiles.Count >= 2)
                         DeliveryCaravan.Spawn(d);
                 }

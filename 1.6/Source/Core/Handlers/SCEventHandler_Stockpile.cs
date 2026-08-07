@@ -27,6 +27,8 @@ namespace FactionColonies.SupplyChain
             WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
             if (wc == null) return;
 
+            if (evt?.settlementTraitLocations == null) return;
+
             bool debug = SupplyChainSettings.PrintDebug;
             List<ResourceTypeDef> targets = GetTargetResources();
 

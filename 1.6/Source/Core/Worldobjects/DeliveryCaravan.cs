@@ -143,6 +143,15 @@ namespace FactionColonies.SupplyChain
             if (!Destroyed) Destroy();
         }
 
+        public override void Destroy()
+        {
+            base.Destroy();
+            if (linkedDelivery != null && linkedDelivery.caravan == this)
+            {
+                linkedDelivery.caravan = null;
+            }
+        }
+
         // Smoothly interpolate the drawn position between the current tile and the next tile, matching how
         // a vanilla caravan tweens along its path (progress = fraction of the current segment traversed).
         public override Vector3 DrawPos

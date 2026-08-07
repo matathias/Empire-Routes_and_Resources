@@ -1042,6 +1042,7 @@ namespace FactionColonies.SupplyChain
             foreach (ResourceFC resource in uiSettlement.Resources)
             {
                 ResourceTypeDef def = resource.def;
+                if (def is null) continue;
                 double currentAlloc = GetAllocation(def);
                 double rawProd = resource.rawTotalProduction;
                 double otherAllocs = resource.totalStockpileAllocation - currentAlloc;
