@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_powerSurplus</defName>
+    <label>Power Surplus</label>
+    <desc>Favorable conditions have generated a surge in power output. Factories hum with extra energy and settlers enjoy well-lit nights. This energy surplus could be put to good use; the only question is how.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>0</timeTillTrigger>
+    <activateAtStart>true</activateAtStart>
+    <cooldownTicks>600000</cooldownTicks>
+    <isRandomEvent>true</isRandomEvent>
+    <weight>6</weight>
+    <minDaysSinceFounded>7</minDaysSinceFounded>
+    <rangeSettlementsAffected>1~2</rangeSettlementsAffected>
+    <requiredResource>RTD_Power</requiredResource>
+    <minTechLevel>Industrial</minTechLevel>
+    <incompatibleEvents>
+      <li>sc_powerSurplus</li>
+    </incompatibleEvents>
+    <options>
+      <li>sc_powerSurplus_opt1</li>
+      <li>sc_powerSurplus_opt2</li>
+      <li>sc_powerSurplus_opt3</li>
+    </options>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_powerSurplus_opt1</defName>
+    <label>Overcharge the factories. Push production to the limit.</label>
+    <parentEvent>sc_powerSurplus</parentEvent>
+    <baseChanceOfSuccess>60</baseChanceOfSuccess>
+    <successEvent>sc_powerSurplus_overcharged</successEvent>
+    <failEvent>sc_powerSurplus_overloaded</failEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_powerSurplus_opt2</defName>
+    <label>Store the excess. Enjoy the steady supply.</label>
+    <parentEvent>sc_powerSurplus</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_powerSurplus_stored</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_powerSurplus_opt3</defName>
+    <label>Sell excess power to neighboring settlements.</label>
+    <parentEvent>sc_powerSurplus</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_powerSurplus_sold</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_powerSurplus_overcharged</defName>
+    <label>Factories Overcharged</label>
+    <desc>The extra power is driving production lines at double speed. Sparks fly, but the output is impressive.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>RTD_Power_ProductionAdditive</stat>
+        <value>3</value>
+      </li>
+      <li>
+        <stat>happinessGainedBase</stat>
+        <value>1</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_powerSurplus_overloaded</defName>
+    <label>Grid Overload</label>
+    <desc>The power grid couldn't handle the strain. Rolling blackouts swept through before engineers stabilized things. At least some extra power got through.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>RTD_Power_ProductionAdditive</stat>
+        <value>1</value>
+      </li>
+      <li>
+        <stat>happinessLostBase</stat>
+        <value>2</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_powerSurplus_stored</defName>
+    <label>Steady Power</label>
+    <desc>The extra power hums quietly through the grid. Lights stay on, machines run smoothly, and workers sleep soundly.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>RTD_Power_ProductionAdditive</stat>
+        <value>2</value>
+      </li>
+      <li>
+        <stat>happinessGainedBase</stat>
+        <value>0.5</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_powerSurplus_sold</defName>
+    <label>Power Exports</label>
+    <desc>Neighboring settlements are paying well for your excess power. Less energy for you, but the trade connections are valuable.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>RTD_Power_ProductionAdditive</stat>
+        <value>1</value>
+      </li>
+      <li>
+        <stat>SC_SellRateMultiplier</stat>
+        <value>1.1</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+</Defs>

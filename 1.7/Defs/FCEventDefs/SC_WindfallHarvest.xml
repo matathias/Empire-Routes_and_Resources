@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_windfallHarvest</defName>
+    <label>Windfall Harvest</label>
+    <desc>An unexpected bumper crop has overwhelmed your warehouses. There's more food than you can easily store. What do you do with the bounty?</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>0</timeTillTrigger>
+    <activateAtStart>true</activateAtStart>
+    <cooldownTicks>600000</cooldownTicks>
+    <isRandomEvent>true</isRandomEvent>
+    <weight>8</weight>
+    <minDaysSinceFounded>10</minDaysSinceFounded>
+    <rangeSettlementsAffected>1~2</rangeSettlementsAffected>
+    <restrictedBiomes>
+      <li>IceSheet</li>
+      <li>SeaIce</li>
+      <li>ExtremeDesert</li>
+    </restrictedBiomes>
+    <requiredResource>RTD_Food</requiredResource>
+    <incompatibleEvents>
+      <li>sc_windfallHarvest</li>
+      <li>sc_spoilage</li>
+      <li>sc_famineCrisis</li>
+    </incompatibleEvents>
+    <options>
+      <li>sc_windfallHarvest_opt1</li>
+      <li>sc_windfallHarvest_opt2</li>
+      <li>sc_windfallHarvest_opt3</li>
+    </options>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_windfallHarvest_opt1</defName>
+    <label>Hire extra hands to bring it all in.</label>
+    <parentEvent>sc_windfallHarvest</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <silverCost>500</silverCost>
+    <successEvent>sc_windfallHarvest_expanded</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_windfallHarvest_opt2</defName>
+    <label>Celebrate! Throw a harvest festival.</label>
+    <parentEvent>sc_windfallHarvest</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_windfallHarvest_celebrated</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_windfallHarvest_opt3</defName>
+    <label>Sell the surplus at market prices.</label>
+    <parentEvent>sc_windfallHarvest</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_windfallHarvest_sold</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_windfallHarvest_expanded</defName>
+    <label>Full Harvest</label>
+    <desc>Every last bushel has been gathered and stored. The extra labor cost silver, but the warehouses are packed to the rafters.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>1500</timeTillTrigger>
+    <modExtensions>
+      <li Class="FactionColonies.SupplyChain.SCEventHandler_Stockpile">
+        <resource>RTD_Food</resource>
+        <baseAmount>10</baseAmount>
+        <perWorkerAmount>1.0</perWorkerAmount>
+      </li>
+    </modExtensions>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_windfallHarvest_celebrated</defName>
+    <label>Harvest Festival</label>
+    <desc>The settlement is alive with feasting and celebration. Food stocks are solid, and spirits are high.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>happinessGainedBase</stat>
+        <value>1</value>
+      </li>
+    </statModifiers>
+    <modExtensions>
+      <li Class="FactionColonies.SupplyChain.SCEventHandler_Stockpile">
+        <resource>RTD_Food</resource>
+        <baseAmount>5</baseAmount>
+        <perWorkerAmount>0.5</perWorkerAmount>
+      </li>
+    </modExtensions>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_windfallHarvest_sold</defName>
+    <label>Harvest Sold</label>
+    <desc>Half the crop went straight to market. The silver is welcome, though the warehouses aren't as full as they could be.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>1500</timeTillTrigger>
+    <modExtensions>
+      <li Class="FactionColonies.SupplyChain.SCEventHandler_Stockpile">
+        <resource>RTD_Food</resource>
+        <baseAmount>2.5</baseAmount>
+        <perWorkerAmount>0.25</perWorkerAmount>
+        <convertToSilver>true</convertToSilver>
+      </li>
+    </modExtensions>
+  </FactionColonies.FCEventDef>
+
+</Defs>

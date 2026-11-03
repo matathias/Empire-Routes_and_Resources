@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_infraDecay</defName>
+    <label>Infrastructure Decay</label>
+    <desc>Bridges are rotting, roads are washing out, and supply depots have gone unmaintained for months. Your trade infrastructure is crumbling. What do you do?</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>0</timeTillTrigger>
+    <activateAtStart>true</activateAtStart>
+    <cooldownTicks>600000</cooldownTicks>
+    <isRandomEvent>true</isRandomEvent>
+    <weight>10</weight>
+    <maximumProsperity>60</maximumProsperity>
+    <minDaysSinceFounded>15</minDaysSinceFounded>
+    <rangeSettlementsAffected>2~3</rangeSettlementsAffected>
+    <incompatibleEvents>
+      <li>sc_infraDecay</li>
+    </incompatibleEvents>
+    <options>
+      <li>sc_infraDecay_opt1</li>
+      <li>sc_infraDecay_opt2</li>
+      <li>sc_infraDecay_opt3</li>
+      <li>sc_infraDecay_opt4</li>
+    </options>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_infraDecay_opt1</defName>
+    <label>Fund emergency repairs.</label>
+    <parentEvent>sc_infraDecay</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <silverCost>800</silverCost>
+    <successEvent>sc_infraDecay_repaired</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_infraDecay_opt2</defName>
+    <label>Conscript workers to fix the roads.</label>
+    <parentEvent>sc_infraDecay</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_infraDecay_conscripted</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_infraDecay_opt3</defName>
+    <label>Ignore it. We'll manage.</label>
+    <parentEvent>sc_infraDecay</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_infraDecay_ignored</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_infraDecay_opt4</defName>
+    <label>Mobilize the settlement labor corps.</label>
+    <parentEvent>sc_infraDecay</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_infraDecay_laborCorps</successEvent>
+    <requiredPolicies>
+      <li>expansionist</li>
+    </requiredPolicies>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_infraDecay_repaired</defName>
+    <label>Emergency Repairs</label>
+    <desc>Silver buys speed. Repair crews are patching the worst sections, though some degradation remains.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>SC_RouteEfficiencyBonus</stat>
+        <value>-0.025</value>
+      </li>
+      <li>
+        <stat>SC_SellRateMultiplier</stat>
+        <value>0.975</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_infraDecay_conscripted</defName>
+    <label>Forced Labor</label>
+    <desc>Workers pulled from their regular duties are filling potholes and shoring up bridges. The roads are holding, but people are exhausted and resentful.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>600000</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>SC_RouteEfficiencyBonus</stat>
+        <value>-0.05</value>
+      </li>
+      <li>
+        <stat>SC_SellRateMultiplier</stat>
+        <value>0.95</value>
+      </li>
+      <li>
+        <stat>happinessLostBase</stat>
+        <value>2</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_infraDecay_ignored</defName>
+    <label>Crumbling Roads</label>
+    <desc>The infrastructure continues to deteriorate. Caravans crawl along rutted paths and merchants avoid the worst stretches entirely.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>600000</timeTillTrigger>
+    <timeTillTriggerMax>900000</timeTillTriggerMax>
+    <statModifiers>
+      <li>
+        <stat>SC_RouteEfficiencyBonus</stat>
+        <value>-0.1</value>
+      </li>
+      <li>
+        <stat>SC_SellRateMultiplier</stat>
+        <value>0.9</value>
+      </li>
+      <li>
+        <stat>prosperityGainedBase</stat>
+        <value>-1</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_infraDecay_laborCorps</defName>
+    <label>Rapid Reconstruction</label>
+    <desc>Your expansionist infrastructure corps mobilized within hours. Roads are being rebuilt to a higher standard than before.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>180000</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>SC_RouteEfficiencyBonus</stat>
+        <value>-0.05</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+</Defs>

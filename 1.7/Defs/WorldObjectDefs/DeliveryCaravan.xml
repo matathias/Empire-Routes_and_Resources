@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <!-- In-transit supply delivery: a lightweight caravan-style world object that follows the route's
+       overland path. Reuses the vanilla caravan textures (no new art). Dynamically drawn so it can
+       move smoothly between tiles via DeliveryCaravan.DrawPos. -->
+  <WorldObjectDef>
+    <defName>SC_DeliveryCaravan</defName>
+    <label>supply delivery</label>
+    <description>A shipment of goods travelling between your settlements.</description>
+    <worldObjectClass>FactionColonies.SupplyChain.DeliveryCaravan</worldObjectClass>
+    <texture>World/WorldObjects/Caravan</texture>
+    <useDynamicDrawer>true</useDynamicDrawer>
+    <expandingIcon>true</expandingIcon>
+    <expandingIconTexture>World/WorldObjects/Expanding/Caravan</expandingIconTexture>
+    <expandingIconPriority>90</expandingIconPriority>
+    <expandMore>true</expandMore>
+    <canHaveFaction>true</canHaveFaction>
+    <selectable>true</selectable>
+    <neverMultiSelect>true</neverMultiSelect>
+  </WorldObjectDef>
+
+</Defs>

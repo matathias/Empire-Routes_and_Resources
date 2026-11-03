@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_tradeCartel</defName>
+    <label>Trade Cartel</label>
+    <desc>A powerful trade cartel has approached your {FACTION_TITLE} with an offer: exclusive trade partnerships that would improve sell rates significantly. But their terms come with complications.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>0</timeTillTrigger>
+    <activateAtStart>true</activateAtStart>
+    <cooldownTicks>1200000</cooldownTicks>
+    <isRandomEvent>true</isRandomEvent>
+    <weight>6</weight>
+    <minSettlements>3</minSettlements>
+    <minDaysSinceFounded>20</minDaysSinceFounded>
+    <rangeSettlementsAffected>2~4</rangeSettlementsAffected>
+    <incompatibleEvents>
+      <li>sc_tradeCartel</li>
+    </incompatibleEvents>
+    <options>
+      <li>sc_tradeCartel_opt1</li>
+      <li>sc_tradeCartel_opt2</li>
+      <li>sc_tradeCartel_opt3</li>
+      <li>sc_tradeCartel_opt4</li>
+    </options>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_tradeCartel_opt1</defName>
+    <label>Accept their terms. Silver is silver.</label>
+    <parentEvent>sc_tradeCartel</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_tradeCartel_accepted</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_tradeCartel_opt2</defName>
+    <label>Negotiate better terms.</label>
+    <parentEvent>sc_tradeCartel</parentEvent>
+    <baseChanceOfSuccess>50</baseChanceOfSuccess>
+    <silverCost>500</silverCost>
+    <successEvent>sc_tradeCartel_negotiated</successEvent>
+    <failEvent>sc_tradeCartel_spurned</failEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_tradeCartel_opt3</defName>
+    <label>Refuse. We don't deal with cartels.</label>
+    <parentEvent>sc_tradeCartel</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_tradeCartel_refused</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_tradeCartel_opt4</defName>
+    <label>Undercut them. Flood the market with cheaper goods.</label>
+    <parentEvent>sc_tradeCartel</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_tradeCartel_undercut</successEvent>
+    <requiredPolicies>
+      <li>mercantile</li>
+    </requiredPolicies>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_tradeCartel_accepted</defName>
+    <label>Cartel Partnership</label>
+    <desc>The cartel's lucrative trade deals are flowing, though their influence is eroding the loyalty of your people.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>600000</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>SC_SellRateMultiplier</stat>
+        <value>1.3</value>
+      </li>
+      <li>
+        <stat>loyaltyLostBase</stat>
+        <value>1</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_tradeCartel_negotiated</defName>
+    <label>Favorable Trade Deal</label>
+    <desc>Your negotiators struck a good deal. The cartel's trade channels are open, on your terms.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>SC_SellRateMultiplier</stat>
+        <value>1.2</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_tradeCartel_spurned</defName>
+    <label>Cartel Retaliation</label>
+    <desc>Your failed negotiations insulted the cartel. They're actively undermining your trade operations out of spite.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>SC_SellRateMultiplier</stat>
+        <value>0.9</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_tradeCartel_refused</defName>
+    <label>Principled Stand</label>
+    <desc>Your settlers appreciate the principled refusal to deal with cartels, but said cartels aren't pleased to have been rebuffed. They see their revenge through undermining your trade operations.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>happinessGainedBase</stat>
+        <value>1</value>
+      </li>
+      <li>
+        <stat>SC_SellRateMultiplier</stat>
+        <value>0.85</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_tradeCartel_undercut</defName>
+    <label>Market Dominance</label>
+    <desc>Your aggressive pricing drove the cartel out of the local market. Trade flows freely through your routes.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>SC_SellRateMultiplier</stat>
+        <value>1.15</value>
+      </li>
+      <li>
+        <stat>SC_RouteEfficiencyBonus</stat>
+        <value>0.05</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+</Defs>

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_medicineShortage</defName>
+    <label>Medicine Shortage</label>
+    <desc>A plague sweeping nearby settlements has spiked demand for medicine. Supplies are running thin and settlers are worried. How do you handle the crisis?</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>0</timeTillTrigger>
+    <activateAtStart>true</activateAtStart>
+    <cooldownTicks>600000</cooldownTicks>
+    <isRandomEvent>true</isRandomEvent>
+    <weight>8</weight>
+    <minDaysSinceFounded>10</minDaysSinceFounded>
+    <rangeSettlementsAffected>1~2</rangeSettlementsAffected>
+    <requiredResource>RTD_Medicine</requiredResource>
+    <incompatibleEvents>
+      <li>sc_medicineShortage</li>
+    </incompatibleEvents>
+    <options>
+      <li>sc_medShortage_opt1</li>
+      <li>sc_medShortage_opt2</li>
+      <li>sc_medShortage_opt3</li>
+      <li>sc_medShortage_opt4</li>
+    </options>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_medShortage_opt1</defName>
+    <label>Buy medicine from outside traders.</label>
+    <parentEvent>sc_medicineShortage</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <silverCost>800</silverCost>
+    <successEvent>sc_medShortage_purchased</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_medShortage_opt2</defName>
+    <label>Ration existing supplies strictly.</label>
+    <parentEvent>sc_medicineShortage</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_medShortage_rationed</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_medShortage_opt3</defName>
+    <label>Divert food production to herbal remedies.</label>
+    <parentEvent>sc_medicineShortage</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_medShortage_diverted</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_medShortage_opt4</defName>
+    <label>Our researchers can synthesize substitutes.</label>
+    <parentEvent>sc_medicineShortage</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <silverCost>1500</silverCost>
+    <successEvent>sc_medShortage_synthesized</successEvent>
+    <requiredPolicies>
+      <li>technocratic</li>
+    </requiredPolicies>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_medShortage_purchased</defName>
+    <label>Medicine Purchased</label>
+    <desc>Outside traders delivered a shipment of medicine. The shortage is alleviated, at least for now.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <timeTillTriggerMax>450000</timeTillTriggerMax>
+    <statModifiers>
+      <li>
+        <stat>RTD_Medicine_ProductionAdditive</stat>
+        <value>1</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_medShortage_rationed</defName>
+    <label>Strict Rationing</label>
+    <desc>Medicine is being rationed severely. People are unhappy, but everyone gets at least something.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <timeTillTriggerMax>450000</timeTillTriggerMax>
+    <statModifiers>
+      <li>
+        <stat>happinessLostBase</stat>
+        <value>1.5</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_medShortage_diverted</defName>
+    <label>Herbal Remedies</label>
+    <desc>Food workers are brewing herbal remedies instead. Medicine stocks are improving, but meals are getting thinner.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <timeTillTriggerMax>450000</timeTillTriggerMax>
+    <statModifiers>
+      <li>
+        <stat>RTD_Medicine_ProductionAdditive</stat>
+        <value>0.5</value>
+      </li>
+      <li>
+        <stat>RTD_Food_ProductionAdditive</stat>
+        <value>-1</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_medShortage_synthesized</defName>
+    <label>Synthetic Medicine</label>
+    <desc>Your researchers developed a reliable synthesis process. Medicine production is permanently more efficient.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>600000</timeTillTrigger>
+    <permanentStatModifiers>
+      <li>
+        <stat>RTD_Medicine_ProductionMultiplier</stat>
+        <value>1.15</value>
+      </li>
+    </permanentStatModifiers>
+  </FactionColonies.FCEventDef>
+
+</Defs>

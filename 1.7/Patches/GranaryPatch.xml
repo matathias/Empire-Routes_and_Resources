@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Patch>
+
+	<!-- Patch the base mod's Granary: add food stockpile cap bonus and Cold Storage upgrade -->
+
+	<!-- Ensure modExtensions node exists -->
+	<Operation Class="PatchOperationSequence">
+		<success>Always</success>
+		<operations>
+			<li Class="PatchOperationTest">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="granary"]/modExtensions</xpath>
+				<success>Invert</success>
+			</li>
+			<li Class="PatchOperationAdd">
+				<xpath>/Defs/FactionColonies.BuildingFCDef[defName="granary"]</xpath>
+				<value><modExtensions/></value>
+			</li>
+		</operations>
+	</Operation>
+
+	<!-- Add BuildingNeedExtension with food cap bonus -->
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="granary"]/modExtensions</xpath>
+		<value>
+			<li Class="FactionColonies.SupplyChain.BuildingNeedExtension">
+				<capBonuses>
+					<li><resource>RTD_Food</resource><amount>30</amount></li>
+				</capBonuses>
+			</li>
+		</value>
+	</Operation>
+
+	<!-- Add Cold Storage as an upgrade option -->
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="granary"]</xpath>
+		<value>
+			<upgrades>
+				<li>SC_ColdStorage</li>
+			</upgrades>
+		</value>
+	</Operation>
+
+	<!-- Update description to mention food storage -->
+	<Operation Class="PatchOperationReplace">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="granary"]/desc</xpath>
+		<value><desc>A safe place to store cereal crops from those pesky rats. Also provides additional food stockpile capacity.</desc></value>
+	</Operation>
+
+</Patch>

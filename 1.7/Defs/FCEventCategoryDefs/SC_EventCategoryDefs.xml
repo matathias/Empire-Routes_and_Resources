@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+	<FactionColonies.FCEventCategoryDef>
+		<defName>EC_SupplyChain</defName>
+		<label>Supply Chain</label>
+		<color>(0.3, 0.75, 0.4)</color>
+		<displayOrder>35</displayOrder>
+	</FactionColonies.FCEventCategoryDef>
+
+</Defs>

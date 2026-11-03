@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Routes & Resources - Codex Entry Definitions
+
+    One CodexEntryDef per documented mechanic. Descriptions are deliberately
+    qualitative: they describe direction and relationships, not specific balance
+    constants (penalty sizes, efficiency curves, multiplier caps, demand rates),
+    which are tuned and would drift out of date here.
+
+    Icons reuse existing submod building textures and the shared banner, plus a
+    couple of base-Empire GUI textures (loaded first, so available at runtime).
+    iconPath is optional - a missing texture renders the entry icon-less.
+-->
+<Defs>
+
+    <!-- CATEGORY: Routes & Resources (Logistics) -->
+
+    <FactionColonies.CodexEntryDef>
+        <defName>Codex_SC_Overview</defName>
+        <label>Supply Chains Overview</label>
+        <description>Routes &amp; Resources changes what happens to the goods your settlements produce. Instead of every resource being converted straight to silver, production can be banked as actual stockpiled goods that settlements then draw down to meet their ongoing needs.
+
+You choose how the supply chain works when you start a game, and the choice sets the tone for everything in this section:
+
+[b] - Simple mode.[/b] Your whole empire shares a single pooled stockpile. Production you allocate flows into that one pool, and settlement needs are met from it, shared out across your settlements. There are no routes and no trade network; logistics are largely hands-off.
+
+[b] - Complex mode.[/b] Every settlement keeps its own local stockpile. Goods only move between settlements along supply routes that you set up, and well-connected settlements form a trade network. This is the full logistics game: you decide what each settlement stores, ships, and sells.
+
+Many mechanics in this Codex apply only in one mode - routes and the trade network are Complex-only, for instance. The entries note where that matters.</description>
+        <category>CodexCat_SC_Logistics</category>
+        <displayOrder>0</displayOrder>
+        <iconPath>UI/Banners/Banner-RoutesResources</iconPath>
+        <seeAlso>
+            <li>Codex_SC_Stockpiles</li>
+            <li>Codex_SC_Routes</li>
+            <li>Codex_SC_Needs</li>
+            <li>Codex_ResourceProduction</li>
+        </seeAlso>
+    </FactionColonies.CodexEntryDef>
+
+    <FactionColonies.CodexEntryDef>
+        <defName>Codex_SC_Stockpiles</defName>
+        <label>Stockpiles &amp; Allocation</label>
+        <description>A stockpile is where produced goods are banked instead of being sold. Each resource has a per-settlement allocation that splits its production between the stockpile and your silver income: store more and you bank goods to meet needs and ship around; store less and you take the silver instead. An auto-max toggle simply keeps a resource topped up to whatever it can hold.
+
+In Simple mode, the stockpile and its allocations are faction-wide - one shared pool. In Complex mode, each settlement keeps its own.
+
+Every resource has a storage capacity, and a stockpile cannot hold more than its cap. Anything produced past the cap doesn't pile up - it's automatically sold off for silver at a reduced rate (see [i]Sell Orders &amp; Trade Network[/i]).
+
+Capacity is raised by buildings. The warehouse line (Storehouse, Warehouse, Warehouse Complex, and the Logistics Hub) lifts the cap on all resources, while specialist stores raise specific ones: the Armory and Arsenal hold more weapons, apparel and chemfuel; Cold Storage holds more food; Power Vaults and Reserves hold more power.</description>
+        <category>CodexCat_SC_Logistics</category>
+        <displayOrder>10</displayOrder>
+        <iconPath>Buildings/Warehouse</iconPath>
+        <seeAlso>
+            <li>Codex_SC_SellOrders</li>
+            <li>Codex_SC_Routes</li>
+            <li>Codex_SC_Needs</li>
+            <li>Codex_BuildingSlots</li>
+        </seeAlso>
+    </FactionColonies.CodexEntryDef>
+
+    <FactionColonies.CodexEntryDef>
+        <defName>Codex_SC_Routes</defName>
+        <label>Supply Routes</label>
+        <description>Supply routes are a Complex-mode mechanic. In Simple mode there is nothing to route between, so any routes you have set are kept dormant.
+
+A route is a standing instruction: each cycle, move a set amount of one resource from a source settlement to a destination. Routes are resolved in priority order, so you can decide which deliveries get first claim on a limited stockpile.
+
+Routes are not free of friction. A shipment loses some of its load in transit, and the longer the journey, the less arrives - distant settlements are expensive to supply. Efficiency can be improved: the route-efficiency stat raises throughput, and Distribution Centers and Customs Houses both help goods move more efficiently. Anything that arrives after the destination's stockpile is already full is lost, so don't over-ship into a capped settlement.
+
+You can see your network on the world map: overlay toggles draw your routes between settlements so you can read your logistics at a glance.</description>
+        <category>CodexCat_SC_Logistics</category>
+        <displayOrder>20</displayOrder>
+        <iconPath>Buildings/DistributionCenter</iconPath>
+        <seeAlso>
+            <li>Codex_SC_Stockpiles</li>
+            <li>Codex_SC_SellOrders</li>
+            <li>Codex_SC_Overview</li>
+        </seeAlso>
+    </FactionColonies.CodexEntryDef>
+
+    <FactionColonies.CodexEntryDef>
+        <defName>Codex_SC_SellOrders</defName>
+        <label>Sell Orders &amp; Trade Network</label>
+        <description>A sell order is a standing instruction to convert stockpiled goods into silver. Each cycle it draws a set amount of a resource from the stockpile and sells it. The silver you get is governed by a sell-rate stat, so anything that improves that stat earns you more silver per unit sold. A Customs House, for example, improves a settlement's sell rate. The same rate applies to overflow that is auto-sold when a stockpile is full.
+
+In Simple mode, sell orders draw from the shared faction pool. In Complex mode, they are per-settlement.
+
+The trade network is a Complex-mode bonus layered on top. After routes resolve each cycle, every settlement looks at how it is connected: how many partners it trades with, and how balanced it is between receiving and sending (a true hub does both). Better-connected, better-balanced settlements earn a higher sell rate - up to a cap - and also gain happiness and prosperity. Designating a settlement as a distribution hub, with goods flowing both in and out, pays off here.</description>
+        <category>CodexCat_SC_Logistics</category>
+        <displayOrder>30</displayOrder>
+        <iconPath>Buildings/CustomsHouse</iconPath>
+        <seeAlso>
+            <li>Codex_SC_Stockpiles</li>
+            <li>Codex_SC_TaxEfficiency</li>
+            <li>Codex_ResourceProduction_Tithing</li>
+        </seeAlso>
+    </FactionColonies.CodexEntryDef>
+
+    <FactionColonies.CodexEntryDef>
+        <defName>Codex_SC_Founding</defName>
+        <label>Founding Costs &amp; Distance</label>
+        <description>Routes &amp; Resources changes how new settlements are priced. The base mod scales founding costs by how many settlements you already have; this submod replaces that with a distance-based model instead.
+
+The farther the tile you pick is from your existing network, the more silver it costs to found a settlement there, and the longer it takes to bring online. Settling next door is cheap and quick; planting a far-flung outpost across the planet is a real investment. The founding screen shows the cost for a candidate tile before you commit.
+
+Some settlement types also require resources to found, not just silver. When they do, those goods are drawn from a stockpile at a settlement you choose at founding time, so you'll be asked which of your settlements foots the bill.
+
+In practice this rewards building outward in deliberate steps and keeping a well-stocked settlement near your frontier to seed the next one.</description>
+        <category>CodexCat_SC_Logistics</category>
+        <displayOrder>40</displayOrder>
+        <iconPath>Buildings/TradePost</iconPath>
+        <seeAlso>
+            <li>Codex_FirstSettlement</li>
+            <li>Codex_FoundingFaction</li>
+            <li>Codex_SC_Stockpiles</li>
+        </seeAlso>
+    </FactionColonies.CodexEntryDef>
+
+    <!-- CATEGORY: Settlement Needs -->
+
+    <FactionColonies.CodexEntryDef>
+        <defName>Codex_SC_Needs</defName>
+        <label>Settlement Needs</label>
+        <description>Every settlement has ongoing needs that must be met from stockpiled goods each cycle. There are four:
+
+ - Food keeps the settlement fed.
+ - Power keeps it running.
+ - Medicine keeps it healthy.
+ - Building Materials keep it maintained.
+
+How much a settlement demands scales with its size - some needs grow with its workforce, others with its level. The resources that satisfy a need also shift as your faction advances: a need met by simple materials early on may draw on more industrial inputs at higher tech.
+
+Each day, the settlement's demand is checked against what's available, and satisfaction is simply the share of demand that was met. A fully supplied settlement is satisfied; a half-supplied one is half-satisfied.
+
+Some buildings add their own draw on the stockpile. Cold Storage consumes power to run; Power Vaults and Reserves consume mining output. Building inputs work differently from settlement needs: a building is supplied all-or-nothing. If the stockpile can't cover a building's full inputs for the day, that building goes dormant - it produces nothing, grants no bonus, and costs no upkeep until its inputs are available again.
+
+What meeting, missing, or exceeding these needs actually does to a settlement is covered in Need Consequences.</description>
+        <category>CodexCat_SC_Needs</category>
+        <displayOrder>0</displayOrder>
+        <iconPath>Buildings/ColdStorage</iconPath>
+        <seeAlso>
+            <li>Codex_SC_NeedConsequences</li>
+            <li>Codex_SC_Stockpiles</li>
+            <li>Codex_WorkerOverwork</li>
+            <li>Codex_TechProgression</li>
+        </seeAlso>
+    </FactionColonies.CodexEntryDef>
+
+    <FactionColonies.CodexEntryDef>
+        <defName>Codex_SC_NeedConsequences</defName>
+        <label>Need Consequences</label>
+        <description>Meeting a settlement's needs is paramount to its wellbeing.
+
+[b]Falling short.[/b] When a need goes unmet, the settlement suffers: happiness and loyalty fall, unrest rises, and prosperity erodes over time. The deeper and more sustained the shortfall, the heavier the toll.
+
+[b]Going beyond.[/b] A sustained surplus, up to a point, is rewarded rather than wasted - comfortably oversupplied settlements gain in their social stats. Stockpiling beyond that point brings no further bonus.
+
+[b]The catch.[/b] Normally a settlement slowly heals on its own - happiness and loyalty drift up, unrest drifts down, day by day. But while any need is in shortfall, that natural recovery is suppressed: a struggling settlement will not passively climb out of its hole. Restore its supply and the natural recovery resumes.</description>
+        <category>CodexCat_SC_Needs</category>
+        <displayOrder>20</displayOrder>
+        <iconPath>GUI/Prosperity</iconPath>
+        <seeAlso>
+            <li>Codex_SC_Needs</li>
+            <li>Codex_SocialStats</li>
+            <li>Codex_Prosperity</li>
+        </seeAlso>
+    </FactionColonies.CodexEntryDef>
+
+    <FactionColonies.CodexEntryDef>
+        <defName>Codex_SC_TaxEfficiency</defName>
+        <label>Tax Efficiency &amp; Tithe Injection</label>
+        <description>Allocating production to stockpiles instead of selling it would normally cut your silver income. Two mechanics let you manage that trade-off.
+
+[b]Tax efficiency.[/b] A settlement's silver income is multiplied by a factor that rises with how well its needs are met. A well-supplied settlement pays more than its raw output suggests; a neglected one pays less.
+
+[b]Tithe injection.[/b] Sometimes you'd rather turn a surplus into delivered goods than silver. Per-settlement, per-resource sliders let you divert stockpiled goods into the tithe budget before tax is calculated, so a settlement sitting on a pile of resources can ship them to you instead of letting them sit. You only draw what's actually in the stockpile.
+
+Together, these turn a healthy supply chain into income: satisfied settlements pay better, and surpluses can be cashed out as goods.</description>
+        <category>CodexCat_SC_Needs</category>
+        <displayOrder>30</displayOrder>
+        <iconPath>GUI/ProductionFood</iconPath>
+        <seeAlso>
+            <li>Codex_SC_Needs</li>
+            <li>Codex_TaxOverview</li>
+            <li>Codex_ResourceProduction_Tithing</li>
+        </seeAlso>
+    </FactionColonies.CodexEntryDef>
+
+</Defs>

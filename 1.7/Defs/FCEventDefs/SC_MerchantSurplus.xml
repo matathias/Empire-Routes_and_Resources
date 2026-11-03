@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_merchantSurplus</defName>
+    <label>Merchant Surplus</label>
+    <desc>A merchant caravan is offloading surplus goods at bargain prices. They're eager to shed weight before moving on. What's your play?</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>0</timeTillTrigger>
+    <activateAtStart>true</activateAtStart>
+    <cooldownTicks>300000</cooldownTicks>
+    <isRandomEvent>true</isRandomEvent>
+    <weight>12</weight>
+    <minDaysSinceFounded>5</minDaysSinceFounded>
+    <rangeSettlementsAffected>1~2</rangeSettlementsAffected>
+    <incompatibleEvents>
+      <li>sc_merchantSurplus</li>
+      <li>sc_famineCrisis</li>
+    </incompatibleEvents>
+    <options>
+      <li>sc_merchantSurplus_opt1</li>
+      <li>sc_merchantSurplus_opt2</li>
+      <li>sc_merchantSurplus_opt3</li>
+    </options>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_merchantSurplus_opt1</defName>
+    <label>Buy the lot. Take everything they're selling.</label>
+    <parentEvent>sc_merchantSurplus</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <silverCost>800</silverCost>
+    <successEvent>sc_merchantSurplus_bought</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_merchantSurplus_opt2</defName>
+    <label>Take what's free. No need to spend silver.</label>
+    <parentEvent>sc_merchantSurplus</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_merchantSurplus_free</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_merchantSurplus_opt3</defName>
+    <label>Sell it forward. Flip the goods for silver.</label>
+    <parentEvent>sc_merchantSurplus</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <silverCost>200</silverCost>
+    <successEvent>sc_merchantSurplus_flipped</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_merchantSurplus_bought</defName>
+    <label>Bulk Purchase</label>
+    <desc>You bought out the entire caravan. Warehouses are overflowing with goods at a fraction of the usual cost.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>1500</timeTillTrigger>
+    <modExtensions>
+      <li Class="FactionColonies.SupplyChain.SCEventHandler_Stockpile">
+        <baseAmount>6</baseAmount>
+        <perWorkerAmount>0.4</perWorkerAmount>
+      </li>
+    </modExtensions>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_merchantSurplus_free</defName>
+    <label>Free Goods</label>
+    <desc>The merchants left behind what they couldn't carry. Not a fortune, but free is free.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>1500</timeTillTrigger>
+    <modExtensions>
+      <li Class="FactionColonies.SupplyChain.SCEventHandler_Stockpile">
+        <baseAmount>3</baseAmount>
+        <perWorkerAmount>0.2</perWorkerAmount>
+      </li>
+    </modExtensions>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_merchantSurplus_flipped</defName>
+    <label>Quick Profit</label>
+    <desc>Your traders bought low and sold high. A tidy pile of silver for a day's work, though the warehouses stay lean.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>1500</timeTillTrigger>
+    <modExtensions>
+      <li Class="FactionColonies.SupplyChain.SCEventHandler_Stockpile">
+        <baseAmount>1.5</baseAmount>
+        <perWorkerAmount>0.1</perWorkerAmount>
+        <convertToSilver>true</convertToSilver>
+      </li>
+    </modExtensions>
+  </FactionColonies.FCEventDef>
+
+</Defs>

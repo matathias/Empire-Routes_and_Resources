@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_warehouseFire</defName>
+    <label>Warehouse Fire</label>
+    <desc>A fire has broken out in one of your settlement's warehouses. Stockpiled goods are going up in smoke. How do you respond?</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>0</timeTillTrigger>
+    <activateAtStart>true</activateAtStart>
+    <cooldownTicks>600000</cooldownTicks>
+    <isRandomEvent>true</isRandomEvent>
+    <weight>8</weight>
+    <minDaysSinceFounded>7</minDaysSinceFounded>
+    <rangeSettlementsAffected>1~1</rangeSettlementsAffected>
+    <incompatibleEvents>
+      <li>sc_warehouseFire</li>
+    </incompatibleEvents>
+    <options>
+      <li>sc_warehouseFire_opt1</li>
+      <li>sc_warehouseFire_opt2</li>
+      <li>sc_warehouseFire_opt3</li>
+    </options>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_warehouseFire_opt1</defName>
+    <label>Let it burn. We'll rebuild.</label>
+    <parentEvent>sc_warehouseFire</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_warehouseFire_burned</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_warehouseFire_opt2</defName>
+    <label>Mobilize workers to fight the fire.</label>
+    <parentEvent>sc_warehouseFire</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <silverCost>300</silverCost>
+    <successEvent>sc_warehouseFire_contained</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_warehouseFire_opt3</defName>
+    <label>Salvage what we can and sell the rest for scrap.</label>
+    <parentEvent>sc_warehouseFire</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <silverCost>100</silverCost>
+    <successEvent>sc_warehouseFire_salvaged</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_warehouseFire_burned</defName>
+    <label>Warehouse Gutted</label>
+    <desc>The warehouse is a total loss. Workers sift through charred remains, salvaging nothing.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>happinessLostBase</stat>
+        <value>2</value>
+      </li>
+    </statModifiers>
+    <modExtensions>
+      <li Class="FactionColonies.SupplyChain.SCEventHandler_Stockpile">
+        <mult>0.6</mult>
+      </li>
+    </modExtensions>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_warehouseFire_contained</defName>
+    <label>Fire Contained</label>
+    <desc>Quick action saved most of the stockpile, though the effort cost silver and sweat.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>60000</timeTillTrigger>
+    <modExtensions>
+      <li Class="FactionColonies.SupplyChain.SCEventHandler_Stockpile">
+        <mult>0.85</mult>
+      </li>
+    </modExtensions>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_warehouseFire_salvaged</defName>
+    <label>Goods Salvaged</label>
+    <desc>The damaged goods were sold off cheap. Not ideal, but better than a pile of ash.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>60000</timeTillTrigger>
+    <modExtensions>
+      <li Class="FactionColonies.SupplyChain.SCEventHandler_Stockpile">
+        <mult>0.7</mult>
+        <convertToSilver>true</convertToSilver>
+      </li>
+    </modExtensions>
+  </FactionColonies.FCEventDef>
+
+</Defs>

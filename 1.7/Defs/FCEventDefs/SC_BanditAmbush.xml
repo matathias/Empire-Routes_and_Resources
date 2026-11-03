@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_banditAmbush</defName>
+    <label>Supply Route Ambush</label>
+    <desc>Bandits have been hitting supply caravans along your trade routes. Goods are disappearing before reaching their destinations. How do you respond?</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>0</timeTillTrigger>
+    <activateAtStart>true</activateAtStart>
+    <cooldownTicks>300000</cooldownTicks>
+    <isRandomEvent>true</isRandomEvent>
+    <weight>12</weight>
+    <minDaysSinceFounded>5</minDaysSinceFounded>
+    <rangeSettlementsAffected>1~3</rangeSettlementsAffected>
+    <incompatibleEvents>
+      <li>sc_banditAmbush</li>
+      <li>sc_securedRoutes</li>
+    </incompatibleEvents>
+    <options>
+      <li>sc_banditAmbush_opt1</li>
+      <li>sc_banditAmbush_opt2</li>
+      <li>sc_banditAmbush_opt3</li>
+      <li>sc_banditAmbush_opt4</li>
+    </options>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_banditAmbush_opt1</defName>
+    <label>Hire mercenaries to guard the routes.</label>
+    <parentEvent>sc_banditAmbush</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <silverCost>500</silverCost>
+    <successEvent>sc_banditAmbush_mercs</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_banditAmbush_opt2</defName>
+    <label>Set a trap. Ambush the ambushers.</label>
+    <parentEvent>sc_banditAmbush</parentEvent>
+    <baseChanceOfSuccess>55</baseChanceOfSuccess>
+    <successEvent>sc_banditAmbush_trapped</successEvent>
+    <failEvent>sc_banditAmbush_trapFailed</failEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_banditAmbush_opt3</defName>
+    <label>Pay them off. Tribute is cheaper than war.</label>
+    <parentEvent>sc_banditAmbush</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <silverCost>300</silverCost>
+    <successEvent>sc_banditAmbush_tribute</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_banditAmbush_opt4</defName>
+    <label>Deploy garrison patrols to sweep the area.</label>
+    <parentEvent>sc_banditAmbush</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_banditAmbush_patrols</successEvent>
+    <requiredPolicies>
+      <li>militaristic</li>
+    </requiredPolicies>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_banditAmbush_mercs</defName>
+    <label>Mercenary Escort</label>
+    <desc>Hired swords ride alongside your caravans. The bandits still lurk, but losses have been cut drastically.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>360000</timeTillTrigger>
+    <timeTillTriggerMax>480000</timeTillTriggerMax>
+    <statModifiers>
+      <li>
+        <stat>SC_RouteEfficiencyBonus</stat>
+        <value>0.05</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_banditAmbush_trapped</defName>
+    <label>Bandits Routed</label>
+    <desc>Your ambush worked perfectly. The bandits scattered into the wilderness, and the roads are safer than ever.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <timeTillTriggerMax>450000</timeTillTriggerMax>
+    <statModifiers>
+      <li>
+        <stat>SC_RouteEfficiencyBonus</stat>
+        <value>0.05</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_banditAmbush_trapFailed</defName>
+    <label>Ambush Backfired</label>
+    <desc>The trap failed spectacularly. The bandits were ready for it, and your forces took heavy losses. Routes are in worse shape than before.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <timeTillTriggerMax>450000</timeTillTriggerMax>
+    <statModifiers>
+      <li>
+        <stat>SC_RouteEfficiencyBonus</stat>
+        <value>-0.2</value>
+      </li>
+      <li>
+        <stat>unrestGainedBase</stat>
+        <value>2</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_banditAmbush_tribute</defName>
+    <label>Uneasy Peace</label>
+    <desc>The bandits took your silver and left the caravans alone. But your people aren't happy about paying off criminals.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <timeTillTriggerMax>450000</timeTillTriggerMax>
+    <statModifiers>
+      <li>
+        <stat>loyaltyLostBase</stat>
+        <value>1</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_banditAmbush_patrols</defName>
+    <label>Garrison Patrols</label>
+    <desc>Your standing forces made quick work of the bandit camps. The roads are clear, and your military reputation keeps new threats at bay.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <timeTillTriggerMax>450000</timeTillTriggerMax>
+    <statModifiers>
+      <li>
+        <stat>SC_RouteEfficiencyBonus</stat>
+        <value>0.1</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+</Defs>

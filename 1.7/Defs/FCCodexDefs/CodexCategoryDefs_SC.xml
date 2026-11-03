@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Routes & Resources - Codex Category Definitions
+
+    These CodexCategoryDefs group the submod's Codex entries in the in-game
+    Empire Codex. Entries are auto-discovered from the DefDatabase and grouped
+    by category.modId, so no base-mod changes or registration are needed.
+
+    NOTE: modId must be the package id in ALL LOWERCASE. RimWorld stores
+    ModContentPack.PackageId lowercased, and CodexCategoryDef.PackMatchesModId
+    compares against it directly. The base mod uses "matathias.empire" (lower)
+    for the same reason. Mixed case still groups the entries, but the left-pane
+    group header degrades to the raw packageId and the patch-note banner
+    fallback stops working.
+-->
+<Defs>
+
+    <FactionColonies.CodexCategoryDef>
+        <defName>CodexCat_SC_Logistics</defName>
+        <label>Routes &amp; Resources</label>
+        <description>Supply chains, stockpiles, routes, sell orders, and the trade network introduced by Routes &amp; Resources.</description>
+        <color>(0.20, 0.55, 0.70)</color>
+        <displayOrder>10</displayOrder>
+        <modId>matathias.empire.supplychain</modId>
+        <bannerPath>UI/Banners/Banner-RoutesResources</bannerPath>
+    </FactionColonies.CodexCategoryDef>
+
+    <FactionColonies.CodexCategoryDef>
+        <defName>CodexCat_SC_Needs</defName>
+        <label>Settlement Needs</label>
+        <description>Settlement demand for food, power, medicine, and materials - and the consequences of meeting or missing it.</description>
+        <color>(0.80, 0.45, 0.20)</color>
+        <displayOrder>20</displayOrder>
+        <modId>matathias.empire.supplychain</modId>
+        <bannerPath>UI/Banners/Banner-RoutesResources</bannerPath>
+    </FactionColonies.CodexCategoryDef>
+
+</Defs>

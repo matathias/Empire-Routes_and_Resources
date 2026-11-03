@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_spoilage</defName>
+    <label>Food Spoilage</label>
+    <desc>Food stores have begun to rot. Workers report a foul stench from the warehouses, and contamination is spreading. How do you handle it?</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>0</timeTillTrigger>
+    <activateAtStart>true</activateAtStart>
+    <cooldownTicks>600000</cooldownTicks>
+    <isRandomEvent>true</isRandomEvent>
+    <weight>10</weight>
+    <minDaysSinceFounded>7</minDaysSinceFounded>
+    <rangeSettlementsAffected>1~1</rangeSettlementsAffected>
+    <restrictedBiomes>
+      <li>IceSheet</li>
+      <li>SeaIce</li>
+      <li>Tundra</li>
+    </restrictedBiomes>
+    <requiredResource>RTD_Food</requiredResource>
+    <incompatibleEvents>
+      <li>sc_spoilage</li>
+      <li>sc_windfallHarvest</li>
+    </incompatibleEvents>
+    <options>
+      <li>sc_spoilage_opt1</li>
+      <li>sc_spoilage_opt2</li>
+      <li>sc_spoilage_opt3</li>
+      <li>sc_spoilage_opt4</li>
+    </options>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_spoilage_opt1</defName>
+    <label>Rush cold storage measures. Spend silver to save food.</label>
+    <parentEvent>sc_spoilage</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <silverCost>400</silverCost>
+    <successEvent>sc_spoilage_coldStorage</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_spoilage_opt2</defName>
+    <label>Distribute it before it goes bad. Extra rations for everyone.</label>
+    <parentEvent>sc_spoilage</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <silverCost>100</silverCost>
+    <successEvent>sc_spoilage_distributed</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_spoilage_opt3</defName>
+    <label>Let it rot. Cut our losses.</label>
+    <parentEvent>sc_spoilage</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_spoilage_rotted</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_spoilage_opt4</defName>
+    <label>Apply preservation techniques from our researchers.</label>
+    <parentEvent>sc_spoilage</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_spoilage_preserved</successEvent>
+    <requiredPolicies>
+      <li>technocratic</li>
+    </requiredPolicies>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_spoilage_coldStorage</defName>
+    <label>Emergency Cold Storage</label>
+    <desc>Hastily assembled cooling systems saved the bulk of the food. A costly but effective intervention.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>1500</timeTillTrigger>
+    <modExtensions>
+      <li Class="FactionColonies.SupplyChain.SCEventHandler_Stockpile">
+        <resource>RTD_Food</resource>
+        <mult>0.9</mult>
+      </li>
+    </modExtensions>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_spoilage_distributed</defName>
+    <label>Emergency Rations</label>
+    <desc>Workers handed out food before it turned. Settlers enjoyed generous portions, and morale ticked up despite the waste.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>1500</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>happinessGainedBase</stat>
+        <value>0.5</value>
+      </li>
+    </statModifiers>
+    <modExtensions>
+      <li Class="FactionColonies.SupplyChain.SCEventHandler_Stockpile">
+        <resource>RTD_Food</resource>
+        <mult>0.85</mult>
+      </li>
+    </modExtensions>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_spoilage_rotted</defName>
+    <label>Food Lost</label>
+    <desc>A quarter of the food stores are ruined. The stench lingers as workers cart away the mess.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>1500</timeTillTrigger>
+    <modExtensions>
+      <li Class="FactionColonies.SupplyChain.SCEventHandler_Stockpile">
+        <resource>RTD_Food</resource>
+        <mult>0.75</mult>
+      </li>
+    </modExtensions>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_spoilage_preserved</defName>
+    <label>Scientific Preservation</label>
+    <desc>Your researchers applied advanced preservation methods. Almost nothing was lost, and they've improved food handling protocols going forward.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>RTD_Food_ProductionMultiplier</stat>
+        <value>1.05</value>
+      </li>
+    </statModifiers>
+    <modExtensions>
+      <li Class="FactionColonies.SupplyChain.SCEventHandler_Stockpile">
+        <resource>RTD_Food</resource>
+        <mult>0.95</mult>
+      </li>
+    </modExtensions>
+  </FactionColonies.FCEventDef>
+
+</Defs>

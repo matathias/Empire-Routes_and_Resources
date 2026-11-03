@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+	<FactionColonies.PatchNoteDef ParentName="SCPatchBase">
+		<defName>SC_0_1_0</defName>
+		<label>Initial version</label>
+		<description>First &apos;official&apos; version. Mod already in alpha.</description>
+		<releaseDate>2026-04-03</releaseDate>
+		<patchNoteType>Major</patchNoteType>
+		<patchNoteLines>
+		<li>Initial version</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
+</Defs>

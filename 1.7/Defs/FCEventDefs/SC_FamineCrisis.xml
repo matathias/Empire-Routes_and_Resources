@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_famineCrisis</defName>
+    <label>Famine Season</label>
+    <desc>A prolonged dry spell has withered crops across the region. Food demand spikes as settlers grow restless.
+
+How do you respond to the crisis?</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>0</timeTillTrigger>
+    <activateAtStart>true</activateAtStart>
+    <cooldownTicks>900000</cooldownTicks>
+    <isRandomEvent>true</isRandomEvent>
+    <weight>6</weight>
+    <minDaysSinceFounded>10</minDaysSinceFounded>
+    <rangeSettlementsAffected>1~3</rangeSettlementsAffected>
+    <restrictedBiomes>
+      <li>IceSheet</li>
+      <li>SeaIce</li>
+    </restrictedBiomes>
+    <requiredResource>RTD_Food</requiredResource>
+    <incompatibleEvents>
+      <li>sc_famineCrisis</li>
+      <li>sc_merchantSurplus</li>
+      <li>sc_windfallHarvest</li>
+    </incompatibleEvents>
+    <options>
+      <li>sc_famineCrisis_opt1</li>
+      <li>sc_famineCrisis_opt2</li>
+      <li>sc_famineCrisis_opt3</li>
+      <li>sc_famineCrisis_opt4</li>
+    </options>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_famineCrisis_opt1</defName>
+    <label>Import emergency food supplies from outside.</label>
+    <parentEvent>sc_famineCrisis</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <silverCost>1000</silverCost>
+    <successEvent>sc_famineCrisis_imported</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_famineCrisis_opt2</defName>
+    <label>Enforce strict rationing. Nobody starves, nobody feasts.</label>
+    <parentEvent>sc_famineCrisis</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_famineCrisis_rationed</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_famineCrisis_opt3</defName>
+    <label>Redirect all production toward food.</label>
+    <parentEvent>sc_famineCrisis</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_famineCrisis_redirected</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_famineCrisis_opt4</defName>
+    <label>Seize private food stores for redistribution.</label>
+    <parentEvent>sc_famineCrisis</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_famineCrisis_seized</successEvent>
+    <requiredPolicies>
+      <li>authoritarian</li>
+    </requiredPolicies>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_famineCrisis_imported</defName>
+    <label>Emergency Food Imports</label>
+    <desc>Caravans loaded with grain and preserved meats have arrived. The drought still hurts production, but nobody goes hungry.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>RTD_Food_ProductionMultiplier</stat>
+        <value>0.9</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_famineCrisis_rationed</defName>
+    <label>Strict Rationing</label>
+    <desc>Every morsel is counted and divided. The settlers hate it, but there's no unrest — everyone knows the rules are fair.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>600000</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>RTD_Food_ProductionMultiplier</stat>
+        <value>0.85</value>
+      </li>
+      <li>
+        <stat>happinessLostBase</stat>
+        <value>3</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_famineCrisis_redirected</defName>
+    <label>All Hands to the Fields</label>
+    <desc>Miners, weavers, and smiths have been reassigned to food production. Crops are recovering, but everything else has ground to a halt.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>600000</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>workerProductionMultiplier</stat>
+        <value>0.85</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_famineCrisis_seized</defName>
+    <label>Requisitioned Stores</label>
+    <desc>Soldiers go door to door, collecting private food caches. The people are fed, but furious at the intrusions and seizures. Whispers of resistance spread.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>600000</timeTillTrigger>
+    <statModifiers>
+      <li>
+        <stat>loyaltyLostBase</stat>
+        <value>2</value>
+      </li>
+      <li>
+        <stat>unrestGainedBase</stat>
+        <value>1</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+</Defs>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Patch>
+
+	<!-- Upgrade the base mod's Trading Post with supply chain bonuses -->
+
+	<!-- Increase cost from 250 to 600 -->
+	<Operation Class="PatchOperationReplace">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="tradingPost"]/cost</xpath>
+		<value><cost>600</cost></value>
+	</Operation>
+
+	<!-- Add upkeep (base def has none) -->
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="tradingPost"]</xpath>
+		<value><upkeep>75</upkeep></value>
+	</Operation>
+
+	<!-- Add supply chain stat modifiers -->
+	<Operation Class="PatchOperationAdd">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="tradingPost"]/statModifiers</xpath>
+		<value>
+			<li><stat>SC_SellRateMultiplier</stat><value>1.15</value></li>
+			<li><stat>happinessGainedBase</stat><value>0.2</value></li>
+		</value>
+	</Operation>
+
+	<!-- Update description to mention trade route benefits -->
+	<Operation Class="PatchOperationReplace">
+		<xpath>/Defs/FactionColonies.BuildingFCDef[defName="tradingPost"]/desc</xpath>
+		<value><desc>A small outpost that roving traders frequent. Also improves the rates your settlements get when selling goods on the market.</desc></value>
+	</Operation>
+
+</Patch>

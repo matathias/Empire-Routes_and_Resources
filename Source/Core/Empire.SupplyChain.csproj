@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <!-- Shared settings (framework, language version, RimWorld/Harmony refs) live in ../Directory.Build.props -->
+    <PropertyGroup>
+        <OutputPath>..\..\1.7\Assemblies</OutputPath>
+        <BaseOutputPath>..\..\1.7\Assemblies</BaseOutputPath>
+        <AssemblyName>Empire.SupplyChain</AssemblyName>
+        <RootNamespace>FactionColonies.SupplyChain</RootNamespace>
+        <AssemblyVersion>1.0.7.0</AssemblyVersion>
+        <FileVersion>1.0.7.0</FileVersion>
+    </PropertyGroup>
+    <ItemGroup>
+        <!-- Empire main mod -->
+        <Reference Include="Empire">
+            <HintPath>..\..\..\Empire\1.7\Assemblies\Empire.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+    </ItemGroup>
+</Project>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_securedRoutes</defName>
+    <label>Secured Trade Routes</label>
+    <desc>Local militias have cleared the roads and fair weather has made for smooth caravan travel. Supply routes are running at peak efficiency. How do you capitalize on the good conditions?</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>0</timeTillTrigger>
+    <activateAtStart>true</activateAtStart>
+    <cooldownTicks>600000</cooldownTicks>
+    <isRandomEvent>true</isRandomEvent>
+    <weight>8</weight>
+    <minDaysSinceFounded>10</minDaysSinceFounded>
+    <rangeSettlementsAffected>1~3</rangeSettlementsAffected>
+    <incompatibleEvents>
+      <li>sc_banditAmbush</li>
+      <li>sc_securedRoutes</li>
+    </incompatibleEvents>
+    <options>
+      <li>sc_securedRoutes_opt1</li>
+      <li>sc_securedRoutes_opt2</li>
+      <li>sc_securedRoutes_opt3</li>
+    </options>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_securedRoutes_opt1</defName>
+    <label>Invest in road improvements while conditions are good.</label>
+    <parentEvent>sc_securedRoutes</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <silverCost>600</silverCost>
+    <successEvent>sc_securedRoutes_invested</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_securedRoutes_opt2</defName>
+    <label>Business as usual. Enjoy the smooth sailing.</label>
+    <parentEvent>sc_securedRoutes</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_securedRoutes_standard</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCOptionDef>
+    <defName>sc_securedRoutes_opt3</defName>
+    <label>Give the caravan crews some rest. They've earned it.</label>
+    <parentEvent>sc_securedRoutes</parentEvent>
+    <baseChanceOfSuccess>100</baseChanceOfSuccess>
+    <successEvent>sc_securedRoutes_rested</successEvent>
+  </FactionColonies.FCOptionDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_securedRoutes_invested</defName>
+    <label>Road Improvements</label>
+    <desc>Workers are reinforcing bridges and widening paths. The investment will keep routes efficient long after the good weather fades.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>600000</timeTillTrigger>
+    <timeTillTriggerMax>900000</timeTillTriggerMax>
+    <statModifiers>
+      <li>
+        <stat>SC_RouteEfficiencyBonus</stat>
+        <value>0.1</value>
+      </li>
+      <li>
+        <stat>SC_SellRateMultiplier</stat>
+        <value>1.05</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_securedRoutes_standard</defName>
+    <label>Smooth Operations</label>
+    <desc>Caravans move swiftly along safe roads. A welcome reprieve from the usual hazards of overland trade.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <timeTillTriggerMax>450000</timeTillTriggerMax>
+    <statModifiers>
+      <li>
+        <stat>SC_RouteEfficiencyBonus</stat>
+        <value>0.1</value>
+      </li>
+      <li>
+        <stat>happinessGainedBase</stat>
+        <value>0.5</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+  <FactionColonies.FCEventDef>
+    <defName>sc_securedRoutes_rested</defName>
+    <label>Well-Rested Crews</label>
+    <desc>The caravan crews are rotating shifts and catching up on sleep. Morale is high, even if the routes run a bit slower.</desc>
+    <category>EC_SupplyChain</category>
+    <timeTillTrigger>300000</timeTillTrigger>
+    <timeTillTriggerMax>450000</timeTillTriggerMax>
+    <statModifiers>
+      <li>
+        <stat>SC_RouteEfficiencyBonus</stat>
+        <value>0.05</value>
+      </li>
+      <li>
+        <stat>happinessGainedBase</stat>
+        <value>1.5</value>
+      </li>
+    </statModifiers>
+  </FactionColonies.FCEventDef>
+
+</Defs>

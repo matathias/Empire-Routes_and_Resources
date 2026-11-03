@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+    <FactionColonies.SupplyChain.SettlementNeedDef>
+        <defName>Need_Food</defName>
+        <label>food</label>
+        <description>Workers need food to stay healthy and productive.</description>
+        <resources>
+            <li><resource>RTD_Food</resource></li>
+        </resources>
+        <baseAmount>0.5</baseAmount>
+        <scaling>PerWorker</scaling>
+        <penalties>
+            <li>
+                <stat>happinessLostBase</stat>
+                <penaltyPerUnit>0.6</penaltyPerUnit>
+                <label>happiness</label>
+            </li>
+            <li>
+                <stat>loyaltyLostBase</stat>
+                <penaltyPerUnit>0.4</penaltyPerUnit>
+                <label>loyalty</label>
+            </li>
+        </penalties>
+        <surplusBonuses>
+            <li>
+                <stat>happinessGainedBase</stat>
+                <maxBonus>3.0</maxBonus>
+                <label>food abundance</label>
+            </li>
+        </surplusBonuses>
+        <maxSurplusRatio>2.0</maxSurplusRatio>
+    </FactionColonies.SupplyChain.SettlementNeedDef>
+
+</Defs>

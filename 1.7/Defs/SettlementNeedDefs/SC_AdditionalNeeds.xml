@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+	<FactionColonies.SupplyChain.SettlementNeedDef>
+		<defName>Need_Power</defName>
+		<label>power</label>
+		<description>Settlements require power to maintain infrastructure and keep buildings running.</description>
+		<resources>
+			<li><resource>RTD_Power</resource></li>
+		</resources>
+		<baseAmount>0.25</baseAmount>
+		<scaling>PerLevel</scaling>
+		<minTechLevel>Industrial</minTechLevel>
+		<penalties>
+			<li>
+				<stat>happinessLostBase</stat>
+				<penaltyPerUnit>1.5</penaltyPerUnit>
+				<label>happiness</label>
+			</li>
+			<li>
+				<stat>unrestGainedBase</stat>
+				<penaltyPerUnit>0.8</penaltyPerUnit>
+				<label>unrest</label>
+			</li>
+		</penalties>
+		<surplusBonuses>
+			<li>
+				<stat>unrestLostBase</stat>
+				<maxBonus>2.0</maxBonus>
+				<label>reliable power</label>
+			</li>
+		</surplusBonuses>
+		<maxSurplusRatio>2.0</maxSurplusRatio>
+	</FactionColonies.SupplyChain.SettlementNeedDef>
+
+	<FactionColonies.SupplyChain.SettlementNeedDef>
+		<defName>Need_Medicine</defName>
+		<label>medicine</label>
+		<description>Workers need access to medicine to stay healthy and productive.</description>
+		<resources>
+			<li><resource>RTD_Medicine</resource></li>
+		</resources>
+		<baseAmount>0.15</baseAmount>
+		<scaling>PerWorker</scaling>
+		<penalties>
+			<li>
+				<stat>happinessLostBase</stat>
+				<penaltyPerUnit>1.0</penaltyPerUnit>
+				<label>happiness</label>
+			</li>
+		</penalties>
+		<surplusBonuses>
+			<li>
+				<stat>loyaltyGainedBase</stat>
+				<maxBonus>2.0</maxBonus>
+				<label>medical surplus</label>
+			</li>
+		</surplusBonuses>
+		<maxSurplusRatio>2.0</maxSurplusRatio>
+	</FactionColonies.SupplyChain.SettlementNeedDef>
+
+	<FactionColonies.SupplyChain.SettlementNeedDef>
+		<defName>Need_BuildingMaterials</defName>
+		<label>building materials</label>
+		<description>Settlements require a steady supply of building materials for maintenance and repairs.</description>
+		<resources>
+			<li>
+				<resource>RTD_Logging</resource>
+				<weightsByTech>
+					<li><level>Neolithic</level><weight>1.0</weight></li>
+					<li><level>Medieval</level><weight>0.75</weight></li>
+					<li><level>Industrial</level><weight>0.5</weight></li>
+					<li><level>Spacer</level><weight>0.25</weight></li>
+					<li><level>Ultra</level><weight>0.0</weight></li>
+					<li><level>Archotech</level><weight>0.0</weight></li>
+				</weightsByTech>
+			</li>
+			<li>
+				<resource>RTD_Mining</resource>
+				<weightsByTech>
+					<li><level>Neolithic</level><weight>0.0</weight></li>
+					<li><level>Medieval</level><weight>0.25</weight></li>
+					<li><level>Industrial</level><weight>0.5</weight></li>
+					<li><level>Spacer</level><weight>0.75</weight></li>
+					<li><level>Ultra</level><weight>1.0</weight></li>
+					<li><level>Archotech</level><weight>1.0</weight></li>
+				</weightsByTech>
+			</li>
+		</resources>
+		<baseAmount>0.2</baseAmount>
+		<scaling>PerLevel</scaling>
+		<penalties>
+			<li>
+				<stat>loyaltyLostBase</stat>
+				<penaltyPerUnit>1.5</penaltyPerUnit>
+				<label>loyalty</label>
+			</li>
+		</penalties>
+		<surplusBonuses>
+			<li>
+				<stat>prosperityGainedBase</stat>
+				<maxBonus>2.0</maxBonus>
+				<label>strong infrastructure</label>
+			</li>
+		</surplusBonuses>
+		<maxSurplusRatio>2.0</maxSurplusRatio>
+	</FactionColonies.SupplyChain.SettlementNeedDef>
+
+</Defs>
