@@ -2,121 +2,120 @@ using System.Collections.Generic;
 using RimWorld.Planet;
 using Verse;
 
-namespace FactionColonies.SupplyChain
+namespace FactionColonies.SupplyChain;
+
+public static class SupplyChainCache
 {
-    public static class SupplyChainCache
+    private static WorldComponent_SupplyChain _comp;
+
+    // BuildingFCDef -> BuildingNeedExtension lookup cache (defs don't change mid-game)
+    private static Dictionary<BuildingFCDef, BuildingNeedExtension> _buildingExtCache
+        = new Dictionary<BuildingFCDef, BuildingNeedExtension>();
+
+    // Settlement -> WorldObjectComp_SupplyChain lookup cache
+    private static Dictionary<WorldSettlementFC, WorldObjectComp_SupplyChain> _compCache
+        = new Dictionary<WorldSettlementFC, WorldObjectComp_SupplyChain>();
+
+    // Settlement -> WorldObjectComp_SettlementNeeds lookup cache
+    private static Dictionary<WorldSettlementFC, WorldObjectComp_SettlementNeeds> _needsCompCache
+        = new Dictionary<WorldSettlementFC, WorldObjectComp_SettlementNeeds>();
+
+    // Cached def lists (defs don't change mid-game)
+    private static List<SettlementNeedDef> _cachedNeedDefs;
+    private static List<ResourceTypeDef> _cachedResourceTypeDefs;
+
+    public static WorldComponent_SupplyChain Comp
     {
-        private static WorldComponent_SupplyChain _comp;
-
-        // BuildingFCDef -> BuildingNeedExtension lookup cache (defs don't change mid-game)
-        private static Dictionary<BuildingFCDef, BuildingNeedExtension> _buildingExtCache
-            = new Dictionary<BuildingFCDef, BuildingNeedExtension>();
-
-        // Settlement -> WorldObjectComp_SupplyChain lookup cache
-        private static Dictionary<WorldSettlementFC, WorldObjectComp_SupplyChain> _compCache
-            = new Dictionary<WorldSettlementFC, WorldObjectComp_SupplyChain>();
-
-        // Settlement -> WorldObjectComp_SettlementNeeds lookup cache
-        private static Dictionary<WorldSettlementFC, WorldObjectComp_SettlementNeeds> _needsCompCache
-            = new Dictionary<WorldSettlementFC, WorldObjectComp_SettlementNeeds>();
-
-        // Cached def lists (defs don't change mid-game)
-        private static List<SettlementNeedDef> _cachedNeedDefs;
-        private static List<ResourceTypeDef> _cachedResourceTypeDefs;
-
-        public static WorldComponent_SupplyChain Comp
+        get
         {
-            get
-            {
-                if (_comp == null)
-                    _comp = Find.World?.GetComponent<WorldComponent_SupplyChain>();
-                return _comp;
-            }
+            if (_comp == null)
+                _comp = Find.World?.GetComponent<WorldComponent_SupplyChain>();
+            return _comp;
         }
+    }
 
-        public static List<SettlementNeedDef> AllNeedDefs
+    public static List<SettlementNeedDef> AllNeedDefs
+    {
+        get
         {
-            get
-            {
-                if (_cachedNeedDefs == null)
-                    _cachedNeedDefs = DefDatabase<SettlementNeedDef>.AllDefsListForReading;
-                return _cachedNeedDefs;
-            }
+            if (_cachedNeedDefs == null)
+                _cachedNeedDefs = DefDatabase<SettlementNeedDef>.AllDefsListForReading;
+            return _cachedNeedDefs;
         }
+    }
 
-        public static List<ResourceTypeDef> AllResourceTypeDefs
+    public static List<ResourceTypeDef> AllResourceTypeDefs
+    {
+        get
         {
-            get
-            {
-                if (_cachedResourceTypeDefs == null)
-                    _cachedResourceTypeDefs = DefDatabase<ResourceTypeDef>.AllDefsListForReading;
-                return _cachedResourceTypeDefs;
-            }
+            if (_cachedResourceTypeDefs == null)
+                _cachedResourceTypeDefs = DefDatabase<ResourceTypeDef>.AllDefsListForReading;
+            return _cachedResourceTypeDefs;
         }
+    }
 
-        /// <summary>
-        /// Cached lookup for BuildingNeedExtension on BuildingFCDefs.
-        /// Avoids repeated linear scans of modExtensions lists.
-        /// </summary>
-        public static BuildingNeedExtension GetBuildingNeedExt(BuildingFCDef def)
+    /// <summary>
+    /// Cached lookup for BuildingNeedExtension on BuildingFCDefs.
+    /// Avoids repeated linear scans of modExtensions lists.
+    /// </summary>
+    public static BuildingNeedExtension GetBuildingNeedExt(BuildingFCDef def)
+    {
+        if (def == null) return null;
+
+        BuildingNeedExtension ext;
+        if (!_buildingExtCache.TryGetValue(def, out ext))
         {
-            if (def == null) return null;
-
-            BuildingNeedExtension ext;
-            if (!_buildingExtCache.TryGetValue(def, out ext))
-            {
-                ext = def.GetModExtension<BuildingNeedExtension>();
-                _buildingExtCache[def] = ext;
-            }
-            return ext;
+            ext = def.GetModExtension<BuildingNeedExtension>();
+            _buildingExtCache[def] = ext;
         }
+        return ext;
+    }
 
-        /// <summary>
-        /// Cached lookup for the SupplyChain comp on a settlement.
-        /// Avoids repeated linear scans of AllComps.
-        /// </summary>
-        public static WorldObjectComp_SupplyChain GetSettlementComp(WorldSettlementFC settlement)
+    /// <summary>
+    /// Cached lookup for the SupplyChain comp on a settlement.
+    /// Avoids repeated linear scans of AllComps.
+    /// </summary>
+    public static WorldObjectComp_SupplyChain GetSettlementComp(WorldSettlementFC settlement)
+    {
+        if (settlement == null) return null;
+
+        if (!_compCache.TryGetValue(settlement, out WorldObjectComp_SupplyChain cached))
         {
-            if (settlement == null) return null;
-
-            if (!_compCache.TryGetValue(settlement, out WorldObjectComp_SupplyChain cached))
-            {
-                cached = settlement.GetComponent<WorldObjectComp_SupplyChain>();
-                _compCache[settlement] = cached;
-            }
-            return cached;
+            cached = settlement.GetComponent<WorldObjectComp_SupplyChain>();
+            _compCache[settlement] = cached;
         }
+        return cached;
+    }
 
-        /// <summary>
-        /// Cached lookup for the settlement-needs comp on a settlement.
-        /// Mirrors <see cref="GetSettlementComp"/> for the needs subsystem.
-        /// </summary>
-        public static WorldObjectComp_SettlementNeeds GetNeedsComp(WorldSettlementFC settlement)
+    /// <summary>
+    /// Cached lookup for the settlement-needs comp on a settlement.
+    /// Mirrors <see cref="GetSettlementComp"/> for the needs subsystem.
+    /// </summary>
+    public static WorldObjectComp_SettlementNeeds GetNeedsComp(WorldSettlementFC settlement)
+    {
+        if (settlement == null) return null;
+
+        if (!_needsCompCache.TryGetValue(settlement, out WorldObjectComp_SettlementNeeds cached))
         {
-            if (settlement == null) return null;
-
-            if (!_needsCompCache.TryGetValue(settlement, out WorldObjectComp_SettlementNeeds cached))
-            {
-                cached = settlement.GetComponent<WorldObjectComp_SettlementNeeds>();
-                _needsCompCache[settlement] = cached;
-            }
-            return cached;
+            cached = settlement.GetComponent<WorldObjectComp_SettlementNeeds>();
+            _needsCompCache[settlement] = cached;
         }
+        return cached;
+    }
 
-        public static void ClearCompCache()
-        {
-            _compCache.Clear();
-            _needsCompCache.Clear();
-        }
+    public static void ClearCompCache()
+    {
+        _compCache.Clear();
+        _needsCompCache.Clear();
+    }
 
-        public static void InvalidateCache()
-        {
-            _comp = null;
-            _buildingExtCache.Clear();
-            _compCache.Clear();
-            _needsCompCache.Clear();
-            _cachedNeedDefs = null;
-            _cachedResourceTypeDefs = null;
-        }
+    public static void InvalidateCache()
+    {
+        _comp = null;
+        _buildingExtCache.Clear();
+        _compCache.Clear();
+        _needsCompCache.Clear();
+        _cachedNeedDefs = null;
+        _cachedResourceTypeDefs = null;
     }
 }

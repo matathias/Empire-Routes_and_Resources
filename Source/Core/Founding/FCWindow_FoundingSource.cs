@@ -3,264 +3,263 @@ using RimWorld.Planet;
 using UnityEngine;
 using Verse;
 
-namespace FactionColonies.SupplyChain
+namespace FactionColonies.SupplyChain;
+
+/// <summary>
+/// Companion window to <see cref="CreateColonyWindowFc"/> that shows the source settlement
+/// picker and resource availability for founding costs (Complex mode only).
+/// </summary>
+public class FCWindow_FoundingSource : Window, IFoundingCompanionWindow
 {
-    /// <summary>
-    /// Companion window to <see cref="CreateColonyWindowFc"/> that shows the source settlement
-    /// picker and resource availability for founding costs (Complex mode only).
-    /// </summary>
-    public class FCWindow_FoundingSource : Window, IFoundingCompanionWindow
+    public int CompanionOrder => 20;
+
+    private const float WindowWidth = 250f;
+    private const float RowHeight = 22f;
+    private const float ButtonHeight = 30f;
+    private const float Padding = 8f;
+
+    private PlanetTile lastTile = PlanetTile.Invalid;
+    private WorldSettlementDef lastSettlementType;
+    private FoundingCostValidator validator;
+    private WorldComponent_SupplyChain worldComp;
+    private List<FCResourceCost> cachedCosts;
+
+    public override Vector2 InitialSize => new Vector2(WindowWidth, 350f);
+
+    public FCWindow_FoundingSource()
     {
-        public int CompanionOrder => 20;
+        draggable = true;
+        doCloseX = true;
+        preventCameraMotion = false;
+        forcePause = false;
+        closeOnAccept = false;
+        closeOnCancel = false;
+    }
 
-        private const float WindowWidth = 250f;
-        private const float RowHeight = 22f;
-        private const float ButtonHeight = 30f;
-        private const float Padding = 8f;
+    public override void PreOpen()
+    {
+        base.PreOpen();
+        worldComp = SupplyChainCache.Comp;
+        validator = worldComp?.FoundingValidator;
+        if (validator is object)
+            validator.ResetSourceSelection();
+    }
 
-        private PlanetTile lastTile = PlanetTile.Invalid;
-        private WorldSettlementDef lastSettlementType;
-        private FoundingCostValidator validator;
-        private WorldComponent_SupplyChain worldComp;
-        private List<FCResourceCost> cachedCosts;
+    protected override void SetInitialSizeAndPosition()
+    {
+        base.SetInitialSizeAndPosition();
+        FoundingScreenHooks.ReflowCompanions();
+    }
 
-        public override Vector2 InitialSize => new Vector2(WindowWidth, 350f);
-
-        public FCWindow_FoundingSource()
+    public override void DoWindowContents(Rect inRect)
+    {
+        if (validator is null || worldComp is null || worldComp.Mode == SupplyChainMode.Simple)
         {
-            draggable = true;
-            doCloseX = true;
-            preventCameraMotion = false;
-            forcePause = false;
-            closeOnAccept = false;
-            closeOnCancel = false;
+            Close();
+            return;
         }
 
-        public override void PreOpen()
+        CreateColonyWindowFc createWindow = Find.WindowStack.WindowOfType<CreateColonyWindowFc>();
+        if (createWindow is null)
         {
-            base.PreOpen();
-            worldComp = SupplyChainCache.Comp;
-            validator = worldComp?.FoundingValidator;
-            if (validator is object)
-                validator.ResetSourceSelection();
+            Close();
+            return;
         }
 
-        protected override void SetInitialSizeAndPosition()
+        PlanetTile currentTile = createWindow.currentTileSelected;
+        WorldSettlementDef settlementType = createWindow.currentSettlementType;
+
+        // Handle settlement type changes — close if type no longer has founding costs
+        if (settlementType != lastSettlementType)
         {
-            base.SetInitialSizeAndPosition();
-            FoundingScreenHooks.ReflowCompanions();
-        }
-
-        public override void DoWindowContents(Rect inRect)
-        {
-            if (validator is null || worldComp is null || worldComp.Mode == SupplyChainMode.Simple)
-            {
-                Close();
-                return;
-            }
-
-            CreateColonyWindowFc createWindow = Find.WindowStack.WindowOfType<CreateColonyWindowFc>();
-            if (createWindow is null)
-            {
-                Close();
-                return;
-            }
-
-            PlanetTile currentTile = createWindow.currentTileSelected;
-            WorldSettlementDef settlementType = createWindow.currentSettlementType;
-
-            // Handle settlement type changes — close if type no longer has founding costs
-            if (settlementType != lastSettlementType)
-            {
-                lastSettlementType = settlementType;
-                cachedCosts = FoundingCostUtil.GetFoundingResourceCosts(settlementType);
-                if (cachedCosts is null || cachedCosts.Count == 0)
-                {
-                    Close();
-                    return;
-                }
-            }
-            else if (cachedCosts is null)
-            {
-                cachedCosts = FoundingCostUtil.GetFoundingResourceCosts(settlementType);
-            }
-
+            lastSettlementType = settlementType;
+            cachedCosts = FoundingCostUtil.GetFoundingResourceCosts(settlementType);
             if (cachedCosts is null || cachedCosts.Count == 0)
             {
                 Close();
                 return;
             }
+        }
+        else if (cachedCosts is null)
+        {
+            cachedCosts = FoundingCostUtil.GetFoundingResourceCosts(settlementType);
+        }
 
-            // Auto-select nearest source when tile changes (only if user hasn't explicitly picked)
-            if (currentTile != lastTile)
-            {
-                lastTile = currentTile;
-                if (!validator.UserSelectedSource && currentTile.Valid)
-                    validator.SelectedSource = FoundingCostUtil.FindNearestSettlement(currentTile);
-            }
+        if (cachedCosts is null || cachedCosts.Count == 0)
+        {
+            Close();
+            return;
+        }
 
-            float curY = 0f;
-            
-            WorldSettlementFC source = validator.GetEffectiveSource(currentTile);
-            string sourceName = source?.Name ?? "SC_FoundingCostNone".Translate();
+        // Auto-select nearest source when tile changes (only if user hasn't explicitly picked)
+        if (currentTile != lastTile)
+        {
+            lastTile = currentTile;
+            if (!validator.UserSelectedSource && currentTile.Valid)
+                validator.SelectedSource = FoundingCostUtil.FindNearestSettlement(currentTile);
+        }
 
-            // Title
-            Text.Font = GameFont.Small;
-            Text.Anchor = TextAnchor.MiddleCenter;
-            Rect titleRect = new Rect(0, curY, inRect.width, ButtonHeight);
-            UIUtil.DrawColoredHighlight(titleRect, source?.settlementDef?.accentColor ?? Color.white);
-            Widgets.Label(titleRect, "SC_FoundingSourceTitle".Translate());
-            curY += ButtonHeight + 5f;
+        float curY = 0f;
+        
+        WorldSettlementFC source = validator.GetEffectiveSource(currentTile);
+        string sourceName = source?.Name ?? "SC_FoundingCostNone".Translate();
 
-            // Source settlement selector button
+        // Title
+        Text.Font = GameFont.Small;
+        Text.Anchor = TextAnchor.MiddleCenter;
+        Rect titleRect = new Rect(0, curY, inRect.width, ButtonHeight);
+        UIUtil.DrawColoredHighlight(titleRect, source?.settlementDef?.accentColor ?? Color.white);
+        Widgets.Label(titleRect, "SC_FoundingSourceTitle".Translate());
+        curY += ButtonHeight + 5f;
 
-            Widgets.Label(new Rect(0, curY, inRect.width, 25f), "SC_FoundingSourceButton".Translate());
-            curY += 30f;
-            Text.Anchor = TextAnchor.MiddleCenter;
-            if (Widgets.ButtonText(new Rect(0, curY, inRect.width, ButtonHeight), sourceName))
-            {
-                ShowSourceMenu(currentTile);
-            }
-            curY += ButtonHeight + Padding;
+        // Source settlement selector button
 
-            // Divider
-            Widgets.DrawLineHorizontal(0, curY, inRect.width);
-            curY += Padding;
+        Widgets.Label(new Rect(0, curY, inRect.width, 25f), "SC_FoundingSourceButton".Translate());
+        curY += 30f;
+        Text.Anchor = TextAnchor.MiddleCenter;
+        if (Widgets.ButtonText(new Rect(0, curY, inRect.width, ButtonHeight), sourceName))
+        {
+            ShowSourceMenu(currentTile);
+        }
+        curY += ButtonHeight + Padding;
 
-            // Resource availability
-            Text.Font = GameFont.Small;
+        // Divider
+        Widgets.DrawLineHorizontal(0, curY, inRect.width);
+        curY += Padding;
+
+        // Resource availability
+        Text.Font = GameFont.Small;
+        Text.Anchor = TextAnchor.MiddleLeft;
+
+        double distMult = FoundingCostUtil.ComputeDistanceMultiplier(currentTile);
+        IStockpile stockpile = GetCurrentStockpile(currentTile);
+
+        for (int i = 0; i < cachedCosts.Count; i++)
+        {
+            FCResourceCost entry = cachedCosts[i];
+            double needed = FormulaUtil.ResourceCost(entry.amount, distMult) * validator.LastCostMultiplier;
+            double have = stockpile?.GetAmount(entry.resource) ?? 0;
+            bool sufficient = have >= needed;
+
+            // Resource label
+            float resourceImgSize = RowHeight;
+            float resourceImxgX = 2f;
+            Rect resourceImgRect = new Rect(resourceImxgX, curY, resourceImgSize, resourceImgSize);
+            if (entry.resource.Icon is object)
+                GUI.DrawTexture(resourceImgRect, entry.resource.Icon);
+            GUI.color = sufficient ? AccentUtil.Income : AccentUtil.Expense;
+            Widgets.Label(new Rect(resourceImgRect.xMax + Padding, curY, inRect.width * 0.45f, RowHeight), entry.resource.LabelCap);
+
+            // Amount: have / needed
+            Text.Anchor = TextAnchor.MiddleRight;
+            Widgets.Label(new Rect(inRect.width * 0.45f, curY, inRect.width * 0.55f - Padding, RowHeight),
+                have.ToString("F0") + " / " + needed.ToString("F0"));
             Text.Anchor = TextAnchor.MiddleLeft;
 
-            double distMult = FoundingCostUtil.ComputeDistanceMultiplier(currentTile);
-            IStockpile stockpile = GetCurrentStockpile(currentTile);
-
-            for (int i = 0; i < cachedCosts.Count; i++)
-            {
-                FCResourceCost entry = cachedCosts[i];
-                double needed = FormulaUtil.ResourceCost(entry.amount, distMult) * validator.LastCostMultiplier;
-                double have = stockpile?.GetAmount(entry.resource) ?? 0;
-                bool sufficient = have >= needed;
-
-                // Resource label
-                float resourceImgSize = RowHeight;
-                float resourceImxgX = 2f;
-                Rect resourceImgRect = new Rect(resourceImxgX, curY, resourceImgSize, resourceImgSize);
-                if (entry.resource.Icon is object)
-                    GUI.DrawTexture(resourceImgRect, entry.resource.Icon);
-                GUI.color = sufficient ? AccentUtil.Income : AccentUtil.Expense;
-                Widgets.Label(new Rect(resourceImgRect.xMax + Padding, curY, inRect.width * 0.45f, RowHeight), entry.resource.LabelCap);
-
-                // Amount: have / needed
-                Text.Anchor = TextAnchor.MiddleRight;
-                Widgets.Label(new Rect(inRect.width * 0.45f, curY, inRect.width * 0.55f - Padding, RowHeight),
-                    have.ToString("F0") + " / " + needed.ToString("F0"));
-                Text.Anchor = TextAnchor.MiddleLeft;
-
-                GUI.color = Color.white;
-                curY += RowHeight;
-            }
-
-            curY += Padding;
-
-            // Distance info
-            Text.Font = GameFont.Tiny;
-            Text.Anchor = TextAnchor.MiddleCenter;
-            GUI.color = new Color(0.7f, 0.7f, 0.7f);
-            Widgets.Label(new Rect(0, curY, inRect.width, RowHeight),
-                "SC_FoundingDistanceMult".Translate(distMult.ToString("F1")));
             GUI.color = Color.white;
-            curY += RowHeight + Padding;
-
-            // Resize window to fit content
-            windowRect.height = curY + Window.StandardMargin * 2;
-
-            Text.Anchor = TextAnchor.UpperLeft;
-            Text.Font = GameFont.Small;
+            curY += RowHeight;
         }
 
-        private void ShowSourceMenu(PlanetTile targetTile)
+        curY += Padding;
+
+        // Distance info
+        Text.Font = GameFont.Tiny;
+        Text.Anchor = TextAnchor.MiddleCenter;
+        GUI.color = new Color(0.7f, 0.7f, 0.7f);
+        Widgets.Label(new Rect(0, curY, inRect.width, RowHeight),
+            "SC_FoundingDistanceMult".Translate(distMult.ToString("F1")));
+        GUI.color = Color.white;
+        curY += RowHeight + Padding;
+
+        // Resize window to fit content
+        windowRect.height = curY + Window.StandardMargin * 2;
+
+        Text.Anchor = TextAnchor.UpperLeft;
+        Text.Font = GameFont.Small;
+    }
+
+    private void ShowSourceMenu(PlanetTile targetTile)
+    {
+        FactionFC faction = FindFC.FactionComp;
+        if (faction is null) return;
+
+        List<FloatMenuOption> options = new List<FloatMenuOption>();
+
+        for (int i = 0; i < faction.settlements.Count; i++)
         {
-            FactionFC faction = FindFC.FactionComp;
-            if (faction is null) return;
+            WorldSettlementFC settlement = faction.settlements[i];
+            WorldObjectComp_SupplyChain comp = SupplyChainCache.GetSettlementComp(settlement);
+            IStockpile stockpile = comp?.GetStockpile();
 
-            List<FloatMenuOption> options = new List<FloatMenuOption>();
-
-            for (int i = 0; i < faction.settlements.Count; i++)
+            string label = settlement.Name;
+            if (stockpile is object && cachedCosts is object)
             {
-                WorldSettlementFC settlement = faction.settlements[i];
-                WorldObjectComp_SupplyChain comp = SupplyChainCache.GetSettlementComp(settlement);
-                IStockpile stockpile = comp?.GetStockpile();
-
-                string label = settlement.Name;
-                if (stockpile is object && cachedCosts is object)
+                double menuDistMult = FoundingCostUtil.ComputeDistanceMultiplier(targetTile);
+                int sufficient = 0;
+                foreach (FCResourceCost entry in cachedCosts)
                 {
-                    double menuDistMult = FoundingCostUtil.ComputeDistanceMultiplier(targetTile);
-                    int sufficient = 0;
-                    foreach (FCResourceCost entry in cachedCosts)
-                    {
-                        double needed = FormulaUtil.ResourceCost(entry.amount, menuDistMult) * validator.LastCostMultiplier;
-                        if (stockpile.GetAmount(entry.resource) >= needed) sufficient++;
-                    }
-                    label += $" ({sufficient}/{cachedCosts.Count})";
+                    double needed = FormulaUtil.ResourceCost(entry.amount, menuDistMult) * validator.LastCostMultiplier;
+                    if (stockpile.GetAmount(entry.resource) >= needed) sufficient++;
                 }
-
-                WorldSettlementFC capturedSettlement = settlement;
-                options.Add(new FloatMenuOption(label, delegate
-                {
-                    validator.SelectedSource = capturedSettlement;
-                    validator.UserSelectedSource = true;
-                }));
+                label += $" ({sufficient}/{cachedCosts.Count})";
             }
 
-            if (options.Count > 0)
-                Find.WindowStack.Add(new FloatMenu(options));
+            WorldSettlementFC capturedSettlement = settlement;
+            options.Add(new FloatMenuOption(label, delegate
+            {
+                validator.SelectedSource = capturedSettlement;
+                validator.UserSelectedSource = true;
+            }));
         }
 
-        private IStockpile GetCurrentStockpile(PlanetTile tile)
-        {
-            if (worldComp.Mode == SupplyChainMode.Simple)
-                return worldComp.Stockpile;
+        if (options.Count > 0)
+            Find.WindowStack.Add(new FloatMenu(options));
+    }
 
-            WorldSettlementFC source = validator.GetEffectiveSource(tile);
-            if (source is null) return null;
+    private IStockpile GetCurrentStockpile(PlanetTile tile)
+    {
+        if (worldComp.Mode == SupplyChainMode.Simple)
+            return worldComp.Stockpile;
 
-            WorldObjectComp_SupplyChain comp = SupplyChainCache.GetSettlementComp(source);
-            return comp?.GetStockpile();
-        }
+        WorldSettlementFC source = validator.GetEffectiveSource(tile);
+        if (source is null) return null;
 
-        /// <summary>
-        /// Opens the companion window if conditions are met (Complex mode, above threshold, has extension).
-        /// </summary>
-        public static void TryOpen()
-        {
-            WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
-            if (wc is null || wc.Mode != SupplyChainMode.Complex) return;
-            if (wc.FoundingValidator is null) return;
+        WorldObjectComp_SupplyChain comp = SupplyChainCache.GetSettlementComp(source);
+        return comp?.GetStockpile();
+    }
 
-            FactionFC faction = FindFC.FactionComp;
-            if (faction is null) return;
-            int count = faction.settlements.Count + faction.settlementCaravansList.Count;
-            if (count < SupplyChainSettings.freeSettlementThreshold) return;
+    /// <summary>
+    /// Opens the companion window if conditions are met (Complex mode, above threshold, has extension).
+    /// </summary>
+    public static void TryOpen()
+    {
+        WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
+        if (wc is null || wc.Mode != SupplyChainMode.Complex) return;
+        if (wc.FoundingValidator is null) return;
 
-            CreateColonyWindowFc createWindow = Find.WindowStack.WindowOfType<CreateColonyWindowFc>();
+        FactionFC faction = FindFC.FactionComp;
+        if (faction is null) return;
+        int count = faction.settlements.Count + faction.settlementCaravansList.Count;
+        if (count < SupplyChainSettings.freeSettlementThreshold) return;
 
-            List<FCResourceCost> costs = FoundingCostUtil.GetFoundingResourceCosts(createWindow?.currentSettlementType);
-            if (costs is null || costs.Count == 0) return;
+        CreateColonyWindowFc createWindow = Find.WindowStack.WindowOfType<CreateColonyWindowFc>();
 
-            // Don't open duplicate
-            if (Find.WindowStack.WindowOfType<FCWindow_FoundingSource>() is object) return;
+        List<FCResourceCost> costs = FoundingCostUtil.GetFoundingResourceCosts(createWindow?.currentSettlementType);
+        if (costs is null || costs.Count == 0) return;
 
-            Find.WindowStack.Add(new FCWindow_FoundingSource());
-        }
+        // Don't open duplicate
+        if (Find.WindowStack.WindowOfType<FCWindow_FoundingSource>() is object) return;
 
-        /// <summary>
-        /// Closes the companion window if it's open.
-        /// </summary>
-        public static void TryClose()
-        {
-            FCWindow_FoundingSource window = Find.WindowStack.WindowOfType<FCWindow_FoundingSource>();
-            if (window is object)
-                window.Close();
-        }
+        Find.WindowStack.Add(new FCWindow_FoundingSource());
+    }
+
+    /// <summary>
+    /// Closes the companion window if it's open.
+    /// </summary>
+    public static void TryClose()
+    {
+        FCWindow_FoundingSource window = Find.WindowStack.WindowOfType<FCWindow_FoundingSource>();
+        if (window is object)
+            window.Close();
     }
 }

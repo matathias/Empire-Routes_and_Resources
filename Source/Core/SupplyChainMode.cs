@@ -1,8 +1,7 @@
-namespace FactionColonies.SupplyChain
+namespace FactionColonies.SupplyChain;
+
+public enum SupplyChainMode
 {
-    public enum SupplyChainMode
-    {
-        Simple,
-        Complex
-    }
+    Simple,
+    Complex
 }

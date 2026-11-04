@@ -3,178 +3,177 @@ using System.Collections.Generic;
 using System.Text;
 using Verse;
 
-namespace FactionColonies.SupplyChain
+namespace FactionColonies.SupplyChain;
+
+/// <summary>
+/// Validates resource availability for settlement founding and consumes resources on success.
+/// Silver cost is handled separately by <see cref="SCSettlementTypeExtension"/>.
+/// </summary>
+public class FoundingCostValidator : ISettlementFoundingValidator
 {
+    private readonly WorldComponent_SupplyChain worldComp;
+
     /// <summary>
-    /// Validates resource availability for settlement founding and consumes resources on success.
-    /// Silver cost is handled separately by <see cref="SCSettlementTypeExtension"/>.
+    /// The settlement the player has chosen as a resource source (Complex mode).
+    /// Null means auto-select nearest.
     /// </summary>
-    public class FoundingCostValidator : ISettlementFoundingValidator
+    public WorldSettlementFC SelectedSource;
+
+    /// <summary>
+    /// True when the player has explicitly picked a source settlement.
+    /// When false, <see cref="SelectedSource"/> auto-follows the nearest settlement.
+    /// </summary>
+    public bool UserSelectedSource;
+
+    // The cost multiplier the active founding flow last passed in. The companion window reads this
+    // so its displayed have/needed rows apply the same multiplier the commit path will draw with
+    // (base founding passes 1f; alternative callers e.g. outpost conversion may pass less).
+    private float lastCostMultiplier = 1f;
+
+    /// <summary>The cost multiplier from the most recent validation/description call.</summary>
+    public float LastCostMultiplier => lastCostMultiplier;
+
+    public FoundingCostValidator(WorldComponent_SupplyChain worldComp)
     {
-        private readonly WorldComponent_SupplyChain worldComp;
+        this.worldComp = worldComp;
+    }
 
-        /// <summary>
-        /// The settlement the player has chosen as a resource source (Complex mode).
-        /// Null means auto-select nearest.
-        /// </summary>
-        public WorldSettlementFC SelectedSource;
+    public bool CanFoundSettlement(PlanetTile tile, WorldSettlementDef type, out string reason, float costMultiplier)
+    {
+        reason = null;
+        lastCostMultiplier = costMultiplier;
 
-        /// <summary>
-        /// True when the player has explicitly picked a source settlement.
-        /// When false, <see cref="SelectedSource"/> auto-follows the nearest settlement.
-        /// </summary>
-        public bool UserSelectedSource;
+        List<FCResourceCost> costs = FoundingCostUtil.GetFoundingResourceCosts(type);
+        if (costs is null || costs.Count == 0) return true;
+        if (IsBelowThreshold()) return true;
+        if (costMultiplier <= 0f) return true;  // fully-waived founding needs no resources (so no stockpile)
 
-        // The cost multiplier the active founding flow last passed in. The companion window reads this
-        // so its displayed have/needed rows apply the same multiplier the commit path will draw with
-        // (base founding passes 1f; alternative callers e.g. outpost conversion may pass less).
-        private float lastCostMultiplier = 1f;
-
-        /// <summary>The cost multiplier from the most recent validation/description call.</summary>
-        public float LastCostMultiplier => lastCostMultiplier;
-
-        public FoundingCostValidator(WorldComponent_SupplyChain worldComp)
+        StringBuilder sb = null;
+        double distMult = FoundingCostUtil.ComputeDistanceMultiplier(tile);
+        IStockpile stockpile = GetStockpile(tile);
+        if (stockpile is null)
         {
-            this.worldComp = worldComp;
+            sb = new StringBuilder();
+            sb.Append("SC_NoStockpile".Translate());
+            reason = sb.ToString();
+            return false;
         }
 
-        public bool CanFoundSettlement(PlanetTile tile, WorldSettlementDef type, out string reason, float costMultiplier)
+        bool allowed = true;
+
+        foreach (FCResourceCost entry in costs)
         {
-            reason = null;
-            lastCostMultiplier = costMultiplier;
+            double needed = FormulaUtil.ResourceCost(entry.amount, distMult) * costMultiplier;
+            double have = stockpile.GetAmount(entry.resource);
 
-            List<FCResourceCost> costs = FoundingCostUtil.GetFoundingResourceCosts(type);
-            if (costs is null || costs.Count == 0) return true;
-            if (IsBelowThreshold()) return true;
-            if (costMultiplier <= 0f) return true;  // fully-waived founding needs no resources (so no stockpile)
-
-            StringBuilder sb = null;
-            double distMult = FoundingCostUtil.ComputeDistanceMultiplier(tile);
-            IStockpile stockpile = GetStockpile(tile);
-            if (stockpile is null)
+            if (have < needed)
             {
-                sb = new StringBuilder();
-                sb.Append("SC_NoStockpile".Translate());
-                reason = sb.ToString();
-                return false;
-            }
-
-            bool allowed = true;
-
-            foreach (FCResourceCost entry in costs)
-            {
-                double needed = FormulaUtil.ResourceCost(entry.amount, distMult) * costMultiplier;
-                double have = stockpile.GetAmount(entry.resource);
-
-                if (have < needed)
-                {
-                    if (sb is null) sb = new StringBuilder();
-                    else sb.AppendLine();
-                    sb.Append("SC_FoundingCostInsufficient".Translate(
-                        entry.resource.LabelCap,
-                        have.ToString("F0"),
-                        needed.ToString("F0"),
-                        GetSourceName(tile)));
-                    allowed = false;
-                }
-            }
-
-            if (!allowed)
-                reason = sb.ToString();
-            return allowed;
-        }
-
-        public string GetAdditionalCostDescription(PlanetTile tile, WorldSettlementDef type, float costMultiplier)
-        {
-            lastCostMultiplier = costMultiplier;
-            List<FCResourceCost> costs = FoundingCostUtil.GetFoundingResourceCosts(type);
-            if (costs is null || costs.Count == 0) return null;
-            if (IsBelowThreshold()) return null;
-            if (costMultiplier <= 0f) return null;  // fully-waived founding has no cost line to show
-
-            double distMult = FoundingCostUtil.ComputeDistanceMultiplier(tile);
-
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < costs.Count; i++)
-            {
-                FCResourceCost entry = costs[i];
-                double needed = FormulaUtil.ResourceCost(entry.amount, distMult) * costMultiplier;
-                if (i > 0) sb.Append(", ");
-                sb.Append(needed.ToString("F0"));
-                sb.Append(" ");
-                sb.Append(entry.resource.LabelCap);
-            }
-
-            return "SC_FoundingCostFrom".Translate(sb.ToString(), GetSourceName(tile));
-        }
-
-        public void OnSettlementFounded(PlanetTile tile, WorldSettlementDef type, float costMultiplier)
-        {
-            lastCostMultiplier = costMultiplier;
-            worldComp.MaybeAnnounceUpcomingFoundingCosts();   // look-ahead warning, once
-
-            List<FCResourceCost> costs = FoundingCostUtil.GetFoundingResourceCosts(type);
-            if (costs is null || costs.Count == 0) return;
-            if (IsBelowThreshold()) return;
-            if (costMultiplier <= 0f) return;  // fully-waived founding draws no resources
-
-            double distMult = FoundingCostUtil.ComputeDistanceMultiplier(tile);
-            IStockpile stockpile = GetStockpile(tile);
-            if (stockpile is null) return;
-
-            foreach (FCResourceCost entry in costs)
-            {
-                double needed = FormulaUtil.ResourceCost(entry.amount, distMult) * costMultiplier;
-                stockpile.TryDraw(entry.resource, needed, out _);
+                if (sb is null) sb = new StringBuilder();
+                else sb.AppendLine();
+                sb.Append("SC_FoundingCostInsufficient".Translate(
+                    entry.resource.LabelCap,
+                    have.ToString("F0"),
+                    needed.ToString("F0"),
+                    GetSourceName(tile)));
+                allowed = false;
             }
         }
 
-        /// <summary>
-        /// Resolves the effective source settlement for Complex mode.
-        /// Returns <see cref="SelectedSource"/> if set, otherwise nearest.
-        /// </summary>
-        public WorldSettlementFC GetEffectiveSource(PlanetTile tile)
+        if (!allowed)
+            reason = sb.ToString();
+        return allowed;
+    }
+
+    public string GetAdditionalCostDescription(PlanetTile tile, WorldSettlementDef type, float costMultiplier)
+    {
+        lastCostMultiplier = costMultiplier;
+        List<FCResourceCost> costs = FoundingCostUtil.GetFoundingResourceCosts(type);
+        if (costs is null || costs.Count == 0) return null;
+        if (IsBelowThreshold()) return null;
+        if (costMultiplier <= 0f) return null;  // fully-waived founding has no cost line to show
+
+        double distMult = FoundingCostUtil.ComputeDistanceMultiplier(tile);
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < costs.Count; i++)
         {
-            if (UserSelectedSource && SelectedSource != null) return SelectedSource;
-            return FoundingCostUtil.FindNearestSettlement(tile);
+            FCResourceCost entry = costs[i];
+            double needed = FormulaUtil.ResourceCost(entry.amount, distMult) * costMultiplier;
+            if (i > 0) sb.Append(", ");
+            sb.Append(needed.ToString("F0"));
+            sb.Append(" ");
+            sb.Append(entry.resource.LabelCap);
         }
 
-        /// <summary>
-        /// Resets user source selection (called when companion window opens).
-        /// </summary>
-        public void ResetSourceSelection()
+        return "SC_FoundingCostFrom".Translate(sb.ToString(), GetSourceName(tile));
+    }
+
+    public void OnSettlementFounded(PlanetTile tile, WorldSettlementDef type, float costMultiplier)
+    {
+        lastCostMultiplier = costMultiplier;
+        worldComp.MaybeAnnounceUpcomingFoundingCosts();   // look-ahead warning, once
+
+        List<FCResourceCost> costs = FoundingCostUtil.GetFoundingResourceCosts(type);
+        if (costs is null || costs.Count == 0) return;
+        if (IsBelowThreshold()) return;
+        if (costMultiplier <= 0f) return;  // fully-waived founding draws no resources
+
+        double distMult = FoundingCostUtil.ComputeDistanceMultiplier(tile);
+        IStockpile stockpile = GetStockpile(tile);
+        if (stockpile is null) return;
+
+        foreach (FCResourceCost entry in costs)
         {
-            SelectedSource = null;
-            UserSelectedSource = false;
+            double needed = FormulaUtil.ResourceCost(entry.amount, distMult) * costMultiplier;
+            stockpile.TryDraw(entry.resource, needed, out _);
         }
+    }
 
-        private bool IsBelowThreshold()
-        {
-            FactionFC faction = FindFC.FactionComp;
-            if (faction is null) return true;
-            int count = faction.settlements.Count + faction.settlementCaravansList.Count;
-            return count < SupplyChainSettings.freeSettlementThreshold;
-        }
+    /// <summary>
+    /// Resolves the effective source settlement for Complex mode.
+    /// Returns <see cref="SelectedSource"/> if set, otherwise nearest.
+    /// </summary>
+    public WorldSettlementFC GetEffectiveSource(PlanetTile tile)
+    {
+        if (UserSelectedSource && SelectedSource != null) return SelectedSource;
+        return FoundingCostUtil.FindNearestSettlement(tile);
+    }
 
-        private IStockpile GetStockpile(PlanetTile tile)
-        {
-            if (worldComp.Mode == SupplyChainMode.Simple)
-                return worldComp.Stockpile;
+    /// <summary>
+    /// Resets user source selection (called when companion window opens).
+    /// </summary>
+    public void ResetSourceSelection()
+    {
+        SelectedSource = null;
+        UserSelectedSource = false;
+    }
 
-            WorldSettlementFC source = GetEffectiveSource(tile);
-            if (source is null) return null;
+    private bool IsBelowThreshold()
+    {
+        FactionFC faction = FindFC.FactionComp;
+        if (faction is null) return true;
+        int count = faction.settlements.Count + faction.settlementCaravansList.Count;
+        return count < SupplyChainSettings.freeSettlementThreshold;
+    }
 
-            WorldObjectComp_SupplyChain comp = SupplyChainCache.GetSettlementComp(source);
-            return comp?.GetStockpile();
-        }
+    private IStockpile GetStockpile(PlanetTile tile)
+    {
+        if (worldComp.Mode == SupplyChainMode.Simple)
+            return worldComp.Stockpile;
 
-        private string GetSourceName(PlanetTile tile)
-        {
-            if (worldComp.Mode == SupplyChainMode.Simple)
-                return "SC_FoundingCostFactionStockpile".Translate();
+        WorldSettlementFC source = GetEffectiveSource(tile);
+        if (source is null) return null;
 
-            WorldSettlementFC source = GetEffectiveSource(tile);
-            return source?.Name ?? "SC_FoundingCostFactionStockpile".Translate();
-        }
+        WorldObjectComp_SupplyChain comp = SupplyChainCache.GetSettlementComp(source);
+        return comp?.GetStockpile();
+    }
+
+    private string GetSourceName(PlanetTile tile)
+    {
+        if (worldComp.Mode == SupplyChainMode.Simple)
+            return "SC_FoundingCostFactionStockpile".Translate();
+
+        WorldSettlementFC source = GetEffectiveSource(tile);
+        return source?.Name ?? "SC_FoundingCostFactionStockpile".Translate();
     }
 }

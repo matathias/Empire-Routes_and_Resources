@@ -1,199 +1,198 @@
-namespace FactionColonies.SupplyChain
+namespace FactionColonies.SupplyChain;
+
+/// <summary>
+/// Pure coverage for <see cref="DictionaryStockpile"/> draw/credit semantics and boundary
+/// conditions. No game state required — uses throwaway <see cref="ResourceTypeDef"/> keys.
+/// </summary>
+public static class DictionaryStockpileTests
 {
-    /// <summary>
-    /// Pure coverage for <see cref="DictionaryStockpile"/> draw/credit semantics and boundary
-    /// conditions. No game state required — uses throwaway <see cref="ResourceTypeDef"/> keys.
-    /// </summary>
-    public static class DictionaryStockpileTests
+    private static ResourceTypeDef Res() => SCTestHelper.MakeResourceType("SCTest_Stock");
+
+    /*-*-*- TryDraw -*-*-*/
+
+    [EmpireTest("SC.Stockpile")]
+    public static void TryDraw_PartialAmount_DrawsRequestedAndReduces()
     {
-        private static ResourceTypeDef Res() => SCTestHelper.MakeResourceType("SCTest_Stock");
+        ResourceTypeDef r = Res();
+        DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 10.0, 100.0);
 
-        /*-*-*- TryDraw -*-*-*/
+        bool ok = sp.TryDraw(r, 4.0, out double drawn);
 
-        [EmpireTest("SC.Stockpile")]
-        public static void TryDraw_PartialAmount_DrawsRequestedAndReduces()
-        {
-            ResourceTypeDef r = Res();
-            DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 10.0, 100.0);
+        TestAssert.IsTrue(ok, "TryDraw within available should return true");
+        TestAssert.AreEqual(4.0, drawn);
+        TestAssert.AreEqual(6.0, sp.GetAmount(r));
+    }
 
-            bool ok = sp.TryDraw(r, 4.0, out double drawn);
+    [EmpireTest("SC.Stockpile")]
+    public static void TryDraw_MoreThanAvailable_DrawsAllAndEmpties()
+    {
+        ResourceTypeDef r = Res();
+        DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 10.0, 100.0);
 
-            TestAssert.IsTrue(ok, "TryDraw within available should return true");
-            TestAssert.AreEqual(4.0, drawn);
-            TestAssert.AreEqual(6.0, sp.GetAmount(r));
-        }
+        bool ok = sp.TryDraw(r, 20.0, out double drawn);
 
-        [EmpireTest("SC.Stockpile")]
-        public static void TryDraw_MoreThanAvailable_DrawsAllAndEmpties()
-        {
-            ResourceTypeDef r = Res();
-            DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 10.0, 100.0);
+        TestAssert.IsTrue(ok, "TryDraw should succeed and clamp to what is available");
+        TestAssert.AreEqual(10.0, drawn);
+        TestAssert.AreEqual(0.0, sp.GetAmount(r));
+    }
 
-            bool ok = sp.TryDraw(r, 20.0, out double drawn);
+    [EmpireTest("SC.Stockpile")]
+    public static void TryDraw_EmptyStockpile_ReturnsFalse()
+    {
+        ResourceTypeDef r = Res();
+        DictionaryStockpile sp = SCTestHelper.MakeEmptyStockpile();
 
-            TestAssert.IsTrue(ok, "TryDraw should succeed and clamp to what is available");
-            TestAssert.AreEqual(10.0, drawn);
-            TestAssert.AreEqual(0.0, sp.GetAmount(r));
-        }
+        bool ok = sp.TryDraw(r, 5.0, out double drawn);
 
-        [EmpireTest("SC.Stockpile")]
-        public static void TryDraw_EmptyStockpile_ReturnsFalse()
-        {
-            ResourceTypeDef r = Res();
-            DictionaryStockpile sp = SCTestHelper.MakeEmptyStockpile();
+        TestAssert.IsFalse(ok, "TryDraw on missing/empty resource should return false");
+        TestAssert.AreEqual(0.0, drawn);
+    }
 
-            bool ok = sp.TryDraw(r, 5.0, out double drawn);
+    [EmpireTest("SC.Stockpile")]
+    public static void TryDraw_ZeroAmount_ReturnsFalse()
+    {
+        ResourceTypeDef r = Res();
+        DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 10.0, 100.0);
 
-            TestAssert.IsFalse(ok, "TryDraw on missing/empty resource should return false");
-            TestAssert.AreEqual(0.0, drawn);
-        }
+        bool ok = sp.TryDraw(r, 0.0, out double drawn);
 
-        [EmpireTest("SC.Stockpile")]
-        public static void TryDraw_ZeroAmount_ReturnsFalse()
-        {
-            ResourceTypeDef r = Res();
-            DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 10.0, 100.0);
+        TestAssert.IsFalse(ok, "TryDraw of zero should be a no-op false");
+        TestAssert.AreEqual(0.0, drawn);
+        TestAssert.AreEqual(10.0, sp.GetAmount(r), 0.001, "Amount must be unchanged");
+    }
 
-            bool ok = sp.TryDraw(r, 0.0, out double drawn);
+    [EmpireTest("SC.Stockpile")]
+    public static void TryDraw_NegativeAmount_ReturnsFalse()
+    {
+        ResourceTypeDef r = Res();
+        DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 10.0, 100.0);
 
-            TestAssert.IsFalse(ok, "TryDraw of zero should be a no-op false");
-            TestAssert.AreEqual(0.0, drawn);
-            TestAssert.AreEqual(10.0, sp.GetAmount(r), 0.001, "Amount must be unchanged");
-        }
+        bool ok = sp.TryDraw(r, -5.0, out double drawn);
 
-        [EmpireTest("SC.Stockpile")]
-        public static void TryDraw_NegativeAmount_ReturnsFalse()
-        {
-            ResourceTypeDef r = Res();
-            DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 10.0, 100.0);
+        TestAssert.IsFalse(ok, "TryDraw of a negative amount should return false");
+        TestAssert.AreEqual(0.0, drawn);
+        TestAssert.AreEqual(10.0, sp.GetAmount(r));
+    }
 
-            bool ok = sp.TryDraw(r, -5.0, out double drawn);
+    /*-*-*- Credit -*-*-*/
 
-            TestAssert.IsFalse(ok, "TryDraw of a negative amount should return false");
-            TestAssert.AreEqual(0.0, drawn);
-            TestAssert.AreEqual(10.0, sp.GetAmount(r));
-        }
+    [EmpireTest("SC.Stockpile")]
+    public static void Credit_WithinCap_NoExcess()
+    {
+        ResourceTypeDef r = Res();
+        DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 0.0, 100.0);
 
-        /*-*-*- Credit -*-*-*/
+        double excess = sp.Credit(r, 30.0);
 
-        [EmpireTest("SC.Stockpile")]
-        public static void Credit_WithinCap_NoExcess()
-        {
-            ResourceTypeDef r = Res();
-            DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 0.0, 100.0);
+        TestAssert.AreEqual(0.0, excess, 0.001, "Credit within cap returns no excess");
+        TestAssert.AreEqual(30.0, sp.GetAmount(r));
+    }
 
-            double excess = sp.Credit(r, 30.0);
+    [EmpireTest("SC.Stockpile")]
+    public static void Credit_OverCap_ReturnsExcessAndClamps()
+    {
+        ResourceTypeDef r = Res();
+        DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 90.0, 100.0);
 
-            TestAssert.AreEqual(0.0, excess, 0.001, "Credit within cap returns no excess");
-            TestAssert.AreEqual(30.0, sp.GetAmount(r));
-        }
+        double excess = sp.Credit(r, 30.0);
 
-        [EmpireTest("SC.Stockpile")]
-        public static void Credit_OverCap_ReturnsExcessAndClamps()
-        {
-            ResourceTypeDef r = Res();
-            DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 90.0, 100.0);
+        TestAssert.AreEqual(20.0, excess, 0.001, "Only 10 fits; 20 should be returned as excess");
+        TestAssert.AreEqual(100.0, sp.GetAmount(r), 0.001, "Amount is clamped to cap");
+    }
 
-            double excess = sp.Credit(r, 30.0);
+    [EmpireTest("SC.Stockpile")]
+    public static void Credit_ZeroCap_ReturnsAllAsExcess()
+    {
+        ResourceTypeDef r = Res();
+        DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 0.0, 0.0);
 
-            TestAssert.AreEqual(20.0, excess, 0.001, "Only 10 fits; 20 should be returned as excess");
-            TestAssert.AreEqual(100.0, sp.GetAmount(r), 0.001, "Amount is clamped to cap");
-        }
+        double excess = sp.Credit(r, 10.0);
 
-        [EmpireTest("SC.Stockpile")]
-        public static void Credit_ZeroCap_ReturnsAllAsExcess()
-        {
-            ResourceTypeDef r = Res();
-            DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 0.0, 0.0);
+        TestAssert.AreEqual(10.0, excess, 0.001, "Nothing fits under a zero cap");
+        TestAssert.AreEqual(0.0, sp.GetAmount(r));
+    }
 
-            double excess = sp.Credit(r, 10.0);
+    [EmpireTest("SC.Stockpile")]
+    public static void CreditOverCap_ThenDrawAll_RoundTrips()
+    {
+        // The overflow contract end-to-end: crediting past the cap clamps and reports the excess,
+        // and a subsequent over-draw takes back exactly the capped amount, leaving nothing behind.
+        ResourceTypeDef r = Res();
+        DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 0.0, 100.0);
 
-            TestAssert.AreEqual(10.0, excess, 0.001, "Nothing fits under a zero cap");
-            TestAssert.AreEqual(0.0, sp.GetAmount(r));
-        }
+        double excess = sp.Credit(r, 150.0);
+        TestAssert.AreEqual(50.0, excess, 0.001, "50 over the 100 cap is returned as excess");
+        TestAssert.AreEqual(100.0, sp.GetAmount(r), 0.001, "Stockpile fills to exactly the cap");
 
-        [EmpireTest("SC.Stockpile")]
-        public static void CreditOverCap_ThenDrawAll_RoundTrips()
-        {
-            // The overflow contract end-to-end: crediting past the cap clamps and reports the excess,
-            // and a subsequent over-draw takes back exactly the capped amount, leaving nothing behind.
-            ResourceTypeDef r = Res();
-            DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 0.0, 100.0);
+        bool ok = sp.TryDraw(r, 1000.0, out double drawn);
+        TestAssert.IsTrue(ok, "Draw from a full stockpile succeeds");
+        TestAssert.AreEqual(100.0, drawn, 0.001, "Draw clamps to the capped amount");
+        TestAssert.AreEqual(0.0, sp.GetAmount(r), 0.001, "Stockpile empties after drawing everything");
+    }
 
-            double excess = sp.Credit(r, 150.0);
-            TestAssert.AreEqual(50.0, excess, 0.001, "50 over the 100 cap is returned as excess");
-            TestAssert.AreEqual(100.0, sp.GetAmount(r), 0.001, "Stockpile fills to exactly the cap");
+    [EmpireTest("SC.Stockpile")]
+    public static void Credit_NegativeAmount_NoOp()
+    {
+        ResourceTypeDef r = Res();
+        DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 5.0, 100.0);
 
-            bool ok = sp.TryDraw(r, 1000.0, out double drawn);
-            TestAssert.IsTrue(ok, "Draw from a full stockpile succeeds");
-            TestAssert.AreEqual(100.0, drawn, 0.001, "Draw clamps to the capped amount");
-            TestAssert.AreEqual(0.0, sp.GetAmount(r), 0.001, "Stockpile empties after drawing everything");
-        }
+        double excess = sp.Credit(r, -5.0);
 
-        [EmpireTest("SC.Stockpile")]
-        public static void Credit_NegativeAmount_NoOp()
-        {
-            ResourceTypeDef r = Res();
-            DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 5.0, 100.0);
+        TestAssert.AreEqual(0.0, excess);
+        TestAssert.AreEqual(5.0, sp.GetAmount(r), 0.001, "Negative credit must not change the amount");
+    }
 
-            double excess = sp.Credit(r, -5.0);
+    /*-*-*- Add (uncapped deposit) -*-*-*/
 
-            TestAssert.AreEqual(0.0, excess);
-            TestAssert.AreEqual(5.0, sp.GetAmount(r), 0.001, "Negative credit must not change the amount");
-        }
+    [EmpireTest("SC.Stockpile")]
+    public static void Add_ExceedsCap_DepositsOverCapWithoutClamping()
+    {
+        // The produce-then-consume deposit path: Add ignores the cap so the day's production can
+        // land in full and be reconciled later by the overflow sweep. Contrast Credit, which clamps.
+        ResourceTypeDef r = Res();
+        DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 90.0, 100.0);
 
-        /*-*-*- Add (uncapped deposit) -*-*-*/
+        sp.Add(r, 30.0);
 
-        [EmpireTest("SC.Stockpile")]
-        public static void Add_ExceedsCap_DepositsOverCapWithoutClamping()
-        {
-            // The produce-then-consume deposit path: Add ignores the cap so the day's production can
-            // land in full and be reconciled later by the overflow sweep. Contrast Credit, which clamps.
-            ResourceTypeDef r = Res();
-            DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 90.0, 100.0);
+        TestAssert.AreEqual(120.0, sp.GetAmount(r), 0.001, "Add must deposit the full amount even past the cap");
+    }
 
-            sp.Add(r, 30.0);
+    [EmpireTest("SC.Stockpile")]
+    public static void Add_MissingResource_StartsFromZero()
+    {
+        ResourceTypeDef r = Res();
+        DictionaryStockpile sp = SCTestHelper.MakeEmptyStockpile();
 
-            TestAssert.AreEqual(120.0, sp.GetAmount(r), 0.001, "Add must deposit the full amount even past the cap");
-        }
+        sp.Add(r, 15.0);
 
-        [EmpireTest("SC.Stockpile")]
-        public static void Add_MissingResource_StartsFromZero()
-        {
-            ResourceTypeDef r = Res();
-            DictionaryStockpile sp = SCTestHelper.MakeEmptyStockpile();
+        TestAssert.AreEqual(15.0, sp.GetAmount(r), 0.001, "Add to a missing key seeds it from zero");
+    }
 
-            sp.Add(r, 15.0);
+    [EmpireTest("SC.Stockpile")]
+    public static void Add_ZeroOrNegative_NoOp()
+    {
+        ResourceTypeDef r = Res();
+        DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 5.0, 100.0);
 
-            TestAssert.AreEqual(15.0, sp.GetAmount(r), 0.001, "Add to a missing key seeds it from zero");
-        }
+        sp.Add(r, 0.0);
+        sp.Add(r, -5.0);
 
-        [EmpireTest("SC.Stockpile")]
-        public static void Add_ZeroOrNegative_NoOp()
-        {
-            ResourceTypeDef r = Res();
-            DictionaryStockpile sp = SCTestHelper.MakeStockpile(r, 5.0, 100.0);
+        TestAssert.AreEqual(5.0, sp.GetAmount(r), 0.001, "Non-positive Add must not change the amount");
+    }
 
-            sp.Add(r, 0.0);
-            sp.Add(r, -5.0);
+    /*-*-*- GetAmount / GetCap defaults -*-*-*/
 
-            TestAssert.AreEqual(5.0, sp.GetAmount(r), 0.001, "Non-positive Add must not change the amount");
-        }
+    [EmpireTest("SC.Stockpile")]
+    public static void GetAmount_MissingKey_IsZero()
+    {
+        DictionaryStockpile sp = SCTestHelper.MakeEmptyStockpile();
+        TestAssert.AreEqual(0.0, sp.GetAmount(Res()));
+    }
 
-        /*-*-*- GetAmount / GetCap defaults -*-*-*/
-
-        [EmpireTest("SC.Stockpile")]
-        public static void GetAmount_MissingKey_IsZero()
-        {
-            DictionaryStockpile sp = SCTestHelper.MakeEmptyStockpile();
-            TestAssert.AreEqual(0.0, sp.GetAmount(Res()));
-        }
-
-        [EmpireTest("SC.Stockpile")]
-        public static void GetCap_MissingKey_IsZero()
-        {
-            DictionaryStockpile sp = SCTestHelper.MakeEmptyStockpile();
-            TestAssert.AreEqual(0.0, sp.GetCap(Res()));
-        }
+    [EmpireTest("SC.Stockpile")]
+    public static void GetCap_MissingKey_IsZero()
+    {
+        DictionaryStockpile sp = SCTestHelper.MakeEmptyStockpile();
+        TestAssert.AreEqual(0.0, sp.GetCap(Res()));
     }
 }
