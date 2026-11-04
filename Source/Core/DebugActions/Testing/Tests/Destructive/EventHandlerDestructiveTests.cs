@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace FactionColonies.SupplyChain;
 
 /* DESTRUCTIVE: fires SCEventHandler_Stockpile against a live settlement's real stockpile (the

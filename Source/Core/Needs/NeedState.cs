@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using Verse;
-
 namespace FactionColonies.SupplyChain;
 
 public enum NeedCategory : byte

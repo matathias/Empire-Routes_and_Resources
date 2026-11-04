@@ -1,6 +1,3 @@
-using System;
-using RimWorld.Planet;
-
 namespace FactionColonies.SupplyChain;
 
 /// <summary>

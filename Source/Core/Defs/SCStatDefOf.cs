@@ -1,6 +1,4 @@
-﻿using RimWorld;
-
-namespace FactionColonies.SupplyChain;
+﻿namespace FactionColonies.SupplyChain;
 
 [DefOf]
 public class SCStatDefOf

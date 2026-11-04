@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using RimWorld;
-using RimWorld.Planet;
-using Verse;
-
 namespace FactionColonies.SupplyChain;
 
 public class WorldObjectCompProperties_SettlementNeeds : WorldObjectCompProperties

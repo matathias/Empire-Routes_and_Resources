@@ -1,5 +1,3 @@
-using Verse;
-
 namespace FactionColonies.SupplyChain;
 
 public static class LogSC

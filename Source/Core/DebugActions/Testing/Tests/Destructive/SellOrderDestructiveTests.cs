@@ -1,5 +1,3 @@
-using System.Linq;
-
 namespace FactionColonies.SupplyChain;
 
 /* DESTRUCTIVE: exercises the settlement-context SellOrder overload, which reads the live

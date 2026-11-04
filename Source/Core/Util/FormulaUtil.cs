@@ -1,5 +1,3 @@
-using System;
-
 namespace FactionColonies.SupplyChain;
 
 public static class FormulaUtil

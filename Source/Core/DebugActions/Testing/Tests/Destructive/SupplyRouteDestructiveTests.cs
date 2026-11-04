@@ -1,6 +1,3 @@
-using System.Linq;
-using Verse;
-
 namespace FactionColonies.SupplyChain;
 
 /* DESTRUCTIVE: needs two live settlements (may create transient ones) to compute a real route

@@ -1,5 +1,3 @@
-using System.Linq;
-
 namespace FactionColonies.SupplyChain;
 
 /* DESTRUCTIVE: registers/clears stockpile allocations and toggles auto-max on a live settlement's

@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using RimWorld;
-
 namespace FactionColonies.SupplyChain;
 
 /// <summary>
