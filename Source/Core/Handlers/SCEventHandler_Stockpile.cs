@@ -59,9 +59,7 @@ public class SCEventHandler_Stockpile : FCEventHandlerExtension
                             stockpile.TryDraw(r, loss, out drawn);
                             if (convertToSilver && drawn > 0)
                                 silverAccum += FormulaUtil.OverflowSilver(drawn);
-                            LogSC.Message("Stockpile event: "
-                                + settlement.Name + " " + r.label
-                                + " mult=" + mult + " drew " + drawn.ToString("F1"));
+                            LogSC.Message($"Stockpile event: {settlement.Name} {r.label} mult={mult} drew {drawn:F1}");
                         }
                         else if (target > current)
                         {
@@ -69,16 +67,12 @@ public class SCEventHandler_Stockpile : FCEventHandlerExtension
                             if (convertToSilver)
                             {
                                 silverAccum += FormulaUtil.OverflowSilver(gain);
-                                LogSC.Message("Stockpile event: "
-                                    + settlement.Name + " " + r.label
-                                    + " mult=" + mult + " sold " + gain.ToString("F1") + " for silver");
+                                LogSC.Message($"Stockpile event: {settlement.Name} {r.label} mult={mult} sold {gain:F1} for silver");
                             }
                             else
                             {
                                 stockpile.Credit(r, gain);
-                                LogSC.Message("Stockpile event: "
-                                    + settlement.Name + " " + r.label
-                                    + " mult=" + mult + " credited " + gain.ToString("F1"));
+                                LogSC.Message($"Stockpile event: {settlement.Name} {r.label} mult={mult} credited {gain:F1}");
                             }
                         }
                     }
@@ -93,16 +87,12 @@ public class SCEventHandler_Stockpile : FCEventHandlerExtension
                         if (convertToSilver)
                         {
                             silverAccum += FormulaUtil.OverflowSilver(delta);
-                            LogSC.Message("Stockpile event: "
-                                + settlement.Name + " " + r.label
-                                + " sold " + delta.ToString("F1") + " for silver (flat)");
+                            LogSC.Message($"Stockpile event: {settlement.Name} {r.label} sold {delta:F1} for silver (flat)");
                         }
                         else
                         {
                             stockpile.Credit(r, delta);
-                            LogSC.Message("Stockpile event: "
-                                + settlement.Name + " " + r.label
-                                + " credited " + delta.ToString("F1") + " (flat)");
+                            LogSC.Message($"Stockpile event: {settlement.Name} {r.label} credited {delta:F1} (flat)");
                         }
                     }
                     else
@@ -110,9 +100,7 @@ public class SCEventHandler_Stockpile : FCEventHandlerExtension
                         double drawn;
                         stockpile.TryDraw(r, -delta, out drawn);
                         if (debug)
-                            LogSC.Message("Stockpile event: "
-                                + settlement.Name + " " + r.label
-                                + " drew " + drawn.ToString("F1") + " (flat)");
+                            LogSC.Message($"Stockpile event: {settlement.Name} {r.label} drew {drawn:F1} (flat)");
                     }
                 }
             }
@@ -121,8 +109,7 @@ public class SCEventHandler_Stockpile : FCEventHandlerExtension
             {
                 settlement.AddOneTimeSilverIncome(silverAccum);
                 if (debug)
-                    LogSC.Message("Stockpile event: "
-                        + settlement.Name + " salvaged " + silverAccum.ToString("F0") + " silver");
+                    LogSC.Message($"Stockpile event: {settlement.Name} salvaged {silverAccum:F0} silver");
             }
         }
     }
