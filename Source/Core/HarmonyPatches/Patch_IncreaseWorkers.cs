@@ -10,7 +10,7 @@ public static class Patch_IncreaseWorkers
     {
         SupplyChainCache.Comp?.DirtyFlowCache();
         WorldObjectComp_SettlementNeeds needsComp = SupplyChainCache.GetNeedsComp(__instance);
-        if (needsComp != null)
+        if (needsComp is not null)
             needsComp.RebuildNeedStates();
     }
 }

@@ -30,7 +30,7 @@ public class SellOrder : IExposable
     /// </summary>
     public float Execute(IStockpile stockpile, WorldSettlementFC settlement)
     {
-        if (resource == null || amountPerPeriod <= 0)
+        if (resource is null || amountPerPeriod <= 0)
             return 0f;
 
         double drawn;
@@ -40,10 +40,10 @@ public class SellOrder : IExposable
         double sellRate = SupplyChainSettings.overflowPenaltyRate;
 
         // Apply sell rate multiplier stat if a settlement context is available
-        if (settlement != null && FindFC.FactionComp != null)
+        if (settlement is not null && FindFC.FactionComp is not null)
         {
             FCStatDef sellRateStat = DefDatabase<FCStatDef>.GetNamedSilentFail("SC_SellRateMultiplier");
-            if (sellRateStat != null)
+            if (sellRateStat is not null)
             {
                 double mult = FindFC.FactionComp.GetStatValue(sellRateStat, settlement);
                 if (mult > 0)

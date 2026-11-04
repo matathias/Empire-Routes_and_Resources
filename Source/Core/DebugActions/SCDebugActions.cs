@@ -13,24 +13,24 @@ public static class SCDebugActions
     private static void ForEachStockpile(Action<IStockpile, string> action)
     {
         WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
-        if (comp == null) return;
+        if (comp is null) return;
 
         if (comp.Mode == SupplyChainMode.Simple)
         {
             IStockpile stockpile = comp.Stockpile;
-            if (stockpile != null)
+            if (stockpile is not null)
                 action(stockpile, "Faction");
         }
         else
         {
             FactionFC faction = FindFC.FactionComp;
-            if (faction == null) return;
+            if (faction is null) return;
             foreach (WorldSettlementFC settlement in faction.settlements)
             {
                 WorldObjectComp_SupplyChain sc = SupplyChainCache.GetSettlementComp(settlement);
-                if (sc == null) continue;
+                if (sc is null) continue;
                 IStockpile stockpile = sc.GetStockpile();
-                if (stockpile != null)
+                if (stockpile is not null)
                     action(stockpile, settlement.Name);
             }
         }
@@ -74,15 +74,15 @@ public static class SCDebugActions
     private static void ForceResolveNeeds()
     {
         WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
-        if (comp == null) return;
+        if (comp is null) return;
 
         FactionFC faction = FindFC.FactionComp;
-        if (faction == null) return;
+        if (faction is null) return;
 
         if (comp.Mode == SupplyChainMode.Simple)
         {
             IStockpile stockpile = comp.Stockpile;
-            if (stockpile == null) return;
+            if (stockpile is null) return;
             NeedResolver.ResolveSettlementNeedsFair(faction, stockpile);
         }
         else
@@ -91,9 +91,9 @@ public static class SCDebugActions
             {
                 WorldObjectComp_SupplyChain sc = SupplyChainCache.GetSettlementComp(settlement);
                 WorldObjectComp_SettlementNeeds needsComp = SupplyChainCache.GetNeedsComp(settlement);
-                if (sc == null || needsComp == null) continue;
+                if (sc is null || needsComp is null) continue;
                 IStockpile stockpile = sc.GetStockpile();
-                if (stockpile == null) continue;
+                if (stockpile is null) continue;
                 NeedResolver.ResolveSettlementNeeds(settlement, stockpile, needsComp);
             }
         }
@@ -104,7 +104,7 @@ public static class SCDebugActions
     private static void ForceDispatchAllRoutes()
     {
         WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
-        if (comp == null || comp.Mode != SupplyChainMode.Complex) return;
+        if (comp is null || comp.Mode != SupplyChainMode.Complex) return;
 
         comp.DebugForceDispatchAllRoutes();
         Log.Message("[Empire-SupplyChain] Debug: Dispatched all routes now; "
@@ -115,7 +115,7 @@ public static class SCDebugActions
     private static void ForceArriveAllDeliveries()
     {
         WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
-        if (comp == null || comp.Mode != SupplyChainMode.Complex) return;
+        if (comp is null || comp.Mode != SupplyChainMode.Complex) return;
 
         int count = comp.PendingDeliveries.Count;
         comp.DebugForceArriveAllDeliveries();
@@ -126,10 +126,10 @@ public static class SCDebugActions
     private static void ForceExecuteSellOrders()
     {
         WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
-        if (comp == null) return;
+        if (comp is null) return;
 
         FactionFC faction = FindFC.FactionComp;
-        if (faction == null) return;
+        if (faction is null) return;
 
         comp.PreTaxResolution(faction);
         Log.Message("[Empire-SupplyChain] Debug: PreTaxResolution executed (includes sell orders).");
@@ -139,7 +139,7 @@ public static class SCDebugActions
     private static void PrintStockpileState()
     {
         WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
-        if (comp == null) return;
+        if (comp is null) return;
 
         StringBuilder sb = new StringBuilder();
         sb.AppendLine("[Empire-SupplyChain] === Stockpile State (" + comp.Mode + " mode) ===");
@@ -171,9 +171,9 @@ public static class SCDebugActions
             sb.AppendLine("  In-transit deliveries: " + comp.PendingDeliveries.Count);
             foreach (PendingDelivery d in comp.PendingDeliveries)
             {
-                string src = d.source != null ? d.source.Name : "?";
-                string dst = d.destination != null ? d.destination.Name : "?";
-                string res = d.resource != null ? d.resource.label : "?";
+                string src = d.source is not null ? d.source.Name : "?";
+                string dst = d.destination is not null ? d.destination.Name : "?";
+                string res = d.resource is not null ? d.resource.label : "?";
                 sb.AppendLine("    " + src + " -> " + dst + " (" + res + " x" + d.amount.ToString("F1")
                     + ", eff=" + d.efficiency.ToString("F2") + ", ETA " + d.TicksRemaining.ToStringTicksToPeriod() + ")");
             }
@@ -186,10 +186,10 @@ public static class SCDebugActions
     private static void ForceFullTaxCycle()
     {
         WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
-        if (comp == null) return;
+        if (comp is null) return;
 
         FactionFC faction = FindFC.FactionComp;
-        if (faction == null) return;
+        if (faction is null) return;
 
         comp.PreTaxResolution(faction);
         comp.PostTaxResolution(faction);
@@ -211,7 +211,7 @@ public static class SCDebugActions
 
         WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
         FactionFC faction = FindFC.FactionComp;
-        if (comp == null || faction == null)
+        if (comp is null || faction is null)
         {
             Log.Warning("[Empire-SupplyChain] Debug: stress test aborted (no supply-chain component or faction).");
             return;
@@ -239,7 +239,7 @@ public static class SCDebugActions
                 if (faction.CheckSettlementCaravansList(tile)) continue;
 
                 WorldSettlementFC s = ColonyUtil.CreatePlayerColonySettlement(tile, def);
-                if (s != null) created.Add(s);
+                if (s is not null) created.Add(s);
             }
 
             // 2. Configure each: random upgrades, one worked resource, all workers on it, seeded stock.
@@ -250,8 +250,8 @@ public static class SCDebugActions
 
                 // Non-pool so the scenario also exercises the silver flows (sell orders,
                 // overflow auto-sell), which pool resources never enter.
-                ResourceFC chosen = s.Resources.Where(r => r.def != null && !r.def.isPoolResource).RandomElementWithFallback(null);
-                if (chosen == null) continue;
+                ResourceFC chosen = s.Resources.Where(r => r.def is not null && !r.def.isPoolResource).RandomElementWithFallback(null);
+                if (chosen is null) continue;
                 workedResource[s] = chosen.def;
 
                 // All workers onto the chosen resource: shed everything, then load to the ultra cap.
@@ -261,7 +261,7 @@ public static class SCDebugActions
 
                 // Pre-seed the source stockpile to cap so routes dispatch immediately.
                 IStockpile sp = SupplyChainCache.GetSettlementComp(s)?.EnsureLocalStockpile();
-                if (sp != null)
+                if (sp is not null)
                 {
                     double room = sp.GetCap(chosen.def) - sp.GetAmount(chosen.def);
                     if (room > 0) sp.Credit(chosen.def, room);
@@ -298,7 +298,7 @@ public static class SCDebugActions
     private static void ForceDispatchAllRoutesTenTimes()
     {
         WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
-        if (comp == null || comp.Mode != SupplyChainMode.Complex) return;
+        if (comp is null || comp.Mode != SupplyChainMode.Complex) return;
 
         for (int i = 0; i < 10; i++)
             comp.DebugForceDispatchAllRoutes();
@@ -311,7 +311,7 @@ public static class SCDebugActions
     private static void ClearAllSupplyCaravans()
     {
         WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
-        if (comp == null || comp.Mode != SupplyChainMode.Complex) return;
+        if (comp is null || comp.Mode != SupplyChainMode.Complex) return;
 
         int count = comp.PendingDeliveries.Count;
         comp.DebugForceArriveAllDeliveries();  // credits goods + removes caravans

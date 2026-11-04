@@ -165,7 +165,7 @@ public class SettlementNeedDef : Def
         {
             foreach (SettlementNeedResourceInput t in resources)
             {
-                if (t?.resource != null)
+                if (t?.resource is not null)
                 {
                     result.Add(new KeyValuePair<ResourceTypeDef, double>(t.resource, 1.0));
                     return result;
@@ -234,7 +234,7 @@ public class SettlementNeedDef : Def
                 : (label.CapitalizeFirst() + " - " + res.label.CapitalizeFirst());
 
             List<NeedSurplusBonus> scaledBonuses = null;
-            if (surplusBonuses != null && surplusBonuses.Count > 0)
+            if (surplusBonuses is not null && surplusBonuses.Count > 0)
             {
                 if (single)
                 {
@@ -284,7 +284,7 @@ public class SettlementNeedDef : Def
                     continue;
                 }
                 anyValid = true;
-                if (entry.weightsByTech != null && entry.weightsByTech.Count > 0)
+                if (entry.weightsByTech is not null && entry.weightsByTech.Count > 0)
                 {
                     foreach (var t in entry.weightsByTech)
                         if (t.weight > 0f) { anyNonzero = true; break; }
@@ -297,21 +297,21 @@ public class SettlementNeedDef : Def
             if (anyValid && !anyNonzero)
                 yield return "SettlementNeedDef " + defName + " has no nonzero resource weight at any tech level";
         }
-        if (penalties == null || penalties.Count == 0)
+        if (penalties is null || penalties.Count == 0)
             yield return "SettlementNeedDef " + defName + " has no penalties";
         else
         {
             for (int i = 0; i < penalties.Count; i++)
             {
-                if (penalties[i].stat == null)
+                if (penalties[i].stat is null)
                     yield return "SettlementNeedDef " + defName + " penalty " + i + " has null stat";
             }
         }
-        if (surplusBonuses != null)
+        if (surplusBonuses is not null)
         {
             for (int i = 0; i < surplusBonuses.Count; i++)
             {
-                if (surplusBonuses[i].stat == null)
+                if (surplusBonuses[i].stat is null)
                     yield return "SettlementNeedDef " + defName + " surplusBonus " + i + " has null stat";
             }
         }

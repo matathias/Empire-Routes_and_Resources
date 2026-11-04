@@ -129,21 +129,21 @@ public class BuildingNeedExtension : DefModExtension, IBuildingDetailSection
     {
         foreach (string e in base.ConfigErrors())
             yield return e;
-        if ((inputs == null || inputs.Count == 0) && (capBonuses == null || capBonuses.Count == 0))
+        if ((inputs is null || inputs.Count == 0) && (capBonuses is null || capBonuses.Count == 0))
             yield return "BuildingNeedExtension has no inputs and no capBonuses";
-        if (inputs != null)
+        if (inputs is not null)
         {
             for (int i = 0; i < inputs.Count; i++)
             {
-                if (inputs[i].resource == null)
+                if (inputs[i].resource is null)
                     yield return "BuildingNeedExtension input " + i + " has null resource";
             }
         }
-        if (capBonuses != null)
+        if (capBonuses is not null)
         {
             for (int i = 0; i < capBonuses.Count; i++)
             {
-                if (capBonuses[i].resource == null)
+                if (capBonuses[i].resource is null)
                     yield return "BuildingNeedExtension capBonus " + i + " has null resource";
             }
         }

@@ -10,14 +10,14 @@ public static class SCDestructiveTestUtil
     /// <summary>First live settlement, or a freshly created transient one (null if neither possible).</summary>
     public static WorldSettlementFC FirstOrTransient(FactionFC f)
     {
-        if (f?.settlements != null && f.settlements.Count > 0) return f.settlements[0];
+        if (f?.settlements is not null && f.settlements.Count > 0) return f.settlements[0];
         return DestructiveTestUtil.CreateTransientSettlement();
     }
 
     /// <summary>Settlement at <paramref name="index"/>, or a freshly created transient one.</summary>
     public static WorldSettlementFC SettlementAt(FactionFC f, int index)
     {
-        if (f?.settlements != null && f.settlements.Count > index) return f.settlements[index];
+        if (f?.settlements is not null && f.settlements.Count > index) return f.settlements[index];
         return DestructiveTestUtil.CreateTransientSettlement();
     }
 

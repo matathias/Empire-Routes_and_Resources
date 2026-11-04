@@ -79,7 +79,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
     private Dictionary<ResourceTypeDef, double> titheInjections => Ledger?.TitheInjections;
 
     private double GetAllocation(ResourceTypeDef def) => Ledger?.GetAllocation(def) ?? 0.0;
-    private bool IsAutoMax(ResourceTypeDef def) => Ledger is object && Ledger.IsAutoMax(def);
+    private bool IsAutoMax(ResourceTypeDef def) => Ledger is not null && Ledger.IsAutoMax(def);
     private void SetAllocation(ResourceTypeDef def, double amount) => Ledger?.SetAllocation(def, amount);
     private void SetAutoMax(ResourceTypeDef def, bool enabled) => Ledger?.SetAutoMax(def, enabled);
     private double GetTitheInjection(ResourceTypeDef def) => Ledger?.GetTitheInjection(def) ?? 0.0;
@@ -220,7 +220,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
             WorldComponent_SupplyChain.FlowBreakdown flow = default(WorldComponent_SupplyChain.FlowBreakdown);
             WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
             WorldSettlementFC ws = WorldSettlement;
-            if (wc is object && ws is object)
+            if (wc is not null && ws is not null)
                 flow = wc.GetCachedFlow(ws, Ledger, def);
 
             // Cell width must be computed identically to DrawStockpileStatusBar (two separate
@@ -269,7 +269,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
             double amount = localStockpileDict.GetAmount(def);
             WorldComponent_SupplyChain.FlowBreakdown flow = default(WorldComponent_SupplyChain.FlowBreakdown);
-            if (wc is object && ws is object)
+            if (wc is not null && ws is not null)
                 flow = wc.GetCachedFlow(ws, Ledger, def);
 
             string amtStr = amount.ToString("F1");
@@ -287,7 +287,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
             // Icon
             float iconY = curY + (StatusRowH - StatusIconSize) / 2f;
-            if (def.Icon is object)
+            if (def.Icon is not null)
                 GUI.DrawTexture(new Rect(curX, iconY, StatusIconSize, StatusIconSize), def.Icon);
 
             // Amount text (white)
@@ -422,7 +422,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
             // Flow calculation
             WorldComponent_SupplyChain.FlowBreakdown flow = default(WorldComponent_SupplyChain.FlowBreakdown);
-            if (flowWc is object && flowSettlement is object)
+            if (flowWc is not null && flowSettlement is not null)
                 flow = flowWc.GetCachedFlow(flowSettlement, Ledger, def);
 
             // Row highlight: alternating gray + flow-based red/green
@@ -433,7 +433,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
             Color accentColor = flow.DailyNet > 0.01 ? AccentPositive : flow.DailyNet < -0.01 ? AccentNegative : AccentNeutral;
             Widgets.DrawBoxSolid(new Rect(0f, curY, AccentW, barHeight), accentColor);
 
-            if (def.Icon is object)
+            if (def.Icon is not null)
                 GUI.DrawTexture(new Rect(contentX, curY + 2f, 24f, 24f), def.Icon);
 
             Text.Anchor = TextAnchor.MiddleLeft;
@@ -578,7 +578,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
             float cx = AccentW + 4f;
             Text.Anchor = TextAnchor.MiddleLeft;
-            if (order.resource.Icon is object)
+            if (order.resource.Icon is not null)
                 GUI.DrawTexture(new Rect(cx, curY + 3f, 20f, 20f), order.resource.Icon);
 
             Widgets.Label(new Rect(cx + 24f, curY, 120f, 26f),
@@ -603,7 +603,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
             curY += 28f;
             sellIdx++;
         }
-        if (toRemove is object)
+        if (toRemove is not null)
         {
             foreach (SellOrder order in toRemove)
                 localSellOrders.Remove(order);
@@ -637,7 +637,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
             float cx = AccentW + 4f;
             Text.Anchor = TextAnchor.MiddleLeft;
-            if (kv.Key.Icon is object)
+            if (kv.Key.Icon is not null)
                 GUI.DrawTexture(new Rect(cx, curY + 3f, 20f, 20f), kv.Key.Icon);
 
             Widgets.Label(new Rect(cx + 24f, curY, 120f, 26f),
@@ -662,7 +662,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
             curY += 28f;
             titheIdx++;
         }
-        if (titheToRemove is object)
+        if (titheToRemove is not null)
         {
             foreach (ResourceTypeDef def in titheToRemove)
                 SetTitheInjection(def, 0);
@@ -722,14 +722,14 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
             bool active = routeFilterResource == filterDef;
             ResourceTypeDef captured = filterDef;
             string btnLabel = filterDef.label.CapitalizeFirst();
-            float btnW = (filterDef.Icon is object ? 20f : 0f) + Text.CalcSize(btnLabel).x + 10f;
+            float btnW = (filterDef.Icon is not null ? 20f : 0f) + Text.CalcSize(btnLabel).x + 10f;
             if (UIUtil.ButtonFlatIcon(new Rect(fbX, filterY, btnW, fbH), btnLabel,
                 filterDef.Icon, labelColor: filterDef.color, highlighted: active))
                 routeFilterResource = captured;
             fbX += btnW + 4f;
         }
 
-        if (routeFilterResource is object && !routeResources.Contains(routeFilterResource))
+        if (routeFilterResource is not null && !routeResources.Contains(routeFilterResource))
             routeFilterResource = null;
 
         Text.Font = GameFont.Tiny;
@@ -744,7 +744,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         foreach (SupplyRoute route in wc.SupplyRoutes)
         {
             if (!route.IsValid()) continue;
-            if (routeFilterResource is object && route.resource != routeFilterResource) continue;
+            if (routeFilterResource is not null && route.resource != routeFilterResource) continue;
             if (newRouteIsOutgoing && route.source == ws) shown.Add(route);
             else if (!newRouteIsOutgoing && route.destination == ws) shown.Add(route);
         }
@@ -809,10 +809,10 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
             GUI.color = Color.white;
 
             // Resource icon + name
-            if (route.resource is object && route.resource.Icon is object)
+            if (route.resource is not null && route.resource.Icon is not null)
                 GUI.DrawTexture(new Rect(cx + 34f, curY + 4f, 20f, 20f), route.resource.Icon);
 
-            string resName = route.resource is object ? route.resource.label.CapitalizeFirst() : "?";
+            string resName = route.resource is not null ? route.resource.label.CapitalizeFirst() : "?";
             Widgets.Label(new Rect(cx + 58f, curY, 90f, 26f), resName);
 
             // Direction arrow + other settlement name
@@ -870,7 +870,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
             curY += 30f;
         }
 
-        if (routeToRemove is object)
+        if (routeToRemove is not null)
         {
             routeAmountBuffers.Remove(routeToRemove);
             wc.UnlinkRoute(routeToRemove);
@@ -921,7 +921,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         float bx = x + 74f;
 
         // Resource picker
-        string resLabel = newRouteResource is object
+        string resLabel = newRouteResource is not null
             ? newRouteResource.label.CapitalizeFirst()
             : (string)"SC_ResourcePicker".Translate();
         if (Widgets.ButtonText(new Rect(bx, curY, 110f, 24f), resLabel))
@@ -940,7 +940,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         float pickerW = width - (bx - x) - 74f - 52f - 54f - 8f;
         if (pickerW < 120f) pickerW = 120f;
 
-        string otherLabel = newRouteOther is object
+        string otherLabel = newRouteOther is not null
             ? newRouteOther.Name
             : (string)"SC_PickSettlement".Translate();
         if (Widgets.ButtonText(new Rect(bx, curY, pickerW, 24f), otherLabel))
@@ -951,7 +951,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
                 if (s == ws) continue;
                 WorldSettlementFC captured = s;
                 string label = s.Name;
-                if (newRouteResource is object)
+                if (newRouteResource is not null)
                 {
                     if (newRouteIsOutgoing)
                     {
@@ -970,7 +970,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
                     else
                     {
                         ResourceFC res = s.GetResource(newRouteResource);
-                        if (res is object)
+                        if (res is not null)
                             label += "SC_RouteFormProdSuffix".Translate(res.rawTotalProduction.ToString("F1"));
                     }
                 }
@@ -995,7 +995,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         // Add button
         if (Widgets.ButtonText(new Rect(bx, curY, 50f, 24f), "SC_Add".Translate()))
         {
-            if (newRouteOther is object && newRouteResource is object && newRouteAmount > 0)
+            if (newRouteOther is not null && newRouteResource is not null && newRouteAmount > 0)
             {
                 WorldSettlementFC src = newRouteIsOutgoing ? ws : newRouteOther;
                 WorldSettlementFC dest = newRouteIsOutgoing ? newRouteOther : ws;
@@ -1055,7 +1055,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
             float cx = AccentW + 4f;
 
-            if (def.Icon is object)
+            if (def.Icon is not null)
                 GUI.DrawTexture(new Rect(cx, curY + 2f, 24f, 24f), def.Icon);
 
             Text.Anchor = TextAnchor.MiddleLeft;
@@ -1167,7 +1167,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
         // Pre-compute projected fill rates per resource
         WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
-        bool isComplex = wc is object && wc.Mode == SupplyChainMode.Complex;
+        bool isComplex = wc is not null && wc.Mode == SupplyChainMode.Complex;
         FactionFC faction = FindFC.FactionComp;
         WorldSettlementFC ws = WorldSettlement;
 
@@ -1216,7 +1216,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
             // --- Top line: icon + label + bar + percentage ---
             float topY = curY + 1f;
 
-            if (state.resource.Icon is object)
+            if (state.resource.Icon is not null)
                 GUI.DrawTexture(new Rect(cx, topY + 1f, 20f, 20f), state.resource.Icon);
 
             Text.Anchor = TextAnchor.MiddleLeft;
@@ -1270,7 +1270,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
                 GUI.color = new Color(1f, 0.5f, 0.5f);
                 double projectedShortfall = state.demanded * (1.0 - satisfaction);
                 string penaltyText = GetProjectedPenaltySummary(state, projectedShortfall);
-                if (penaltyText is object)
+                if (penaltyText is not null)
                 {
                     Rect penaltyRect = new Rect(cx + 228f, botY, viewRect.width - cx - 232f, NeedBotLineH);
                     Text.Anchor = TextAnchor.MiddleRight;
@@ -1283,7 +1283,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
             // Tooltip
             string tooltip = BuildNeedTooltip(state, satisfaction, actual);
-            if (tooltip is object)
+            if (tooltip is not null)
                 TooltipHandler.TipRegion(rowRect, tooltip);
 
             Text.Anchor = TextAnchor.UpperLeft;
@@ -1308,7 +1308,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         {
             // Base/comp needs: show scaling breakdown if a SettlementNeedDef exists
             SettlementNeedDef needDef = state.needDef;
-            if (needDef is object)
+            if (needDef is not null)
             {
                 string scalingDesc;
                 switch (needDef.scaling)
@@ -1335,7 +1335,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         }
 
         // Projected penalties
-        if (projected < 1f && state.penalties is object && state.demanded > 0)
+        if (projected < 1f && state.penalties is not null && state.demanded > 0)
         {
             tip += "\n\n" + (string)"SC_NeedProjectionExplain".Translate(
                 (projected * 100f).ToString("F0"));
@@ -1384,7 +1384,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         Text.Anchor = TextAnchor.MiddleLeft;
         Widgets.Label(new Rect(sx, curY, 40f, 26f), "SC_AddColon".Translate());
 
-        string resLabel = newLocalSellResource is object ? newLocalSellResource.label.CapitalizeFirst() : (string)"SC_PickResource".Translate();
+        string resLabel = newLocalSellResource is not null ? newLocalSellResource.label.CapitalizeFirst() : (string)"SC_PickResource".Translate();
         if (Widgets.ButtonText(new Rect(sx + 44f, curY, 130f, 24f), resLabel))
         {
             List<FloatMenuOption> options = new List<FloatMenuOption>();
@@ -1405,7 +1405,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
         if (Widgets.ButtonText(new Rect(sx + 268f, curY, 60f, 24f), "SC_Add".Translate()))
         {
-            if (newLocalSellResource is object && newLocalSellAmount > 0)
+            if (newLocalSellResource is not null && newLocalSellAmount > 0)
             {
                 localSellOrders.Add(new SellOrder(newLocalSellResource, newLocalSellAmount));
                 SupplyChainCache.Comp?.DirtyFlowCache();
@@ -1428,7 +1428,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         Text.Anchor = TextAnchor.MiddleLeft;
         Widgets.Label(new Rect(sx, curY, 40f, 26f), "SC_AddColon".Translate());
 
-        string resLabel = newTitheInjResource is object ? newTitheInjResource.label.CapitalizeFirst() : (string)"SC_PickResource".Translate();
+        string resLabel = newTitheInjResource is not null ? newTitheInjResource.label.CapitalizeFirst() : (string)"SC_PickResource".Translate();
         if (Widgets.ButtonText(new Rect(sx + 44f, curY, 130f, 24f), resLabel))
         {
             List<FloatMenuOption> options = new List<FloatMenuOption>();
@@ -1449,7 +1449,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
         if (Widgets.ButtonText(new Rect(sx + 268f, curY, 60f, 24f), "SC_Add".Translate()))
         {
-            if (newTitheInjResource is object && newTitheInjAmount > 0)
+            if (newTitheInjResource is not null && newTitheInjAmount > 0)
             {
                 SetTitheInjection(newTitheInjResource, newTitheInjAmount);
                 newTitheInjResource = null;

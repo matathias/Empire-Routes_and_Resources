@@ -21,7 +21,7 @@ public class SCEventHandler_Stockpile : FCEventHandlerExtension
     public override void OnEventTriggered(FCEvent evt)
     {
         WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
-        if (wc == null) return;
+        if (wc is null) return;
 
         bool debug = SupplyChainSettings.PrintDebug;
         List<ResourceTypeDef> targets = GetTargetResources();
@@ -34,10 +34,10 @@ public class SCEventHandler_Stockpile : FCEventHandlerExtension
 
         foreach (WorldSettlementFC settlement in evt.settlementTraitLocations)
         {
-            if (settlement == null) continue;
+            if (settlement is null) continue;
 
             IStockpile stockpile = GetStockpile(wc, settlement);
-            if (stockpile == null) continue;
+            if (stockpile is null) continue;
 
             bool applyMult = multAppliedPiles.Add(stockpile);
 
@@ -129,7 +129,7 @@ public class SCEventHandler_Stockpile : FCEventHandlerExtension
 
     private List<ResourceTypeDef> GetTargetResources()
     {
-        if (resource != null)
+        if (resource is not null)
             return new List<ResourceTypeDef> { resource };
         return new List<ResourceTypeDef>(SupplyChainCache.AllResourceTypeDefs);
     }
@@ -140,7 +140,7 @@ public class SCEventHandler_Stockpile : FCEventHandlerExtension
             return wc.Stockpile;
 
         WorldObjectComp_SupplyChain comp = SupplyChainCache.GetSettlementComp(settlement);
-        if (comp == null) return null;
+        if (comp is null) return null;
         return comp.GetStockpile();
     }
 }

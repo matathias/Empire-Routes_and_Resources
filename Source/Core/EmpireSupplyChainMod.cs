@@ -78,7 +78,7 @@ public class SupplyChainSettings : ModSettings
         Scribe_Collections.Look(ref startingResources, "startingResources", LookMode.Value, LookMode.Value);
         // Re-seed defaults only when the node is entirely absent (a config predating this
         // setting), so an explicit saved 0 is respected rather than reset to the default.
-        if (Scribe.mode == LoadSaveMode.LoadingVars && startingResources == null)
+        if (Scribe.mode == LoadSaveMode.LoadingVars && startingResources is null)
             startingResources = DefaultStartingResources();
     }
 
@@ -128,10 +128,10 @@ public class SupplyChainSettings : ModSettings
             mode = newMode;
 
             // If a world is loaded, apply the switch immediately
-            if (Find.World != null)
+            if (Find.World is not null)
             {
                 WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
-                if (wc != null)
+                if (wc is not null)
                     wc.SwitchMode(newMode);
             }
         }
@@ -149,7 +149,7 @@ public class SupplyChainSettings : ModSettings
         ls.Gap(12f);
 
         ls.Label("SC_SettingsBaseCap".Translate(baseCapPerSettlement.ToString("F0")));
-        if (capBuffer == null)
+        if (capBuffer is null)
             capBuffer = baseCapPerSettlement.ToString("F0");
         ls.TextFieldNumeric(ref baseCapPerSettlement, ref capBuffer, 10f, 500f);
         ls.Gap(12f);
@@ -172,19 +172,19 @@ public class SupplyChainSettings : ModSettings
         Listing_StandardExtensions.ResetRowStripe();
 
         ls.Label("SC_SettingsFoundingThreshold".Translate(freeSettlementThreshold.ToString()));
-        if (thresholdBuffer == null)
+        if (thresholdBuffer is null)
             thresholdBuffer = freeSettlementThreshold.ToString();
         ls.TextFieldNumeric(ref freeSettlementThreshold, ref thresholdBuffer, 0, 1000);
         ls.Gap(6f);
 
         ls.Label("SC_SettingsDistanceNorm".Translate(distanceNormalizingDays.ToString("F1")));
-        if (distNormBuffer == null)
+        if (distNormBuffer is null)
             distNormBuffer = distanceNormalizingDays.ToString("F1");
         ls.TextFieldNumeric(ref distanceNormalizingDays, ref distNormBuffer, 0.001f, 100f);
         ls.Gap(6f);
 
         ls.Label("SC_SettingsBaseSurcharge".Translate(baseSilverSurcharge.ToString()));
-        if (surchargeBuffer == null)
+        if (surchargeBuffer is null)
             surchargeBuffer = baseSilverSurcharge.ToString();
         ls.TextFieldNumeric(ref baseSilverSurcharge, ref surchargeBuffer, 0, 100000);
         ls.Gap(6f);
@@ -236,19 +236,19 @@ public class SupplyChainSettings : ModSettings
         ls.Label("SC_SettingsRouteDecay".Translate(
             routeDecayPerDay.ToString("F2"),
             (FormulaUtil.RouteEfficiency(5.0) * 100).ToString("F0")));
-        if (routeDecayBuffer == null)
+        if (routeDecayBuffer is null)
             routeDecayBuffer = routeDecayPerDay.ToString("F2");
         ls.TextFieldNumeric(ref routeDecayPerDay, ref routeDecayBuffer, 0.01f, 1f);
         ls.Gap(12f);
 
         ls.Label("SC_SettingsLocalCap".Translate(localCapBase.ToString("F0")));
-        if (localCapBuffer == null)
+        if (localCapBuffer is null)
             localCapBuffer = localCapBase.ToString("F0");
         ls.TextFieldNumeric(ref localCapBase, ref localCapBuffer, 10f, 500f);
         ls.Gap(12f);
 
         ls.Label("SC_SettingsDefaultRouteFreq".Translate(defaultRouteFrequencyDays.ToString()));
-        if (routeFreqBuffer == null)
+        if (routeFreqBuffer is null)
             routeFreqBuffer = defaultRouteFrequencyDays.ToString();
         ls.TextFieldNumeric(ref defaultRouteFrequencyDays, ref routeFreqBuffer, minRouteFrequencyDays, maxRouteFrequencyDays);
 

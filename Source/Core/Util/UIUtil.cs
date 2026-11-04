@@ -37,7 +37,7 @@ internal static class UIUtilSC
             tip += "\n" + (string)"SC_BarFlowBaseNeeds".Translate(flow.baseNeeds.ToString("F1"));
         if (flow.buildingNeeds > 0)
             tip += "\n" + (string)"SC_BarFlowBuildingNeeds".Translate(flow.buildingNeeds.ToString("F1"));
-        if (flow.compNeedLines != null)
+        if (flow.compNeedLines is not null)
         {
             foreach (CompNeedLine line in flow.compNeedLines)
             {

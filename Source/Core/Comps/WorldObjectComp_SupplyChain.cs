@@ -147,7 +147,7 @@ public class WorldObjectComp_SupplyChain : WorldObjectComp, IStatModifierProvide
             if (ext?.capBonuses is null) continue;
             foreach (BuildingCapBonus bonus in ext.capBonuses)
             {
-                if (bonus.resource != null && localCaps.ContainsKey(bonus.resource))
+                if (bonus.resource is not null && localCaps.ContainsKey(bonus.resource))
                     localCaps[bonus.resource] += bonus.amount;
             }
         }
@@ -385,7 +385,7 @@ public class WorldObjectComp_SupplyChain : WorldObjectComp, IStatModifierProvide
         if (autoMaxResources.Contains(def))
         {
             ResourceFC resource = WorldSettlement?.GetResource(def);
-            if (resource != null)
+            if (resource is not null)
                 return LiveMaxFor(resource);
         }
         return allocations.TryGetValue(def, out double val) ? val : 0.0;
@@ -520,7 +520,7 @@ public class WorldObjectComp_SupplyChain : WorldObjectComp, IStatModifierProvide
         if (actual > 0)
         {
             WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
-            if (wc != null && wc.Mode == SupplyChainMode.Simple)
+            if (wc is not null && wc.Mode == SupplyChainMode.Simple)
             {
                 wc.AddToFactionStockpile(def, actual);
             }
@@ -607,12 +607,12 @@ public class WorldObjectComp_SupplyChain : WorldObjectComp, IStatModifierProvide
             }
         }
 
-        if (toRemove != null)
+        if (toRemove is not null)
         {
             foreach (ResourceTypeDef def in toRemove)
                 allocations.Remove(def);
         }
-        if (toClamp != null)
+        if (toClamp is not null)
         {
             foreach (KeyValuePair<ResourceTypeDef, double> kv in toClamp)
                 allocations[kv.Key] = kv.Value;

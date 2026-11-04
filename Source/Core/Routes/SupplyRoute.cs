@@ -70,7 +70,7 @@ public class SupplyRoute : IExposable
     /// </summary>
     public bool IsValid()
     {
-        return source != null && destination != null && resource != null
+        return source is not null && destination is not null && resource is not null
             && !source.Destroyed && !destination.Destroyed;
     }
 
@@ -142,7 +142,7 @@ public class SupplyRoute : IExposable
 
         // Apply route efficiency bonus stat from source settlement
         FCStatDef routeEffStat = SCStatDefOf.SC_RouteEfficiencyBonus;
-        if (routeEffStat != null)
+        if (routeEffStat is not null)
         {
             double bonus = FindFC.FactionComp.GetStatValue(routeEffStat, source);
             baseEfficiency += bonus;
@@ -198,7 +198,7 @@ public class SupplyRoute : IExposable
             // Snapshot the road path only when delivery caravans are enabled — that keeps the abstract
             // path byte-identical to the pre-caravan behaviour (no saved path, no world object). Null for
             // straight-line travel (pods/shuttle) too, which never spawns a caravan.
-            pathTiles = (SupplyChainSettings.useDeliveryCaravans && cachedPathTiles != null)
+            pathTiles = (SupplyChainSettings.useDeliveryCaravans && cachedPathTiles is not null)
                 ? new List<PlanetTile>(cachedPathTiles)
                 : null
         };

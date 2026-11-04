@@ -24,7 +24,7 @@ public static class SupplyChainCache
     {
         get
         {
-            if (_comp == null)
+            if (_comp is null)
                 _comp = Find.World?.GetComponent<WorldComponent_SupplyChain>();
             return _comp;
         }
@@ -34,7 +34,7 @@ public static class SupplyChainCache
     {
         get
         {
-            if (_cachedNeedDefs == null)
+            if (_cachedNeedDefs is null)
                 _cachedNeedDefs = DefDatabase<SettlementNeedDef>.AllDefsListForReading;
             return _cachedNeedDefs;
         }
@@ -44,7 +44,7 @@ public static class SupplyChainCache
     {
         get
         {
-            if (_cachedResourceTypeDefs == null)
+            if (_cachedResourceTypeDefs is null)
                 _cachedResourceTypeDefs = DefDatabase<ResourceTypeDef>.AllDefsListForReading;
             return _cachedResourceTypeDefs;
         }
@@ -56,7 +56,7 @@ public static class SupplyChainCache
     /// </summary>
     public static BuildingNeedExtension GetBuildingNeedExt(BuildingFCDef def)
     {
-        if (def == null) return null;
+        if (def is null) return null;
 
         BuildingNeedExtension ext;
         if (!_buildingExtCache.TryGetValue(def, out ext))
@@ -73,7 +73,7 @@ public static class SupplyChainCache
     /// </summary>
     public static WorldObjectComp_SupplyChain GetSettlementComp(WorldSettlementFC settlement)
     {
-        if (settlement == null) return null;
+        if (settlement is null) return null;
 
         if (!_compCache.TryGetValue(settlement, out WorldObjectComp_SupplyChain cached))
         {
@@ -89,7 +89,7 @@ public static class SupplyChainCache
     /// </summary>
     public static WorldObjectComp_SettlementNeeds GetNeedsComp(WorldSettlementFC settlement)
     {
-        if (settlement == null) return null;
+        if (settlement is null) return null;
 
         if (!_needsCompCache.TryGetValue(settlement, out WorldObjectComp_SettlementNeeds cached))
         {

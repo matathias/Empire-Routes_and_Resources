@@ -27,7 +27,7 @@ public static class SellOrderDestructiveTests
         // The settlement overload multiplies the base silver by the settlement's sell-rate stat;
         // values <= 0 are ignored, leaving the base unchanged.
         FCStatDef sellStat = SCStatDefOf.SC_SellRateMultiplier;
-        double mult = sellStat != null ? FindFC.FactionComp.GetStatValue(sellStat, s) : 1.0;
+        double mult = sellStat is not null ? FindFC.FactionComp.GetStatValue(sellStat, s) : 1.0;
         if (mult <= 0) mult = 1.0;
 
         TestAssert.AreEqual(baseSilver * mult, ctxSilver, baseSilver * 0.01 + 0.01,

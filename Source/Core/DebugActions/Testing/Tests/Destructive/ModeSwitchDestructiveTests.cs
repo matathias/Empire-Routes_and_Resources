@@ -47,7 +47,7 @@ public static class ModeSwitchDestructiveTests
             foreach (WorldSettlementFC s in f.settlements)
             {
                 IStockpile sp = SupplyChainCache.GetSettlementComp(s)?.GetStockpile();
-                if (sp != null) localSum += sp.GetAmount(r);
+                if (sp is not null) localSum += sp.GetAmount(r);
             }
             TestAssert.LessThanOrEqual(localSum, factionTotalBefore + 0.01,
                 "Distributed local total cannot exceed the faction total before the switch");

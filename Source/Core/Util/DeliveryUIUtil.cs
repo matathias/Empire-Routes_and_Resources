@@ -24,11 +24,11 @@ internal static class DeliveryUIUtil
 
         // Build the visible subset (respecting the optional settlement filter).
         List<PendingDelivery> visible = new List<PendingDelivery>();
-        if (deliveries != null)
+        if (deliveries is not null)
         {
             foreach (PendingDelivery d in deliveries)
             {
-                if (filter != null && d.source != filter && d.destination != filter) continue;
+                if (filter is not null && d.source != filter && d.destination != filter) continue;
                 visible.Add(d);
             }
         }
@@ -57,13 +57,13 @@ internal static class DeliveryUIUtil
             Rect row = new Rect(0f, curY, rowW, rowH);
             if (idx % 2 == 0) Widgets.DrawHighlight(row);
 
-            Color accent = d.resource != null ? d.resource.color : Color.gray;
+            Color accent = d.resource is not null ? d.resource.color : Color.gray;
             Widgets.DrawBoxSolid(new Rect(0f, curY, accentW, rowH), accent);
 
             float x = accentW + 6f;
             Text.Anchor = TextAnchor.MiddleLeft;
 
-            if (d.resource != null && d.resource.Icon != null)
+            if (d.resource is not null && d.resource.Icon != null)
                 GUI.DrawTexture(new Rect(x, curY + 5f, 20f, 20f), d.resource.Icon);
             x += 24f;
 
@@ -77,8 +77,8 @@ internal static class DeliveryUIUtil
             float barX = rowW - barW - 8f;
 
             // Source -> Dest text fills the space between the amount and the bar.
-            string srcName = d.source != null ? d.source.Name : "?";
-            string dstName = d.destination != null ? d.destination.Name : "?";
+            string srcName = d.source is not null ? d.source.Name : "?";
+            string dstName = d.destination is not null ? d.destination.Name : "?";
             float routeW = barX - x - 8f;
             if (routeW > 20f)
             {

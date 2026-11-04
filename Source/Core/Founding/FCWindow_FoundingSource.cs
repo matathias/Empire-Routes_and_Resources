@@ -38,7 +38,7 @@ public class FCWindow_FoundingSource : Window, IFoundingCompanionWindow
         base.PreOpen();
         worldComp = SupplyChainCache.Comp;
         validator = worldComp?.FoundingValidator;
-        if (validator is object)
+        if (validator is not null)
             validator.ResetSourceSelection();
     }
 
@@ -142,7 +142,7 @@ public class FCWindow_FoundingSource : Window, IFoundingCompanionWindow
             float resourceImgSize = RowHeight;
             float resourceImxgX = 2f;
             Rect resourceImgRect = new Rect(resourceImxgX, curY, resourceImgSize, resourceImgSize);
-            if (entry.resource.Icon is object)
+            if (entry.resource.Icon is not null)
                 GUI.DrawTexture(resourceImgRect, entry.resource.Icon);
             GUI.color = sufficient ? AccentUtil.Income : AccentUtil.Expense;
             Widgets.Label(new Rect(resourceImgRect.xMax + Padding, curY, inRect.width * 0.45f, RowHeight), entry.resource.LabelCap);
@@ -189,7 +189,7 @@ public class FCWindow_FoundingSource : Window, IFoundingCompanionWindow
             IStockpile stockpile = comp?.GetStockpile();
 
             string label = settlement.Name;
-            if (stockpile is object && cachedCosts is object)
+            if (stockpile is not null && cachedCosts is not null)
             {
                 double menuDistMult = FoundingCostUtil.ComputeDistanceMultiplier(targetTile);
                 int sufficient = 0;
@@ -245,7 +245,7 @@ public class FCWindow_FoundingSource : Window, IFoundingCompanionWindow
         if (costs is null || costs.Count == 0) return;
 
         // Don't open duplicate
-        if (Find.WindowStack.WindowOfType<FCWindow_FoundingSource>() is object) return;
+        if (Find.WindowStack.WindowOfType<FCWindow_FoundingSource>() is not null) return;
 
         Find.WindowStack.Add(new FCWindow_FoundingSource());
     }
@@ -256,7 +256,7 @@ public class FCWindow_FoundingSource : Window, IFoundingCompanionWindow
     public static void TryClose()
     {
         FCWindow_FoundingSource window = Find.WindowStack.WindowOfType<FCWindow_FoundingSource>();
-        if (window is object)
+        if (window is not null)
             window.Close();
     }
 }

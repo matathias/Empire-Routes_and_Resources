@@ -85,7 +85,7 @@ public static class FoundingCostUtil
         if (tile == PlanetTile.Invalid)
         {
             Map home = Find.AnyPlayerHomeMap;
-            if (home is object) tile = home.Tile;
+            if (home is not null) tile = home.Tile;
         }
 
         return tile;

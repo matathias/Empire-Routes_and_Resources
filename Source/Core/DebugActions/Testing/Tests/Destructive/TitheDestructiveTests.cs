@@ -18,7 +18,7 @@ public static class TitheDestructiveTests
         ResourceTypeDef target = null;
         foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
         {
-            if (def.CanTithe && s.GetResource(def) != null) { target = def; break; }
+            if (def.CanTithe && s.GetResource(def) is not null) { target = def; break; }
         }
         if (target is null) TestAssert.Skip("No tithe-able resource tracked by the settlement");
 

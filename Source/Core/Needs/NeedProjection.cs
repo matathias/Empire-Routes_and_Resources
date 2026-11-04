@@ -17,7 +17,7 @@ internal static class NeedProjection
         WorldObjectComp_SupplyChain comp,
         ResourceTypeDef resource)
     {
-        if (wc == null || settlement == null || comp == null || resource == null)
+        if (wc is null || settlement is null || comp is null || resource is null)
             return 1f;
 
         WorldComponent_SupplyChain.FlowBreakdown flow = wc.GetCachedFlow(settlement, comp, resource);
@@ -25,7 +25,7 @@ internal static class NeedProjection
             return 1f;
 
         IStockpile stockpile = comp.GetStockpile();
-        double currentAmount = stockpile != null ? stockpile.GetAmount(resource) : 0;
+        double currentAmount = stockpile is not null ? stockpile.GetAmount(resource) : 0;
 
         // Daily-net basis: availableForNeeds = currentStockpile + the daily inflow available
         // to needs (production diverted in - tithe drawn). Algebraically that is
@@ -47,7 +47,7 @@ internal static class NeedProjection
         FactionFC faction,
         ResourceTypeDef resource)
     {
-        if (wc == null || faction == null || resource == null)
+        if (wc is null || faction is null || resource is null)
             return 1f;
 
         WorldComponent_SupplyChain.FlowBreakdown flow = wc.GetCachedSimpleFlow(faction, resource);
@@ -55,7 +55,7 @@ internal static class NeedProjection
             return 1f;
 
         IStockpile stockpile = wc.Stockpile;
-        double currentAmount = stockpile != null ? stockpile.GetAmount(resource) : 0;
+        double currentAmount = stockpile is not null ? stockpile.GetAmount(resource) : 0;
 
         double available = currentAmount + flow.DailyNet + flow.needs;
         double rate = available / flow.needs;

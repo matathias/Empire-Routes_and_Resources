@@ -196,7 +196,7 @@ public class DeliveryCaravan : WorldObject
             if (sb.Length > 0) sb.AppendLine();
             sb.Append("SC_DeliveryCaravanRoute".Translate(sourceLabel, destLabel));
         }
-        if (resource != null)
+        if (resource is not null)
         {
             if (sb.Length > 0) sb.AppendLine();
             sb.Append("SC_DeliveryCaravanCargo".Translate(resource.LabelCap, Mathf.RoundToInt((float)amount)));

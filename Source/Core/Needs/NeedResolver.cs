@@ -12,7 +12,7 @@ public static class NeedResolver
     /// </summary>
     public static void ResolveSettlementNeeds(WorldSettlementFC settlement, IStockpile stockpile, WorldObjectComp_SettlementNeeds comp)
     {
-        if (stockpile == null || comp == null) return;
+        if (stockpile is null || comp is null) return;
 
         List<NeedState> states = new List<NeedState>();
 
@@ -37,7 +37,7 @@ public static class NeedResolver
         // 3. Compute surplus ratios (post-all-draws)
         foreach (NeedState state in states)
         {
-            if (state.surplusBonuses == null || state.demanded <= 0 || state.fulfilled < state.demanded)
+            if (state.surplusBonuses is null || state.demanded <= 0 || state.fulfilled < state.demanded)
                 continue;
             state.surplusRatio = stockpile.GetAmount(state.resource) / state.demanded;
         }
@@ -53,7 +53,7 @@ public static class NeedResolver
     /// </summary>
     public static void ResolveSettlementNeedsFair(FactionFC faction, IStockpile stockpile)
     {
-        if (stockpile == null) return;
+        if (stockpile is null) return;
 
         // Gather all demand per resource across all settlements
         // Key: resource, Value: list of (settlement, comp, needId, demand)
@@ -62,7 +62,7 @@ public static class NeedResolver
         foreach (WorldSettlementFC settlement in faction.settlements)
         {
             WorldObjectComp_SettlementNeeds comp = SupplyChainCache.GetNeedsComp(settlement);
-            if (comp == null) continue;
+            if (comp is null) continue;
 
             // Base needs
             foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
@@ -96,14 +96,14 @@ public static class NeedResolver
             foreach (WorldObjectComp woc in settlement.AllComps)
             {
                 INeedProvider provider = woc as INeedProvider;
-                if (provider == null) continue;
+                if (provider is null) continue;
 
                 List<NeedEntry> compNeeds = new List<NeedEntry>();
                 provider.CollectNeeds(settlement, compNeeds);
 
                 foreach (NeedEntry entry in compNeeds)
                 {
-                    if (entry.resource == null || entry.amount <= 0) continue;
+                    if (entry.resource is null || entry.amount <= 0) continue;
 
                     allDemands.Add(new NeedDemandEntry
                     {
@@ -169,7 +169,7 @@ public static class NeedResolver
                 entry.surplusBonuses, entry.maxSurplusRatio));
 
             // Track provider resolutions
-            if (entry.provider != null)
+            if (entry.provider is not null)
             {
                 List<NeedResolution> resolutions;
                 if (!providerResolutions.TryGetValue(entry.provider, out resolutions))
@@ -191,7 +191,7 @@ public static class NeedResolver
         {
             foreach (NeedState state in kv.Value)
             {
-                if (state.surplusBonuses == null || state.demanded <= 0 || state.fulfilled < state.demanded)
+                if (state.surplusBonuses is null || state.demanded <= 0 || state.fulfilled < state.demanded)
                     continue;
                 state.surplusRatio = stockpile.GetAmount(state.resource) / state.demanded;
             }
@@ -202,7 +202,7 @@ public static class NeedResolver
         {
             kv.Key.SetNeedStates(kv.Value);
             WorldSettlementFC ws = kv.Key.WorldSettlement;
-            if (ws != null)
+            if (ws is not null)
                 ws.InvalidateStatCache();
         }
 
@@ -216,7 +216,7 @@ public static class NeedResolver
         foreach (WorldSettlementFC settlement in faction.settlements)
         {
             WorldObjectComp_SettlementNeeds comp = SupplyChainCache.GetNeedsComp(settlement);
-            if (comp == null) continue;
+            if (comp is null) continue;
             if (!compStates.ContainsKey(comp))
             {
                 comp.SetNeedStates(new List<NeedState>());
@@ -234,7 +234,7 @@ public static class NeedResolver
     /// </summary>
     public static void ResolveBuildingDormancy(WorldSettlementFC settlement, IStockpile stockpile)
     {
-        if (settlement?.BuildingsComp == null || stockpile == null) return;
+        if (settlement?.BuildingsComp is null || stockpile is null) return;
 
         WorldObjectComp_SettlementBuildings bComp = settlement.BuildingsComp;
         List<BuildingFC> buildings = bComp.Buildings;
@@ -284,7 +284,7 @@ public static class NeedResolver
         foreach (WorldObjectComp comp in settlement.AllComps)
         {
             INeedProvider provider = comp as INeedProvider;
-            if (provider == null) continue;
+            if (provider is null) continue;
 
             try
             {
@@ -294,7 +294,7 @@ public static class NeedResolver
                 List<NeedResolution> resolutions = new List<NeedResolution>();
                 foreach (NeedEntry entry in compNeeds)
                 {
-                    if (entry.resource == null || entry.amount <= 0) continue;
+                    if (entry.resource is null || entry.amount <= 0) continue;
 
                     double drawn;
                     stockpile.TryDraw(entry.resource, entry.amount, out drawn);

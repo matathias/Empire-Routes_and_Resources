@@ -177,7 +177,7 @@ public static class SupplyRouteDestructiveTests
 
         TestAssert.IsNotNull(d1, "The earlier route should dispatch from a stocked source");
         TestAssert.AreEqual(50.0, d1.amount, 0.01, "The earlier route draws its full amount first");
-        if (d2 != null)
+        if (d2 is not null)
             TestAssert.AreEqual(10.0, d2.amount, 0.01, "The later route only gets the remaining 10");
         TestAssert.AreEqual(0.0, sourceSp.GetAmount(r), 0.01, "The constrained source is drained in dispatch order");
 

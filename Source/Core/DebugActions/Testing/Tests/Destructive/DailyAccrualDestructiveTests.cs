@@ -416,7 +416,7 @@ public static class DailyAccrualDestructiveTests
                 // Snapshot the affordable inputs so we can prove none were drawn.
                 Dictionary<ResourceTypeDef, double> before = new Dictionary<ResourceTypeDef, double>();
                 foreach (BuildingResourceInput input in ext.inputs)
-                    if (input.resource != null)
+                    if (input.resource is not null)
                         before[input.resource] = sp.GetAmount(input.resource);
 
                 NeedResolver.ResolveBuildingDormancy(s, sp);

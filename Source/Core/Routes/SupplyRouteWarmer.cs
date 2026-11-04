@@ -54,7 +54,7 @@ public class SupplyRouteWarmer
     {
         MergeCompleted();
 
-        if (workerActive || routes == null) return;
+        if (workerActive || routes is null) return;
 
         List<Job> jobs = null;
         for (int i = 0; i < routes.Count; i++)
@@ -149,7 +149,7 @@ public class SupplyRouteWarmer
             kv.Key.ApplyPathResult(kv.Value.travelTicks, kv.Value.path);
 
         // Flush any buffered worker messages here — on the main thread, where logging is safe.
-        if (log != null)
+        if (log is not null)
         {
             foreach (string msg in log)
                 LogSC.Error(msg);

@@ -43,7 +43,7 @@ public static class NeedResolverDestructiveTests
 
         List<NeedState> states = needsComp.NeedStates;
         bool anyPositiveDemand = false;
-        if (states != null)
+        if (states is not null)
         {
             foreach (NeedState ns in states)
             {

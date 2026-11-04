@@ -99,17 +99,17 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
     {
         base.FinalizeInit(fromLoad);
 
-        if (factionStockpile == null)
+        if (factionStockpile is null)
             factionStockpile = new Dictionary<ResourceTypeDef, double>();
-        if (factionCaps == null)
+        if (factionCaps is null)
             factionCaps = new Dictionary<ResourceTypeDef, double>();
-        if (globalSellOrders == null)
+        if (globalSellOrders is null)
             globalSellOrders = new List<SellOrder>();
-        if (supplyRoutes == null)
+        if (supplyRoutes is null)
             supplyRoutes = new List<SupplyRoute>();
-        if (dormantRoutes == null)
+        if (dormantRoutes is null)
             dormantRoutes = new List<SupplyRoute>();
-        if (pendingDeliveries == null)
+        if (pendingDeliveries is null)
             pendingDeliveries = new List<PendingDelivery>();
 
         stockpile = new DictionaryStockpile(factionStockpile, factionCaps);
@@ -165,7 +165,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
     {
         EmpireRegistry.Register(this);
 
-        if (filterStockpileCap == null)
+        if (filterStockpileCap is null)
         {
             filterStockpileCap = new BuildingFilter(
                 "SC_FilterStockpileCap".Translate(),
@@ -177,7 +177,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
                 }
             );
         }
-        if (filterBuildingNeeds == null)
+        if (filterBuildingNeeds is null)
         {
             filterBuildingNeeds = new BuildingFilter(
                 "SC_FilterBuildingNeeds".Translate(),
@@ -295,7 +295,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
             }
 
             pairLabelCache.TryGetValue(kvp.Key, out string label);
-            if (label != null)
+            if (label is not null)
                 RouteOverlayUtil.DrawRouteLabel(route, grid, label);
         }
 
@@ -341,17 +341,17 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
 
         if (Scribe.mode == LoadSaveMode.PostLoadInit)
         {
-            if (factionStockpile == null)
+            if (factionStockpile is null)
                 factionStockpile = new Dictionary<ResourceTypeDef, double>();
-            if (factionCaps == null)
+            if (factionCaps is null)
                 factionCaps = new Dictionary<ResourceTypeDef, double>();
-            if (globalSellOrders == null)
+            if (globalSellOrders is null)
                 globalSellOrders = new List<SellOrder>();
-            if (supplyRoutes == null)
+            if (supplyRoutes is null)
                 supplyRoutes = new List<SupplyRoute>();
-            if (dormantRoutes == null)
+            if (dormantRoutes is null)
                 dormantRoutes = new List<SupplyRoute>();
-            if (pendingDeliveries == null)
+            if (pendingDeliveries is null)
                 pendingDeliveries = new List<PendingDelivery>();
 
             // Cross-refs (faction.settlements, route endpoints) resolve before this PostLoadInit
@@ -392,7 +392,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
             factionCaps[def] = numSettlements * SupplyChainSettings.baseCapPerSettlement;
         }
 
-        if (faction == null) return;
+        if (faction is null) return;
         foreach (WorldSettlementFC settlement in faction.settlements)
         {
             if (settlement.BuildingsComp is null) continue;
@@ -403,7 +403,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
                 if (ext?.capBonuses is null) continue;
                 foreach (BuildingCapBonus bonus in ext.capBonuses)
                 {
-                    if (bonus.resource != null && factionCaps.ContainsKey(bonus.resource))
+                    if (bonus.resource is not null && factionCaps.ContainsKey(bonus.resource))
                         factionCaps[bonus.resource] += bonus.amount;
                 }
             }
@@ -549,7 +549,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         foreach (WorldSettlementFC settlement in faction.settlements)
         {
             WorldObjectComp_SupplyChain comp = GetComp(settlement);
-            if (comp != null)
+            if (comp is not null)
                 flow.production += comp.GetAllocation(def);
 
             AccumulateSettlementFlow(settlement, def, ref flow);
@@ -565,7 +565,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         foreach (WorldSettlementFC s in faction.settlements)
         {
             WorldObjectComp_SupplyChain c = GetComp(s);
-            if (c != null)
+            if (c is not null)
                 flow.titheInjection += c.GetTitheInjection(def);
         }
 
@@ -588,7 +588,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
                 flow.baseNeeds += needDef.CalculateDemand(settlement) * needDef.GetResourceFraction(tech, def);
         }
 
-        if (settlement.BuildingsComp != null)
+        if (settlement.BuildingsComp is not null)
         {
             foreach (BuildingFC building in settlement.BuildingsComp.Buildings)
             {
@@ -607,7 +607,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         foreach (WorldObjectComp woc in settlement.AllComps)
         {
             INeedProvider provider = woc as INeedProvider;
-            if (provider == null) continue;
+            if (provider is null) continue;
             List<NeedEntry> entries = new List<NeedEntry>();
             provider.CollectNeeds(settlement, entries);
             foreach (NeedEntry entry in entries)
@@ -888,7 +888,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
 
     public void PostSettlementCreateTax(WorldSettlementFC settlement, ref int silverAmount, List<Thing> titheThings)
     {
-        if (silverAmount <= 0 || FindFC.FactionComp == null) return;
+        if (silverAmount <= 0 || FindFC.FactionComp is null) return;
 
         FCStatDef taxEffStat = SCStatDefOf.SC_TaxEfficiency;
         if (taxEffStat is null) return;
@@ -974,7 +974,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
             WorldObjectComp_SettlementNeeds needComp = SupplyChainCache.GetNeedsComp(settlement);
 
             // 1. Settlement + comp needs (proportional draw from the local stockpile).
-            if (needComp != null)
+            if (needComp is not null)
                 NeedResolver.ResolveSettlementNeeds(settlement, local, needComp);
 
             // 2. Per-building dormancy (all-or-nothing; deterministic slot order).
@@ -1007,7 +1007,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         List<PendingDelivery> arrived = null;
         foreach (PendingDelivery d in pendingDeliveries)
         {
-            if (d.caravan is object) continue;   // a live caravan drives this delivery's arrival
+            if (d.caravan is not null) continue;   // a live caravan drives this delivery's arrival
             if (now < d.arrivalTick) continue;
             if (arrived is null) arrived = new List<PendingDelivery>();
             arrived.Add(d);
@@ -1031,11 +1031,11 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         if (!pendingDeliveries.Remove(d)) return;   // already completed
         d.caravan = null;
 
-        if (d.destination is object && !d.destination.Destroyed && d.resource is object)
+        if (d.destination is not null && !d.destination.Destroyed && d.resource is not null)
         {
             WorldObjectComp_SupplyChain destComp = GetComp(d.destination);
             IStockpile destStockpile = destComp?.GetStockpile();
-            if (destStockpile is object)
+            if (destStockpile is not null)
             {
                 double credited = d.amount * d.efficiency;   // efficiency snapshot applied on arrival
                 if (credited > 0)
@@ -1051,7 +1051,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
     /// <summary>Destroys the world object following <paramref name="d"/>, if any (does not credit).</summary>
     private static void DestroyCaravanOf(PendingDelivery d)
     {
-        if (d?.caravan is object)
+        if (d?.caravan is not null)
         {
             if (!d.caravan.Destroyed) d.caravan.Destroy();
             d.caravan = null;
@@ -1074,7 +1074,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
                 orphans.Add(dc);
             }
         }
-        if (orphans != null)
+        if (orphans is not null)
         {
             foreach (DeliveryCaravan dc in orphans)
                 if (!dc.Destroyed) dc.Destroy();
@@ -1084,8 +1084,8 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         {
             foreach (PendingDelivery d in pendingDeliveries)
             {
-                if (d.caravan is object) continue;
-                if (d.pathTiles != null && d.pathTiles.Count >= 2)
+                if (d.caravan is not null) continue;
+                if (d.pathTiles is not null && d.pathTiles.Count >= 2)
                     DeliveryCaravan.Spawn(d);
             }
         }
@@ -1127,17 +1127,17 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
 
             WorldObjectComp_SupplyChain sourceComp = GetComp(route.source);
             IStockpile sourceStockpile = sourceComp?.GetStockpile();
-            if (sourceStockpile != null)
+            if (sourceStockpile is not null)
             {
                 PendingDelivery d = route.TryDispatch(sourceStockpile);
-                if (d != null)
+                if (d is not null)
                 {
                     d.loadId = nextDeliveryId++;
                     pendingDeliveries.Add(d);
                     // With the feature enabled, road-routed deliveries get a world object that follows the
                     // path and drives arrival; straight-line (pod/shuttle) deliveries and the disabled
                     // feature have no path/object and arrive via ProcessArrivals.
-                    if (SupplyChainSettings.useDeliveryCaravans && d.pathTiles != null && d.pathTiles.Count >= 2)
+                    if (SupplyChainSettings.useDeliveryCaravans && d.pathTiles is not null && d.pathTiles.Count >= 2)
                         DeliveryCaravan.Spawn(d);
                     LogSC.Message($"Dispatched {d.amount} {route.resource.label} from {route.source.Name} -> {route.destination.Name}, arriving in {(d.arrivalTick - now).ToStringTicksToPeriod()}");
                 }
@@ -1146,7 +1146,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
             route.nextDispatchTick = now + route.frequencyDays * GenDate.TicksPerDay;
         }
 
-        if (invalidRoutes != null)
+        if (invalidRoutes is not null)
         {
             foreach (SupplyRoute route in invalidRoutes)
                 UnlinkRoute(route);
@@ -1331,9 +1331,9 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
             if (def.isPoolResource) continue;
             int amt = SupplyChainSettings.GetStartingAmount(def.defName);
             if (amt <= 0) continue;
-            if (startSp == null)
+            if (startSp is null)
                 startSp = mode == SupplyChainMode.Simple ? Stockpile : GetComp(settlement)?.EnsureLocalStockpile();
-            if (startSp == null) break;
+            if (startSp is null) break;
             startSp.Credit(def, amt);
         }
     }
@@ -1372,7 +1372,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
             if (touching is null) touching = new List<SupplyRoute>();
             touching.Add(r);
         }
-        if (touching != null)
+        if (touching is not null)
             foreach (SupplyRoute r in touching)
                 UnlinkRoute(r);
 
@@ -1490,7 +1490,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
 
     public void DrawOverviewTab(Rect boundingBox)
     {
-        if (uiFaction == null) return;
+        if (uiFaction is null) return;
 
         if (mode == SupplyChainMode.Simple)
             DrawFactionTab_Simple(boundingBox);
@@ -1526,7 +1526,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         }
 
         int totalTitheInjections = 0;
-        if (simpleFaction != null)
+        if (simpleFaction is not null)
         {
             foreach (WorldSettlementFC s in simpleFaction.settlements)
             {
@@ -1534,7 +1534,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
                 if (comp is null) continue;
                 foreach (KeyValuePair<ResourceTypeDef, double> kv in comp.TitheInjections)
                 {
-                    if (kv.Key != null && kv.Value > 0) totalTitheInjections++;
+                    if (kv.Key is not null && kv.Value > 0) totalTitheInjections++;
                 }
             }
         }
@@ -1635,7 +1635,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
             TooltipHandler.TipRegion(buyRect, "SC_BuyTooltip".Translate());
             Text.Font = GameFont.Small;
 
-            int numSettlements = simpleFaction != null ? simpleFaction.settlements.Count : 0;
+            int numSettlements = simpleFaction is not null ? simpleFaction.settlements.Count : 0;
             double baseCap = numSettlements * SupplyChainSettings.baseCapPerSettlement;
             double buildingCapBonus = cap - baseCap;
 
@@ -1704,7 +1704,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
             drawY += sellRowH;
             sellIdx++;
         }
-        if (toRemove != null)
+        if (toRemove is not null)
         {
             foreach (SellOrder order in toRemove)
                 globalSellOrders.Remove(order);
@@ -1740,15 +1740,15 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         List<KeyValuePair<WorldObjectComp_SupplyChain, ResourceTypeDef>> titheToRemove = null;
         int titheIdx = 0;
 
-        if (simpleFaction != null)
+        if (simpleFaction is not null)
         {
             foreach (WorldSettlementFC settlement in simpleFaction.settlements)
             {
                 WorldObjectComp_SupplyChain comp = GetComp(settlement);
-                if (comp == null) continue;
+                if (comp is null) continue;
                 foreach (KeyValuePair<ResourceTypeDef, double> kv in comp.TitheInjections)
                 {
-                    if (kv.Key == null || kv.Value <= 0) continue;
+                    if (kv.Key is null || kv.Value <= 0) continue;
 
                     Rect titheRow = new Rect(0f, drawY, viewRect.width, titheRowH);
                     if (titheIdx % 2 == 0) Widgets.DrawHighlight(titheRow);
@@ -1792,7 +1792,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
                 }
             }
         }
-        if (titheToRemove != null)
+        if (titheToRemove is not null)
         {
             foreach (KeyValuePair<WorldObjectComp_SupplyChain, ResourceTypeDef> pair in titheToRemove)
                 pair.Key.SetTitheInjection(pair.Value, 0);
@@ -1950,14 +1950,14 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
 
             // Determine accent from flow state
             Color accent = Color.gray;
-            if (comp != null)
+            if (comp is not null)
             {
                 bool hasDeficit = false;
                 bool hasSurplus = false;
                 foreach (ResourceTypeDef flowDef in columns)
                 {
                     IStockpile checkStockpile = comp.GetStockpile();
-                    if (checkStockpile == null || checkStockpile.GetCap(flowDef) <= 0) continue;
+                    if (checkStockpile is null || checkStockpile.GetCap(flowDef) <= 0) continue;
                     FlowBreakdown flow = GetCachedFlow(settlement, comp, flowDef);
                     if (flow.DailyNet < -0.01)
                         hasDeficit = true;
@@ -2063,7 +2063,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         float fbH = 22f;
         Text.Font = GameFont.Tiny;
 
-        bool allActive = routeFilterResource == null;
+        bool allActive = routeFilterResource is null;
         if (UIUtil.ButtonFlat(new Rect(fbX, curY, 40f, fbH), (string)"SC_All".Translate(), highlighted: allActive))
             routeFilterResource = null;
         fbX += 44f;
@@ -2071,7 +2071,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         HashSet<ResourceTypeDef> routeResources = new HashSet<ResourceTypeDef>();
         foreach (SupplyRoute r in supplyRoutes)
         {
-            if (r.IsValid() && r.resource != null)
+            if (r.IsValid() && r.resource is not null)
                 routeResources.Add(r.resource);
         }
         foreach (ResourceTypeDef filterDef in routeResources)
@@ -2092,7 +2092,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         }
 
         // Reset filter if filtered resource has no routes
-        if (routeFilterResource != null && !routeResources.Contains(routeFilterResource))
+        if (routeFilterResource is not null && !routeResources.Contains(routeFilterResource))
             routeFilterResource = null;
 
         Text.Font = GameFont.Small;
@@ -2110,7 +2110,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
                 routesToRemove.Add(route);
                 continue;
             }
-            if (routeFilterResource != null && route.resource != routeFilterResource) continue;
+            if (routeFilterResource is not null && route.resource != routeFilterResource) continue;
             shown.Add(route);
         }
 
@@ -2127,7 +2127,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
             if (v % 2 == 0) Widgets.DrawHighlight(rRow);
 
             float eff = (float)route.CachedEfficiency;
-            Color routeAccent = route.resource != null ? route.resource.color : Color.gray;
+            Color routeAccent = route.resource is not null ? route.resource.color : Color.gray;
             Color effAccent = pathReady ? AccentUtil.GetStatColor(eff * 100f, false) : Color.gray;
             Widgets.DrawBoxSolid(new Rect(0f, curY, accentW, routeRowH), routeAccent);
             Widgets.DrawBoxSolid(new Rect(accentW + 2f, curY, accentW, routeRowH), effAccent);
@@ -2152,10 +2152,10 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
 
             Text.Anchor = TextAnchor.MiddleLeft;
 
-            if (route.resource != null && route.resource.Icon != null)
+            if (route.resource is not null && route.resource.Icon != null)
                 GUI.DrawTexture(new Rect(cx, curY + 6f, 20f, 20f), route.resource.Icon);
 
-            string resName = route.resource != null ? route.resource.label.CapitalizeFirst() : "?";
+            string resName = route.resource is not null ? route.resource.label.CapitalizeFirst() : "?";
             Widgets.Label(new Rect(cx + 24f, curY, 80f, routeRowH), resName);
 
             // Right-anchored elements
@@ -2213,7 +2213,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
             curY += routeRowH + rowGap;
         }
 
-        if (routesToRemove != null)
+        if (routesToRemove is not null)
         {
             foreach (SupplyRoute route in routesToRemove)
                 UnlinkRoute(route);
@@ -2248,7 +2248,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         float bx = 74f;
 
         // Resource picker (first)
-        string resLabel = newRouteResource != null ? newRouteResource.label.CapitalizeFirst() : (string)"SC_ResourcePicker".Translate();
+        string resLabel = newRouteResource is not null ? newRouteResource.label.CapitalizeFirst() : (string)"SC_ResourcePicker".Translate();
         if (Widgets.ButtonText(new Rect(bx, curY, 110f, 24f), resLabel))
         {
             List<FloatMenuOption> options = new List<FloatMenuOption>();
@@ -2262,7 +2262,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         bx += 114f;
 
         // Source picker (with production info if resource selected)
-        string srcLabel = newRouteSource != null ? newRouteSource.Name : (string)"SC_SourcePicker".Translate();
+        string srcLabel = newRouteSource is not null ? newRouteSource.Name : (string)"SC_SourcePicker".Translate();
         if (Widgets.ButtonText(new Rect(bx, curY, pickerW, 24f), srcLabel))
         {
             List<FloatMenuOption> options = new List<FloatMenuOption>();
@@ -2270,10 +2270,10 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
             {
                 WorldSettlementFC captured = s;
                 string label = s.Name;
-                if (newRouteResource != null)
+                if (newRouteResource is not null)
                 {
                     ResourceFC res = s.GetResource(newRouteResource);
-                    if (res != null)
+                    if (res is not null)
                         label += " (" + res.rawTotalProduction.ToString("F1") + "/day)";
                 }
                 options.Add(new FloatMenuOption(label, delegate { newRouteSource = captured; }));
@@ -2283,7 +2283,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         bx += pickerW + 4f;
 
         // Dest picker (with need info if resource selected)
-        string destLabel = newRouteDest != null ? newRouteDest.Name : (string)"SC_DestPicker".Translate();
+        string destLabel = newRouteDest is not null ? newRouteDest.Name : (string)"SC_DestPicker".Translate();
         if (Widgets.ButtonText(new Rect(bx, curY, pickerW, 24f), destLabel))
         {
             List<FloatMenuOption> options = new List<FloatMenuOption>();
@@ -2291,7 +2291,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
             {
                 WorldSettlementFC captured = s;
                 string label = s.Name;
-                if (newRouteResource != null)
+                if (newRouteResource is not null)
                 {
                     foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
                     {
@@ -2326,7 +2326,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         // Confirm
         if (Widgets.ButtonText(new Rect(bx, curY, 50f, 24f), "SC_Add".Translate()))
         {
-            if (newRouteSource != null && newRouteDest != null && newRouteResource != null
+            if (newRouteSource is not null && newRouteDest is not null && newRouteResource is not null
                 && newRouteAmount > 0 && newRouteSource != newRouteDest)
             {
                 SupplyRoute route = new SupplyRoute(newRouteSource, newRouteDest, newRouteResource, newRouteAmount);
@@ -2347,7 +2347,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         curY += 28f;
 
         // Hint if source == dest
-        if (newRouteSource != null && newRouteDest != null && newRouteSource == newRouteDest)
+        if (newRouteSource is not null && newRouteDest is not null && newRouteSource == newRouteDest)
         {
             Text.Font = GameFont.Tiny;
             GUI.color = new Color(1f, 0.5f, 0.5f);
@@ -2365,7 +2365,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         Text.Anchor = TextAnchor.MiddleLeft;
         Widgets.Label(new Rect(inner.x, curY, 40f, 26f), "SC_AddColon".Translate());
 
-        string resLabel = newSellOrderResource != null ? newSellOrderResource.label.CapitalizeFirst() : (string)"SC_PickResource".Translate();
+        string resLabel = newSellOrderResource is not null ? newSellOrderResource.label.CapitalizeFirst() : (string)"SC_PickResource".Translate();
         if (Widgets.ButtonText(new Rect(inner.x + 44f, curY, 130f, 24f), resLabel))
         {
             List<FloatMenuOption> options = new List<FloatMenuOption>();
@@ -2386,7 +2386,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
 
         if (Widgets.ButtonText(new Rect(inner.x + 268f, curY, 60f, 24f), "SC_Add".Translate()))
         {
-            if (newSellOrderResource != null && newSellOrderAmount > 0)
+            if (newSellOrderResource is not null && newSellOrderAmount > 0)
             {
                 globalSellOrders.Add(new SellOrder(newSellOrderResource, newSellOrderAmount));
                 DirtyFlowCache();
@@ -2408,11 +2408,11 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         Widgets.Label(new Rect(0f, curY, 40f, 26f), "SC_AddColon".Translate());
 
         // Settlement picker
-        string settLabel = newTitheSettlement != null ? newTitheSettlement.Name : (string)"SC_PickSettlement".Translate();
+        string settLabel = newTitheSettlement is not null ? newTitheSettlement.Name : (string)"SC_PickSettlement".Translate();
         if (Widgets.ButtonText(new Rect(44f, curY, 200f, 24f), settLabel))
         {
             List<FloatMenuOption> options = new List<FloatMenuOption>();
-            if (faction != null)
+            if (faction is not null)
             {
                 foreach (WorldSettlementFC s in faction.settlements)
                 {
@@ -2427,7 +2427,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         }
 
         // Resource picker
-        string resLabel = newTitheResource != null ? newTitheResource.label.CapitalizeFirst() : (string)"SC_PickResource".Translate();
+        string resLabel = newTitheResource is not null ? newTitheResource.label.CapitalizeFirst() : (string)"SC_PickResource".Translate();
         if (Widgets.ButtonText(new Rect(250f, curY, 130f, 24f), resLabel))
         {
             List<FloatMenuOption> options = new List<FloatMenuOption>();
@@ -2450,10 +2450,10 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         // Add button
         if (Widgets.ButtonText(new Rect(474f, curY, 60f, 24f), "SC_Add".Translate()))
         {
-            if (newTitheSettlement != null && newTitheResource != null && newTitheAmount > 0)
+            if (newTitheSettlement is not null && newTitheResource is not null && newTitheAmount > 0)
             {
                 WorldObjectComp_SupplyChain comp = GetComp(newTitheSettlement);
-                if (comp != null)
+                if (comp is not null)
                 {
                     comp.SetTitheInjection(newTitheResource, newTitheAmount);
                 }

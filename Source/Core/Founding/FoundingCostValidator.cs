@@ -132,7 +132,7 @@ public class FoundingCostValidator : ISettlementFoundingValidator
     /// </summary>
     public WorldSettlementFC GetEffectiveSource(PlanetTile tile)
     {
-        if (UserSelectedSource && SelectedSource != null) return SelectedSource;
+        if (UserSelectedSource && SelectedSource is not null) return SelectedSource;
         return FoundingCostUtil.FindNearestSettlement(tile);
     }
 
