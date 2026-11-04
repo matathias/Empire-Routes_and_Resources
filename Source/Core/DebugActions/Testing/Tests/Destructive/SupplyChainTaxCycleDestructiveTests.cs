@@ -18,7 +18,7 @@ public static class SupplyChainTaxCycleDestructiveTests
         }
 
         TestAssert.DoesNotThrow(() => comp.PreTaxResolution(f), "PreTaxResolution threw");
-        TestAssert.DoesNotThrow(() => comp.PostTaxResolution(f), "PostTaxResolution threw");
+        TestAssert.DoesNotThrow(() => ((ITaxTickParticipant)comp).PostTaxResolution(f), "PostTaxResolution threw");
 
         SCDestructiveTestUtil.AssertStockpilesNonNegative(f, comp, "FullTaxCycle");
         DestructiveTestUtil.AssertEmpireInvariants(f, "FullTaxCycle");

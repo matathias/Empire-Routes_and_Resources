@@ -192,7 +192,7 @@ public static class SCDebugActions
         if (faction is null) return;
 
         comp.PreTaxResolution(faction);
-        comp.PostTaxResolution(faction);
+        ((ITaxTickParticipant)comp).PostTaxResolution(faction);
         Log.Message("[Empire-SupplyChain] Debug: Full tax cycle executed (Pre + Post + cleanup).");
     }
 

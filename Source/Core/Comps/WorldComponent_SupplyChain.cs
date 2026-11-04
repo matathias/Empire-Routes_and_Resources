@@ -858,14 +858,6 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         return total;
     }
 
-    public void PostTaxResolution(FactionFC faction)
-    {
-    }
-
-    public void PreSettlementCreateTax(WorldSettlementFC settlement)
-    {
-    }
-
     public void PostSettlementCreateTax(WorldSettlementFC settlement, ref int silverAmount, List<Thing> titheThings)
     {
         if (silverAmount <= 0 || FindFC.FactionComp is null) return;
@@ -1456,10 +1448,6 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         newRouteResource = null;
         newRouteAmountBuffer = "";
         newRouteAmount = 0;
-    }
-
-    public void OnTabSwitch()
-    {
     }
 
     public void PostCloseWindow()

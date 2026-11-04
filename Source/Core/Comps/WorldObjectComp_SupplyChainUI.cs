@@ -115,10 +115,6 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         routeFilterResource = null;
     }
 
-    public void OnTabSwitch()
-    {
-    }
-
     public void PostCloseWindow()
     {
         uiSettlement = null;
