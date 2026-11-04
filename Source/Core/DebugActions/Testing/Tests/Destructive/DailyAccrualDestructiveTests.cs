@@ -173,7 +173,7 @@ public static class DailyAccrualDestructiveTests
         double before = sp.GetAmount(r);
 
         // Arrive a full cap's worth (efficiency 1.0 -> credited == cap) into the already-full stockpile.
-        PendingDelivery d = new PendingDelivery
+        PendingDelivery d = new()
         {
             loadId = -1001, source = s, destination = s, resource = r, amount = cap, efficiency = 1.0
         };
@@ -226,7 +226,7 @@ public static class DailyAccrualDestructiveTests
         sp.TryDraw(r, sp.GetAmount(r), out _);
         sp.Add(r, start);
 
-        PendingDelivery d = new PendingDelivery
+        PendingDelivery d = new()
         {
             loadId = -1002, source = s, destination = s, resource = r, amount = incoming, efficiency = 1.0
         };
@@ -403,18 +403,18 @@ public static class DailyAccrualDestructiveTests
                 if (shorted is null) continue;
 
                 // Seed every input abundantly EXCEPT the shorted one, which gets half its requirement.
-                Dictionary<ResourceTypeDef, double> amounts = new Dictionary<ResourceTypeDef, double>();
-                Dictionary<ResourceTypeDef, double> caps = new Dictionary<ResourceTypeDef, double>();
+                Dictionary<ResourceTypeDef, double> amounts = [];
+                Dictionary<ResourceTypeDef, double> caps = [];
                 foreach (BuildingResourceInput input in ext.inputs)
                 {
                     if (input.resource is null) continue;
                     amounts[input.resource] = input == shorted ? shorted.amount * 0.5 : input.amount * 2.0;
                     caps[input.resource] = 1e9;
                 }
-                DictionaryStockpile sp = new DictionaryStockpile(amounts, caps);
+                DictionaryStockpile sp = new(amounts, caps);
 
                 // Snapshot the affordable inputs so we can prove none were drawn.
-                Dictionary<ResourceTypeDef, double> before = new Dictionary<ResourceTypeDef, double>();
+                Dictionary<ResourceTypeDef, double> before = [];
                 foreach (BuildingResourceInput input in ext.inputs)
                     if (input.resource is not null)
                         before[input.resource] = sp.GetAmount(input.resource);
@@ -437,8 +437,8 @@ public static class DailyAccrualDestructiveTests
     /// <summary>Throwaway stockpile seeded with each of a building's inputs at (amount * factor).</summary>
     private static DictionaryStockpile BuildInputStockpile(BuildingNeedExtension ext, double factor)
     {
-        Dictionary<ResourceTypeDef, double> amounts = new Dictionary<ResourceTypeDef, double>();
-        Dictionary<ResourceTypeDef, double> caps = new Dictionary<ResourceTypeDef, double>();
+        Dictionary<ResourceTypeDef, double> amounts = [];
+        Dictionary<ResourceTypeDef, double> caps = [];
         foreach (BuildingResourceInput input in ext.inputs)
         {
             if (input.resource is null) continue;

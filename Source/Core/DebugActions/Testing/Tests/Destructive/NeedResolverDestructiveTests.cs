@@ -130,11 +130,11 @@ public static class NeedResolverDestructiveTests
         if (target is null) TestAssert.Skip("No settlement need has positive demand for any resource");
 
         // 2. Supply exactly half the total demand of the target resource; everything else empty.
-        Dictionary<ResourceTypeDef, double> amounts = new Dictionary<ResourceTypeDef, double>();
-        Dictionary<ResourceTypeDef, double> caps = new Dictionary<ResourceTypeDef, double>();
+        Dictionary<ResourceTypeDef, double> amounts = [];
+        Dictionary<ResourceTypeDef, double> caps = [];
         amounts[target] = totalDemand * 0.5;
         caps[target] = 1e9;
-        DictionaryStockpile scarce = new DictionaryStockpile(amounts, caps);
+        DictionaryStockpile scarce = new(amounts, caps);
 
         NeedResolver.ResolveSettlementNeedsFair(f, scarce);
 
@@ -186,7 +186,7 @@ public static class NeedResolverDestructiveTests
             // Fully satisfy needs at the starting level so each need's satisfaction ratio is 1.0.
             NeedResolver.ResolveSettlementNeeds(s, SCDestructiveTestUtil.AbundantStockpile(), needsComp);
 
-            Dictionary<string, double> demandBefore = new Dictionary<string, double>();
+            Dictionary<string, double> demandBefore = [];
             foreach (NeedState ns in needsComp.NeedStates)
                 demandBefore[ns.needId] = ns.demanded;
 

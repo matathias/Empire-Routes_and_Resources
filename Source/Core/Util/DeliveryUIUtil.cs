@@ -8,8 +8,8 @@ namespace FactionColonies.SupplyChain;
 /// </summary>
 internal static class DeliveryUIUtil
 {
-    private static readonly Color DeliveryBarBg = new Color(0.12f, 0.12f, 0.12f);
-    private static readonly Color DeliveryBarFill = new Color(0.35f, 0.6f, 0.9f);
+    private static readonly Color DeliveryBarBg = new(0.12f, 0.12f, 0.12f);
+    private static readonly Color DeliveryBarFill = new(0.35f, 0.6f, 0.9f);
 
     /// <summary>
     /// Draws the in-transit deliveries as a scrollable read-only list. When <paramref name="filter"/>
@@ -23,7 +23,7 @@ internal static class DeliveryUIUtil
         const float rowGap = 2f;
 
         // Build the visible subset (respecting the optional settlement filter).
-        List<PendingDelivery> visible = new List<PendingDelivery>();
+        List<PendingDelivery> visible = [];
         if (deliveries is not null)
         {
             foreach (PendingDelivery d in deliveries)
@@ -54,7 +54,7 @@ internal static class DeliveryUIUtil
         int idx = 0;
         foreach (PendingDelivery d in visible)
         {
-            Rect row = new Rect(0f, curY, rowW, rowH);
+            Rect row = new(0f, curY, rowW, rowH);
             if (idx % 2 == 0) Widgets.DrawHighlight(row);
 
             Color accent = d.resource is not null ? d.resource.color : Color.gray;
@@ -88,7 +88,7 @@ internal static class DeliveryUIUtil
                 Text.WordWrap = prevWrap;
             }
 
-            Rect barRect = new Rect(barX, curY + 7f, barW, rowH - 14f);
+            Rect barRect = new(barX, curY + 7f, barW, rowH - 14f);
             UIUtil.DrawProgressBarColors(barRect, d.Progress, DeliveryBarBg, DeliveryBarFill);
 
             Text.Font = GameFont.Tiny;
@@ -115,9 +115,9 @@ internal static class DeliveryUIUtil
     {
         TextAnchor prevAnchor = Text.Anchor;
         float y = rect.y + (rect.height - 24f) / 2f;
-        Rect minusRect = new Rect(rect.x, y, 16f, 24f);
-        Rect labelRect = new Rect(rect.x + 17f, rect.y, 24f, rect.height);
-        Rect plusRect = new Rect(rect.x + 42f, y, 16f, 24f);
+        Rect minusRect = new(rect.x, y, 16f, 24f);
+        Rect labelRect = new(rect.x + 17f, rect.y, 24f, rect.height);
+        Rect plusRect = new(rect.x + 42f, y, 16f, 24f);
 
         if (Widgets.ButtonText(minusRect, "-"))
         {

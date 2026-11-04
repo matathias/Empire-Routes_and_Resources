@@ -14,7 +14,7 @@ public static class NeedResolver
     {
         if (stockpile is null || comp is null) return;
 
-        List<NeedState> states = new List<NeedState>();
+        List<NeedState> states = [];
 
         // 1. Base settlement needs
         FactionFC faction = FindFC.FactionComp;
@@ -57,7 +57,7 @@ public static class NeedResolver
 
         // Gather all demand per resource across all settlements
         // Key: resource, Value: list of (settlement, comp, needId, demand)
-        List<NeedDemandEntry> allDemands = new List<NeedDemandEntry>();
+        List<NeedDemandEntry> allDemands = [];
 
         foreach (WorldSettlementFC settlement in faction.settlements)
         {
@@ -98,7 +98,7 @@ public static class NeedResolver
                 INeedProvider provider = woc as INeedProvider;
                 if (provider is null) continue;
 
-                List<NeedEntry> compNeeds = new List<NeedEntry>();
+                List<NeedEntry> compNeeds = [];
                 provider.CollectNeeds(settlement, compNeeds);
 
                 foreach (NeedEntry entry in compNeeds)
@@ -124,7 +124,7 @@ public static class NeedResolver
         }
 
         // Calculate fill rate per resource
-        Dictionary<ResourceTypeDef, double> totalDemandPerResource = new Dictionary<ResourceTypeDef, double>();
+        Dictionary<ResourceTypeDef, double> totalDemandPerResource = [];
         foreach (NeedDemandEntry entry in allDemands)
         {
             double current;
@@ -132,7 +132,7 @@ public static class NeedResolver
             totalDemandPerResource[entry.resource] = current + entry.demand;
         }
 
-        Dictionary<ResourceTypeDef, double> fillRates = new Dictionary<ResourceTypeDef, double>();
+        Dictionary<ResourceTypeDef, double> fillRates = [];
         foreach (KeyValuePair<ResourceTypeDef, double> kv in totalDemandPerResource)
         {
             double available = stockpile.GetAmount(kv.Key);
@@ -142,11 +142,11 @@ public static class NeedResolver
         // Distribute proportionally and draw
         // Group results by settlement
         Dictionary<WorldObjectComp_SettlementNeeds, List<NeedState>> compStates =
-            new Dictionary<WorldObjectComp_SettlementNeeds, List<NeedState>>();
+            [];
 
         // Track provider resolutions for OnNeedsResolved callbacks
         Dictionary<INeedProvider, List<NeedResolution>> providerResolutions =
-            new Dictionary<INeedProvider, List<NeedResolution>>();
+            [];
 
         foreach (NeedDemandEntry entry in allDemands)
         {
@@ -160,7 +160,7 @@ public static class NeedResolver
             List<NeedState> states;
             if (!compStates.TryGetValue(entry.comp, out states))
             {
-                states = new List<NeedState>();
+                states = [];
                 compStates[entry.comp] = states;
             }
 
@@ -174,7 +174,7 @@ public static class NeedResolver
                 List<NeedResolution> resolutions;
                 if (!providerResolutions.TryGetValue(entry.provider, out resolutions))
                 {
-                    resolutions = new List<NeedResolution>();
+                    resolutions = [];
                     providerResolutions[entry.provider] = resolutions;
                 }
                 resolutions.Add(new NeedResolution
@@ -219,7 +219,7 @@ public static class NeedResolver
             if (comp is null) continue;
             if (!compStates.ContainsKey(comp))
             {
-                comp.SetNeedStates(new List<NeedState>());
+                comp.SetNeedStates([]);
                 settlement.InvalidateStatCache();
             }
         }
@@ -288,10 +288,10 @@ public static class NeedResolver
 
             try
             {
-                List<NeedEntry> compNeeds = new List<NeedEntry>();
+                List<NeedEntry> compNeeds = [];
                 provider.CollectNeeds(settlement, compNeeds);
 
-                List<NeedResolution> resolutions = new List<NeedResolution>();
+                List<NeedResolution> resolutions = [];
                 foreach (NeedEntry entry in compNeeds)
                 {
                     if (entry.resource is null || entry.amount <= 0) continue;

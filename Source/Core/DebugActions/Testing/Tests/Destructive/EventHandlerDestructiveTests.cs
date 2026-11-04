@@ -24,7 +24,7 @@ public static class EventHandlerDestructiveTests
         double before = sp.GetAmount(r);
 
         // A plain flat +baseAmount event stores the resource.
-        SCEventHandler_Stockpile handler = new SCEventHandler_Stockpile
+        SCEventHandler_Stockpile handler = new()
         {
             resource = r, mult = 1f, baseAmount = 5f, perWorkerAmount = 0f, convertToSilver = false
         };
@@ -53,7 +53,7 @@ public static class EventHandlerDestructiveTests
         double before = sp.GetAmount(r);
 
         // convertToSilver: a flat gain is paid out as silver instead of stored — the pile is untouched.
-        SCEventHandler_Stockpile handler = new SCEventHandler_Stockpile
+        SCEventHandler_Stockpile handler = new()
         {
             resource = r, mult = 1f, baseAmount = 5f, perWorkerAmount = 0f, convertToSilver = true
         };
@@ -82,8 +82,8 @@ public static class EventHandlerDestructiveTests
 
     private static FCEvent MakeEvent(WorldSettlementFC s)
     {
-        FCEvent evt = new FCEvent();
-        evt.settlementTraitLocations = new List<WorldSettlementFC> { s };
+        FCEvent evt = new();
+        evt.settlementTraitLocations = [s];
         return evt;
     }
 }

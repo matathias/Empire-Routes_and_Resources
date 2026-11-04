@@ -19,7 +19,7 @@ public class WorldObjectCompProperties_SettlementNeeds : WorldObjectCompProperti
 /*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*/
 public class WorldObjectComp_SettlementNeeds : WorldObjectComp, IStatModifierProvider, ISettlementPostLoadInit
 {
-    private List<NeedState> needStates = new List<NeedState>();
+    private List<NeedState> needStates = [];
     private bool hasAnyShortfall;
 
     private WorldSettlementFC cachedSettlement;
@@ -28,8 +28,7 @@ public class WorldObjectComp_SettlementNeeds : WorldObjectComp, IStatModifierPro
     {
         get
         {
-            if (cachedSettlement is null)
-                cachedSettlement = parent as WorldSettlementFC;
+            cachedSettlement ??= parent as WorldSettlementFC;
             return cachedSettlement;
         }
     }
@@ -40,7 +39,7 @@ public class WorldObjectComp_SettlementNeeds : WorldObjectComp, IStatModifierPro
 
     public void SetNeedStates(List<NeedState> states)
     {
-        needStates = states ?? new List<NeedState>();
+        needStates = states ?? [];
         UpdateHasAnyShortfall();
         statModsDirty = true;
     }
@@ -72,8 +71,8 @@ public class WorldObjectComp_SettlementNeeds : WorldObjectComp, IStatModifierPro
         // by the preserved ratio keeps a previously-met need shown as met, instead of pinning a
         // now-too-small absolute amount against the higher demand and flashing a false shortfall
         // (and its stat penalty) until the next daily resolution redraws.
-        Dictionary<string, double> prevSatisfaction = new Dictionary<string, double>();
-        Dictionary<string, double> prevSurplusRatio = new Dictionary<string, double>();
+        Dictionary<string, double> prevSatisfaction = [];
+        Dictionary<string, double> prevSurplusRatio = [];
         foreach(NeedState state in needStates)
         {
             if (state.demanded > 0)
@@ -81,7 +80,7 @@ public class WorldObjectComp_SettlementNeeds : WorldObjectComp, IStatModifierPro
             prevSurplusRatio[state.needId] = state.surplusRatio;
         }
 
-        List<NeedState> newStates = new List<NeedState>();
+        List<NeedState> newStates = [];
 
         // 1. Base settlement needs (from SettlementNeedDefs)
         foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
@@ -107,14 +106,14 @@ public class WorldObjectComp_SettlementNeeds : WorldObjectComp, IStatModifierPro
         {
             INeedProvider provider = comp as INeedProvider;
             if (provider is null) continue;
-            List<NeedEntry> compNeeds = new List<NeedEntry>();
+            List<NeedEntry> compNeeds = [];
             provider.CollectNeeds(ws, compNeeds);
             foreach (NeedEntry entry in compNeeds)
             {
                 if (entry.resource is null || entry.amount <= 0) continue;
                 prevSatisfaction.TryGetValue(entry.needId, out double ratio);
                 prevSurplusRatio.TryGetValue(entry.needId, out double prevSurplus);
-                NeedState ns = new NeedState(entry.needId, entry.resource, entry.amount, ratio * entry.amount,
+                NeedState ns = new(entry.needId, entry.resource, entry.amount, ratio * entry.amount,
                     entry.label, NeedCategory.Comp, entry.penalties,
                     entry.surplusBonuses, entry.maxSurplusRatio);
                 ns.surplusRatio = prevSurplus;
@@ -150,7 +149,7 @@ public class WorldObjectComp_SettlementNeeds : WorldObjectComp, IStatModifierPro
         if (statModsDirty || cachedStatMods is null)
         {
             if (cachedStatMods is null)
-                cachedStatMods = new Dictionary<FCStatDef, double>();
+                cachedStatMods = [];
             else
                 cachedStatMods.Clear();
             statModsDirty = false;
@@ -341,8 +340,7 @@ public class WorldObjectComp_SettlementNeeds : WorldObjectComp, IStatModifierPro
     {
         base.PostExposeData();
         Scribe_Collections.Look(ref needStates, "needStates", LookMode.Deep);
-        if (needStates is null)
-            needStates = new List<NeedState>();
+        needStates ??= [];
         UpdateHasAnyShortfall();
     }
 

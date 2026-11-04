@@ -62,7 +62,7 @@ public static class SCTestHelper
     public static DictionaryStockpile MakeEmptyStockpile()
     {
         return new DictionaryStockpile(
-            new Dictionary<ResourceTypeDef, double>(),
-            new Dictionary<ResourceTypeDef, double>());
+            [],
+            []);
     }
 }

@@ -103,9 +103,9 @@ internal static class UIUtilSC
             return;
         }
 
-        List<FloatMenuOption> options = new List<FloatMenuOption>();
-        HashSet<int> seen = new HashSet<int>();
-        int[] presets = { 1, 5, 10, maxBuyable };
+        List<FloatMenuOption> options = [];
+        HashSet<int> seen = [];
+        int[] presets = [1, 5, 10, maxBuyable];
 
         for (int i = 0; i < presets.Length; i++)
         {

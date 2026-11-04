@@ -30,7 +30,7 @@ public class SCEventHandler_Stockpile : FCEventHandlerExtension
         // physical pile. In Simple mode every affected settlement shares wc.Stockpile — applying
         // the mult per settlement would compound it to mult^N. Track distinct piles and apply the
         // mult only the first time we see each. Flat gains/draws stay per settlement.
-        HashSet<IStockpile> multAppliedPiles = new HashSet<IStockpile>();
+        HashSet<IStockpile> multAppliedPiles = [];
 
         foreach (WorldSettlementFC settlement in evt.settlementTraitLocations)
         {
@@ -130,7 +130,7 @@ public class SCEventHandler_Stockpile : FCEventHandlerExtension
     private List<ResourceTypeDef> GetTargetResources()
     {
         if (resource is not null)
-            return new List<ResourceTypeDef> { resource };
+            return [resource];
         return new List<ResourceTypeDef>(SupplyChainCache.AllResourceTypeDefs);
     }
 

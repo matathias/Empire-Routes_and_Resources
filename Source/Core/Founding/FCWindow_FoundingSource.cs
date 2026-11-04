@@ -21,7 +21,7 @@ public class FCWindow_FoundingSource : Window, IFoundingCompanionWindow
     private WorldComponent_SupplyChain worldComp;
     private List<FCResourceCost> cachedCosts;
 
-    public override Vector2 InitialSize => new Vector2(WindowWidth, 350f);
+    public override Vector2 InitialSize => new(WindowWidth, 350f);
 
     public FCWindow_FoundingSource()
     {
@@ -77,9 +77,9 @@ public class FCWindow_FoundingSource : Window, IFoundingCompanionWindow
                 return;
             }
         }
-        else if (cachedCosts is null)
+        else
         {
-            cachedCosts = FoundingCostUtil.GetFoundingResourceCosts(settlementType);
+            cachedCosts ??= FoundingCostUtil.GetFoundingResourceCosts(settlementType);
         }
 
         if (cachedCosts is null || cachedCosts.Count == 0)
@@ -104,7 +104,7 @@ public class FCWindow_FoundingSource : Window, IFoundingCompanionWindow
         // Title
         Text.Font = GameFont.Small;
         Text.Anchor = TextAnchor.MiddleCenter;
-        Rect titleRect = new Rect(0, curY, inRect.width, ButtonHeight);
+        Rect titleRect = new(0, curY, inRect.width, ButtonHeight);
         UIUtil.DrawColoredHighlight(titleRect, source?.settlementDef?.accentColor ?? Color.white);
         Widgets.Label(titleRect, "SC_FoundingSourceTitle".Translate());
         curY += ButtonHeight + 5f;
@@ -141,7 +141,7 @@ public class FCWindow_FoundingSource : Window, IFoundingCompanionWindow
             // Resource label
             float resourceImgSize = RowHeight;
             float resourceImxgX = 2f;
-            Rect resourceImgRect = new Rect(resourceImxgX, curY, resourceImgSize, resourceImgSize);
+            Rect resourceImgRect = new(resourceImxgX, curY, resourceImgSize, resourceImgSize);
             if (entry.resource.Icon is not null)
                 GUI.DrawTexture(resourceImgRect, entry.resource.Icon);
             GUI.color = sufficient ? AccentUtil.Income : AccentUtil.Expense;
@@ -180,7 +180,7 @@ public class FCWindow_FoundingSource : Window, IFoundingCompanionWindow
         FactionFC faction = FindFC.FactionComp;
         if (faction is null) return;
 
-        List<FloatMenuOption> options = new List<FloatMenuOption>();
+        List<FloatMenuOption> options = [];
 
         for (int i = 0; i < faction.settlements.Count; i++)
         {

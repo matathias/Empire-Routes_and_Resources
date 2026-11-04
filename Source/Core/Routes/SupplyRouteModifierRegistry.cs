@@ -2,7 +2,7 @@ namespace FactionColonies.SupplyChain;
 
 public static class SupplyRouteModifierRegistry
 {
-    private static readonly List<ISupplyRouteModifier> _modifiers = new List<ISupplyRouteModifier>();
+    private static readonly List<ISupplyRouteModifier> _modifiers = [];
 
     public static IReadOnlyList<ISupplyRouteModifier> Modifiers
     {

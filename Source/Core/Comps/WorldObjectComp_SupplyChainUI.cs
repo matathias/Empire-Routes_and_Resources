@@ -21,7 +21,7 @@ public class WorldObjectCompProperties_SupplyChainUI : WorldObjectCompProperties
 public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowOverview
 {
     private WorldSettlementFC cachedSettlement;
-    private Dictionary<ResourceTypeDef, string> sliderBuffers = new Dictionary<ResourceTypeDef, string>();
+    private Dictionary<ResourceTypeDef, string> sliderBuffers = [];
     private Vector2 scrollPos;
 
     // Complex mode UI state
@@ -54,14 +54,13 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
     private ResourceTypeDef routeFilterResource;
 
     // Persistent per-route text buffers for the in-row editable amount field.
-    private Dictionary<SupplyRoute, string> routeAmountBuffers = new Dictionary<SupplyRoute, string>();
+    private Dictionary<SupplyRoute, string> routeAmountBuffers = [];
 
     public WorldSettlementFC WorldSettlement
     {
         get
         {
-            if (cachedSettlement is null)
-                cachedSettlement = parent as WorldSettlementFC;
+            cachedSettlement ??= parent as WorldSettlementFC;
             return cachedSettlement;
         }
     }
@@ -72,7 +71,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
     private WorldObjectComp_SettlementNeeds Needs => SupplyChainCache.GetNeedsComp(WorldSettlement);
 
     // Data proxies so the view body reads the ledger/needs comps transparently.
-    private static readonly List<NeedState> EmptyNeedStates = new List<NeedState>();
+    private static readonly List<NeedState> EmptyNeedStates = [];
     private List<NeedState> needStates => Needs?.NeedStates ?? EmptyNeedStates;
     private IStockpile localStockpileDict => Ledger?.GetStockpile();
     private List<SellOrder> localSellOrders => Ledger?.LocalSellOrders;
@@ -160,7 +159,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         int resourceCount = uiSettlement.Resources.Count;
 
         float totalHeight = resourceCount * rowHeight + 40f + needStates.Count * NeedRowStep + 50f;
-        Rect scrollRect = new Rect(boundingBox.x, y, boundingBox.width, boundingBox.height - (y - boundingBox.y));
+        Rect scrollRect = new(boundingBox.x, y, boundingBox.width, boundingBox.height - (y - boundingBox.y));
 
         Rect viewRect = ScrollUtil.BeginScrollView(scrollRect, ref scrollPos, totalHeight);
         float curY = 0f;
@@ -184,9 +183,9 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
     // --- Complex Mode Tab (sub-tabs: Overview, Production, Routes) ---
 
-    private static readonly Color AccentPositive = new Color(0.3f, 0.8f, 0.3f);
-    private static readonly Color AccentNegative = new Color(0.9f, 0.3f, 0.3f);
-    private static readonly Color AccentNeutral = new Color(0.5f, 0.5f, 0.5f);
+    private static readonly Color AccentPositive = new(0.3f, 0.8f, 0.3f);
+    private static readonly Color AccentNegative = new(0.9f, 0.3f, 0.3f);
+    private static readonly Color AccentNeutral = new(0.5f, 0.5f, 0.5f);
     private const float AccentW = 4f;
 
     // Status bar constants
@@ -194,7 +193,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
     private const float StatusIconSize = 16f;
     private const float StatusCellPad = 8f;
     private const float StatusBarGap = 4f;
-    private static readonly Color StatusNetStable = new Color(0.5f, 0.5f, 0.5f);
+    private static readonly Color StatusNetStable = new(0.5f, 0.5f, 0.5f);
 
     private float MeasureStockpileStatusBar(float width)
     {
@@ -292,7 +291,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
             // Amount text (white)
             GUI.color = Color.white;
-            Rect amtRect = new Rect(curX + StatusIconSize + 2f, curY, amtW, StatusRowH);
+            Rect amtRect = new(curX + StatusIconSize + 2f, curY, amtW, StatusRowH);
             Widgets.Label(amtRect, amtStr);
 
             // Net change text (colored)
@@ -300,12 +299,12 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
                 : flow.DailyNet < -0.01 ? AccentUtil.Expense
                 : StatusNetStable;
             GUI.color = netColor;
-            Rect netRect = new Rect(amtRect.xMax, curY, netW, StatusRowH);
+            Rect netRect = new(amtRect.xMax, curY, netW, StatusRowH);
             Widgets.Label(netRect, netStr);
             GUI.color = prevColor;
 
             // Tooltip
-            Rect cellRect = new Rect(curX, curY, cellW - StatusCellPad, StatusRowH);
+            Rect cellRect = new(curX, curY, cellW - StatusCellPad, StatusRowH);
             TooltipHandler.TipRegion(cellRect, UIUtilSC.BuildFlowTooltip(def, amount, cap, flow));
 
             curX += cellW;
@@ -322,19 +321,19 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         float tabH = 24f;
         float tabW = boundingBox.width / 6f;
         string[] tabLabels =
-        {
+        [
             "SC_SubStockpile".Translate(),
             "SC_SubNeeds".Translate(),
             "SC_SubProduction".Translate(),
             "SC_SubOrders".Translate(),
             "SC_SubRoutes".Translate(),
             "SC_SubDeliveries".Translate()
-        };
+        ];
 
-        Rect chosenRect = new Rect();
+        Rect chosenRect = new();
         for (int i = 0; i < 6; i++)
         {
-            Rect tabRect = new Rect(boundingBox.x + tabW * i, boundingBox.y, tabW, tabH);
+            Rect tabRect = new(boundingBox.x + tabW * i, boundingBox.y, tabW, tabH);
             if (UIUtil.ButtonFlat(tabRect, tabLabels[i], highlighted: complexSubTab == i))
                 complexSubTab = i;
             if (complexSubTab == i)
@@ -350,7 +349,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         // Content area below tabs, above status bar
         float contentY = boundingBox.y + tabH;
         float contentH = boundingBox.yMax - contentY - statusBarH - statusGap;
-        Rect contentRect = new Rect(boundingBox.x, contentY, boundingBox.width, contentH);
+        Rect contentRect = new(boundingBox.x, contentY, boundingBox.width, contentH);
 
         if (complexSubTab == 0)
             DrawComplexStockpile(contentRect);
@@ -368,7 +367,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         // Bottom status bar
         if (statusBarH > 0f)
         {
-            Rect statusRect = new Rect(boundingBox.x, boundingBox.yMax - statusBarH, boundingBox.width, statusBarH);
+            Rect statusRect = new(boundingBox.x, boundingBox.yMax - statusBarH, boundingBox.width, statusBarH);
             DrawStockpileStatusBar(statusRect);
         }
     }
@@ -418,7 +417,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
             float fillPct = cap > 0 ? (float)(amount / cap) : 0f;
 
-            Rect rowRect = new Rect(0f, curY, viewRect.width, barHeight);
+            Rect rowRect = new(0f, curY, viewRect.width, barHeight);
 
             // Flow calculation
             WorldComponent_SupplyChain.FlowBreakdown flow = default(WorldComponent_SupplyChain.FlowBreakdown);
@@ -437,12 +436,12 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
                 GUI.DrawTexture(new Rect(contentX, curY + 2f, 24f, 24f), def.Icon);
 
             Text.Anchor = TextAnchor.MiddleLeft;
-            Rect reslabel = new Rect(contentX + 28f, curY, 100f, barHeight);
+            Rect reslabel = new(contentX + 28f, curY, 100f, barHeight);
             string reslabelstr = TextUtil.ClampWithEllipsis(reslabel, def.label.CapitalizeFirst());
             Widgets.Label(reslabel, reslabelstr);
 
             float barX = contentX + 130f;
-            Rect barRect = new Rect(barX, curY + 4f, barWidth, barHeight - 8f);
+            Rect barRect = new(barX, curY + 4f, barWidth, barHeight - 8f);
             Widgets.FillableBar(barRect, fillPct);
 
             // Arrow indicator (between bar and amount text)
@@ -465,7 +464,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
             // Buy button
             float buyX = viewRect.width - buyBtnW - 2f;
-            Rect buyRect = new Rect(buyX, curY + 3f, buyBtnW, barHeight - 6f);
+            Rect buyRect = new(buyX, curY + 3f, buyBtnW, barHeight - 6f);
             Text.Font = GameFont.Tiny;
             if (Widgets.ButtonText(buyRect, "$"))
             {
@@ -555,7 +554,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         // --- Sell Orders section ---
         Text.Font = GameFont.Medium;
         Text.Anchor = TextAnchor.MiddleCenter;
-        Rect localSellHeaderRect = new Rect(AccentW + 6f, curY, viewRect.width, 30f);
+        Rect localSellHeaderRect = new(AccentW + 6f, curY, viewRect.width, 30f);
         Widgets.Label(localSellHeaderRect, "SC_LocalSellOrders".Translate());
         TooltipHandler.TipRegion(localSellHeaderRect, (string)"SC_SellOrdersTooltip".Translate(
             SupplyChainSettings.overflowPenaltyRate.ToString("P0")));
@@ -572,7 +571,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         {
             if (order.resource is null) continue;
 
-            Rect sellRow = new Rect(0f, curY, viewRect.width, 26f);
+            Rect sellRow = new(0f, curY, viewRect.width, 26f);
             if (sellIdx % 2 == 0) Widgets.DrawHighlight(sellRow);
             Widgets.DrawBoxSolid(new Rect(0f, curY, AccentW, 26f), AccentUtil.Income);
 
@@ -595,7 +594,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
             if (Widgets.ButtonText(new Rect(sellRow.xMax - 28f, curY + 1f, 24f, 24f), "X"))
             {
-                if (toRemove is null) toRemove = new List<SellOrder>();
+                toRemove ??= [];
                 toRemove.Add(order);
             }
 
@@ -615,7 +614,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         // --- Tithe Injection section ---
         Text.Font = GameFont.Medium;
         Text.Anchor = TextAnchor.MiddleCenter;
-        Rect titheHeaderRect = new Rect(AccentW + 6f, curY, viewRect.width, 30f);
+        Rect titheHeaderRect = new(AccentW + 6f, curY, viewRect.width, 30f);
         Widgets.Label(titheHeaderRect, "SC_TitheInjection".Translate());
         TooltipHandler.TipRegion(titheHeaderRect, (string)"SC_TitheInjectionTooltip".Translate());
         Text.Font = GameFont.Small;
@@ -631,7 +630,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         {
             if (kv.Key is null || kv.Value <= 0) continue;
 
-            Rect titheRow = new Rect(0f, curY, viewRect.width, 26f);
+            Rect titheRow = new(0f, curY, viewRect.width, 26f);
             if (titheIdx % 2 == 0) Widgets.DrawHighlight(titheRow);
             Widgets.DrawBoxSolid(new Rect(0f, curY, AccentW, 26f), AccentUtil.Expense);
 
@@ -654,7 +653,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
             if (Widgets.ButtonText(new Rect(xBtnX, curY + 1f, 24f, 24f), "X"))
             {
-                if (titheToRemove is null) titheToRemove = new List<ResourceTypeDef>();
+                titheToRemove ??= [];
                 titheToRemove.Add(kv.Key);
             }
 
@@ -686,8 +685,8 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         // --- Direction toggle (fixed above scroll) ---
         Text.Font = GameFont.Tiny;
         float toggleW = rect.width / 2f;
-        Rect fromRect = new Rect(rect.x, rect.y + 3f, toggleW, 24f);
-        Rect toRect = new Rect(rect.x + toggleW, rect.y + 3f, toggleW, 24f);
+        Rect fromRect = new(rect.x, rect.y + 3f, toggleW, 24f);
+        Rect toRect = new(rect.x + toggleW, rect.y + 3f, toggleW, 24f);
         Rect currentRect = newRouteIsOutgoing ? fromRect : toRect;
         if (UIUtil.ButtonFlat(fromRect, "SC_DirectionFrom".Translate(), highlighted: newRouteIsOutgoing))
             newRouteIsOutgoing = true;
@@ -710,7 +709,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
             routeFilterResource = null;
         fbX += 44f;
 
-        HashSet<ResourceTypeDef> routeResources = new HashSet<ResourceTypeDef>();
+        HashSet<ResourceTypeDef> routeResources = [];
         foreach (SupplyRoute r in wc.SupplyRoutes)
         {
             if (!r.IsValid() || r.resource is null) continue;
@@ -737,10 +736,10 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         float fixedHeaderTotal = 82f; // toggle (26) + add form (28) + filter row (26) + gap (2)
 
         // --- Scrollable route list ---
-        Rect scrollRect = new Rect(rect.x, rect.y + fixedHeaderTotal, rect.width, rect.height - fixedHeaderTotal);
+        Rect scrollRect = new(rect.x, rect.y + fixedHeaderTotal, rect.width, rect.height - fixedHeaderTotal);
 
         // Pre-build the visible (filtered) list so the reorder arrows have indexable neighbors.
-        List<SupplyRoute> shown = new List<SupplyRoute>();
+        List<SupplyRoute> shown = [];
         foreach (SupplyRoute route in wc.SupplyRoutes)
         {
             if (!route.IsValid()) continue;
@@ -766,7 +765,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
             route.RecacheEfficiencyIfDirty();
             bool pathReady = route.PathReady;
 
-            Rect rowRect = new Rect(0f, curY, viewRect.width, 28f);
+            Rect rowRect = new(0f, curY, viewRect.width, 28f);
             if (v % 2 == 0) Widgets.DrawHighlight(rowRect);
 
             // Dual accent bars: resource color + efficiency color
@@ -837,7 +836,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
             pipeX += 16f;
 
             // Efficiency
-            Rect efficiencyRect = new Rect(pipeX, curY, 52f, 26f);
+            Rect efficiencyRect = new(pipeX, curY, 52f, 26f);
             GUI.color = effAccent;
             if (pathReady)
                 Widgets.Label(efficiencyRect, "SC_EffLabel".Translate((eff * 100).ToString("F0")));
@@ -926,7 +925,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
             : (string)"SC_ResourcePicker".Translate();
         if (Widgets.ButtonText(new Rect(bx, curY, 110f, 24f), resLabel))
         {
-            List<FloatMenuOption> options = new List<FloatMenuOption>();
+            List<FloatMenuOption> options = [];
             foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
             {
                 ResourceTypeDef captured = def;
@@ -945,7 +944,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
             : (string)"SC_PickSettlement".Translate();
         if (Widgets.ButtonText(new Rect(bx, curY, pickerW, 24f), otherLabel))
         {
-            List<FloatMenuOption> options = new List<FloatMenuOption>();
+            List<FloatMenuOption> options = [];
             foreach (WorldSettlementFC s in faction.settlements)
             {
                 if (s == ws) continue;
@@ -986,7 +985,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         bx += 74f;
 
         // Frequency (days between deliveries)
-        Rect freqRect = new Rect(bx, curY, 44f, 24f);
+        Rect freqRect = new(bx, curY, 44f, 24f);
         Widgets.TextFieldNumeric(freqRect, ref newRouteFrequency, ref newRouteFreqBuffer,
             SupplyChainSettings.minRouteFrequencyDays, SupplyChainSettings.maxRouteFrequencyDays);
         TooltipHandler.TipRegion(freqRect, "SC_FrequencyTooltip".Translate());
@@ -999,7 +998,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
             {
                 WorldSettlementFC src = newRouteIsOutgoing ? ws : newRouteOther;
                 WorldSettlementFC dest = newRouteIsOutgoing ? newRouteOther : ws;
-                SupplyRoute route = new SupplyRoute(src, dest, newRouteResource, newRouteAmount);
+                SupplyRoute route = new(src, dest, newRouteResource, newRouteAmount);
                 route.frequencyDays = Mathf.Clamp(newRouteFrequency,
                     SupplyChainSettings.minRouteFrequencyDays, SupplyChainSettings.maxRouteFrequencyDays);
                 wc.LinkRoute(route);
@@ -1044,7 +1043,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
             double maxAlloc = rawProd - otherAllocs;
             if (maxAlloc < 0) maxAlloc = 0;
 
-            Rect row = new Rect(0f, curY, viewRect.width, rowHeight);
+            Rect row = new(0f, curY, viewRect.width, rowHeight);
 
             // Alternating row highlights
             if (idx % 2 == 0) Widgets.DrawHighlight(row);
@@ -1066,8 +1065,8 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
             if (autoMax)
             {
-                Rect badgeRect = new Rect(cx + 150f, curY + 6f, 240f, rowHeight - 12f);
-                Color badgeBg = new Color(resColor.r * 0.45f, resColor.g * 0.45f, resColor.b * 0.45f, 0.85f);
+                Rect badgeRect = new(cx + 150f, curY + 6f, 240f, rowHeight - 12f);
+                Color badgeBg = new(resColor.r * 0.45f, resColor.g * 0.45f, resColor.b * 0.45f, 0.85f);
                 Widgets.DrawBoxSolid(badgeRect, badgeBg);
                 Text.Anchor = TextAnchor.MiddleCenter;
                 Widgets.Label(badgeRect, "SC_MaxBadge".Translate());
@@ -1138,8 +1137,8 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
             // Auto-max toggle (between number and silver slots, inside the visible row)
             const float autoBoxSize = 22f;
-            Vector2 autoBoxPos = new Vector2(cx + 495f, curY + (rowHeight - autoBoxSize) / 2f);
-            Rect autoBoxRect = new Rect(autoBoxPos.x, autoBoxPos.y, autoBoxSize, autoBoxSize);
+            Vector2 autoBoxPos = new(cx + 495f, curY + (rowHeight - autoBoxSize) / 2f);
+            Rect autoBoxRect = new(autoBoxPos.x, autoBoxPos.y, autoBoxSize, autoBoxSize);
             bool autoMaxNow = autoMax;
             Widgets.Checkbox(autoBoxPos, ref autoMaxNow, autoBoxSize);
             TooltipHandler.TipRegion(autoBoxRect, "SC_AutoMaxTooltip".Translate());
@@ -1171,7 +1170,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         FactionFC faction = FindFC.FactionComp;
         WorldSettlementFC ws = WorldSettlement;
 
-        Dictionary<ResourceTypeDef, float> projectedRates = new Dictionary<ResourceTypeDef, float>();
+        Dictionary<ResourceTypeDef, float> projectedRates = [];
         foreach (NeedState state in needStates)
         {
             if (state.resource is null || projectedRates.ContainsKey(state.resource))
@@ -1202,7 +1201,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
             float actual = state.Satisfaction;
             float satisfaction = projected;
 
-            Rect rowRect = new Rect(0f, curY, viewRect.width, NeedRowH);
+            Rect rowRect = new(0f, curY, viewRect.width, NeedRowH);
             if (idx % 2 == 0) Widgets.DrawHighlight(rowRect);
 
             // Left accent bar spans full row height
@@ -1220,13 +1219,13 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
                 GUI.DrawTexture(new Rect(cx, topY + 1f, 20f, 20f), state.resource.Icon);
 
             Text.Anchor = TextAnchor.MiddleLeft;
-            Rect labelRect = new Rect(cx + 24f, topY, 140f, NeedTopLineH);
+            Rect labelRect = new(cx + 24f, topY, 140f, NeedTopLineH);
             Widgets.Label(labelRect, TextUtil.ClampWithEllipsis(labelRect, state.label));
 
             float barX = cx + 168f;
             float barW = viewRect.width - barX - 60f;
             if (barW < 80f) barW = 80f;
-            Rect barRect = new Rect(barX, topY + 3f, barW, NeedTopLineH - 6f);
+            Rect barRect = new(barX, topY + 3f, barW, NeedTopLineH - 6f);
             if (satisfaction > 0.8f)
                 GUI.color = new Color(0.4f, 0.8f, 0.4f);
             else if (satisfaction > 0.4f)
@@ -1272,7 +1271,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
                 string penaltyText = GetProjectedPenaltySummary(state, projectedShortfall);
                 if (penaltyText is not null)
                 {
-                    Rect penaltyRect = new Rect(cx + 228f, botY, viewRect.width - cx - 232f, NeedBotLineH);
+                    Rect penaltyRect = new(cx + 228f, botY, viewRect.width - cx - 232f, NeedBotLineH);
                     Text.Anchor = TextAnchor.MiddleRight;
                     Widgets.Label(penaltyRect, TextUtil.ClampWithEllipsis(penaltyRect, penaltyText));
                 }
@@ -1387,7 +1386,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         string resLabel = newLocalSellResource is not null ? newLocalSellResource.label.CapitalizeFirst() : (string)"SC_PickResource".Translate();
         if (Widgets.ButtonText(new Rect(sx + 44f, curY, 130f, 24f), resLabel))
         {
-            List<FloatMenuOption> options = new List<FloatMenuOption>();
+            List<FloatMenuOption> options = [];
             foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
             {
                 if (def.isPoolResource) continue;
@@ -1431,7 +1430,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         string resLabel = newTitheInjResource is not null ? newTitheInjResource.label.CapitalizeFirst() : (string)"SC_PickResource".Translate();
         if (Widgets.ButtonText(new Rect(sx + 44f, curY, 130f, 24f), resLabel))
         {
-            List<FloatMenuOption> options = new List<FloatMenuOption>();
+            List<FloatMenuOption> options = [];
             // Only tithable resources: SetTitheInjection silently no-ops on the rest.
             foreach (ResourceTypeDef def in FactionCache.TitheableResourceTypeDefs)
             {

@@ -141,7 +141,7 @@ public static class SCDebugActions
         WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
         if (comp is null) return;
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         sb.AppendLine("[Empire-SupplyChain] === Stockpile State (" + comp.Mode + " mode) ===");
 
         ForEachStockpile((stockpile, label) =>
@@ -228,7 +228,7 @@ public static class SCDebugActions
 
             // 1. Spawn settlements at valid random surface tiles.
             WorldSettlementDef def = WorldSettlementDefOf.WorldSettlementDef_Surface;
-            List<WorldSettlementFC> created = new List<WorldSettlementFC>();
+            List<WorldSettlementFC> created = [];
             int attempts = 0;
             while (created.Count < settlementCount && attempts < maxTileAttempts)
             {
@@ -243,7 +243,7 @@ public static class SCDebugActions
             }
 
             // 2. Configure each: random upgrades, one worked resource, all workers on it, seeded stock.
-            Dictionary<WorldSettlementFC, ResourceTypeDef> workedResource = new Dictionary<WorldSettlementFC, ResourceTypeDef>();
+            Dictionary<WorldSettlementFC, ResourceTypeDef> workedResource = [];
             foreach (WorldSettlementFC s in created)
             {
                 s.UpgradeSettlement(Rand.RangeInclusive(1, 9));
@@ -278,7 +278,7 @@ public static class SCDebugActions
                 foreach (WorldSettlementFC dst in created)
                 {
                     if (src == dst) continue;
-                    SupplyRoute route = new SupplyRoute(src, dst, res, 1.0);
+                    SupplyRoute route = new(src, dst, res, 1.0);
                     route.frequencyDays = freq;   // leaves nextDispatchTick = -1 -> dispatches next daily tick
                     comp.LinkRoute(route);
                     routes++;

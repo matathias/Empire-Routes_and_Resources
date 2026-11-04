@@ -170,11 +170,11 @@ public static class RouteOverlayUtil
         if (!IsVisibleToCamera(mid)) return false;
 
         Vector2 screenPos = GenWorldUI.WorldToUIPosition(mid);
-        Rect screen = new Rect(0f, 0f, UI.screenWidth, UI.screenHeight);
+        Rect screen = new(0f, 0f, UI.screenWidth, UI.screenHeight);
         if (!screen.Contains(screenPos)) return false;
 
         Vector2 labelSize = Text.CalcSize(label);
-        Rect labelRect = new Rect(
+        Rect labelRect = new(
             screenPos.x - labelSize.x / 2f,
             screenPos.y - labelSize.y / 2f,
             labelSize.x, labelSize.y);

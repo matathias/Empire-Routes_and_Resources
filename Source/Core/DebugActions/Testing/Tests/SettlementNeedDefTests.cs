@@ -32,11 +32,11 @@ public static class SettlementNeedDefTests
     public static void GetWeightAt_ExactTechMatch_ReturnsThatWeight()
     {
         var input = Input(SCTestHelper.MakeResourceType("SCTest_Exact"), 1f);
-        input.weightsByTech = new List<TechLevelWeight>
-        {
-            new TechLevelWeight { level = TechLevel.Medieval, weight = 1f },
-            new TechLevelWeight { level = TechLevel.Industrial, weight = 3f },
-        };
+        input.weightsByTech =
+        [
+            new() { level = TechLevel.Medieval, weight = 1f },
+            new() { level = TechLevel.Industrial, weight = 3f },
+        ];
         TestAssert.AreEqual(3.0, input.GetWeightAt(TechLevel.Industrial));
     }
 
@@ -44,11 +44,11 @@ public static class SettlementNeedDefTests
     public static void GetWeightAt_NoExactMatch_UsesNearestLowerKey()
     {
         var input = Input(SCTestHelper.MakeResourceType("SCTest_Lower"), 1f);
-        input.weightsByTech = new List<TechLevelWeight>
-        {
-            new TechLevelWeight { level = TechLevel.Medieval, weight = 1f },
-            new TechLevelWeight { level = TechLevel.Industrial, weight = 3f },
-        };
+        input.weightsByTech =
+        [
+            new() { level = TechLevel.Medieval, weight = 1f },
+            new() { level = TechLevel.Industrial, weight = 3f },
+        ];
         // Spacer has no exact key; nearest lower defined key is Industrial -> 3.
         TestAssert.AreEqual(3.0, input.GetWeightAt(TechLevel.Spacer));
     }
@@ -57,11 +57,11 @@ public static class SettlementNeedDefTests
     public static void GetWeightAt_BelowAllKeys_UsesSmallestKey()
     {
         var input = Input(SCTestHelper.MakeResourceType("SCTest_Floor"), 1f);
-        input.weightsByTech = new List<TechLevelWeight>
-        {
-            new TechLevelWeight { level = TechLevel.Industrial, weight = 3f },
-            new TechLevelWeight { level = TechLevel.Spacer, weight = 5f },
-        };
+        input.weightsByTech =
+        [
+            new() { level = TechLevel.Industrial, weight = 3f },
+            new() { level = TechLevel.Spacer, weight = 5f },
+        ];
         // Neolithic is below every key -> floor to the smallest defined key (Industrial) -> 3.
         TestAssert.AreEqual(3.0, input.GetWeightAt(TechLevel.Neolithic));
     }

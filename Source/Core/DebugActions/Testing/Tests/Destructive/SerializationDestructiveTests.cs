@@ -16,7 +16,7 @@ public static class SerializationDestructiveTests
         ResourceTypeDef r = SupplyChainCache.AllResourceTypeDefs.FirstOrDefault();
         if (r is null) TestAssert.Skip("No resource types defined");
 
-        SellOrder original = new SellOrder(r, 37.5);
+        SellOrder original = new(r, 37.5);
         SellOrder loaded = ScribeRoundTrip(original, "sellOrder");
 
         TestAssert.IsNotNull(loaded, "Round-tripped sell order should not be null");
@@ -30,7 +30,7 @@ public static class SerializationDestructiveTests
         ResourceTypeDef r = SupplyChainCache.AllResourceTypeDefs.FirstOrDefault();
         if (r is null) TestAssert.Skip("No resource types defined");
 
-        NeedState original = new NeedState("need.test", r, 20.0, 8.0, "Test Need", NeedCategory.Base);
+        NeedState original = new("need.test", r, 20.0, 8.0, "Test Need", NeedCategory.Base);
         NeedState loaded = ScribeRoundTrip(original, "needState");
 
         TestAssert.IsNotNull(loaded, "Round-tripped need state should not be null");

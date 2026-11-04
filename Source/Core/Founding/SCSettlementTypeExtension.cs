@@ -12,7 +12,7 @@ public class FCResourceCost
 /// </summary>
 public class SCSettlementTypeExtension : SettlementTypeExtension
 {
-    public List<FCResourceCost> foundingResourceCosts = new List<FCResourceCost>();
+    public List<FCResourceCost> foundingResourceCosts = [];
 
     public virtual List<FCResourceCost> GetFoundingResourceCosts()
     {

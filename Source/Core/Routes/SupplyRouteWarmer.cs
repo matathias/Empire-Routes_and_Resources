@@ -61,7 +61,7 @@ public class SupplyRouteWarmer
         {
             SupplyRoute r = routes[i];
             if (r.PathReady || !r.IsValid()) continue;
-            if (jobs is null) jobs = new List<Job>();
+            jobs ??= [];
             jobs.Add(new Job { route = r, from = r.source.Tile, to = r.destination.Tile });
         }
         if (jobs is null) return;
@@ -71,7 +71,7 @@ public class SupplyRouteWarmer
 
         if (SupplyChainSettings.useThreadedRouteComputation)
         {
-            Thread thread = new Thread(() => Compute(jobs, gen)) { IsBackground = true };
+            Thread thread = new(() => Compute(jobs, gen)) { IsBackground = true };
             thread.Start();
         }
         else
@@ -89,7 +89,7 @@ public class SupplyRouteWarmer
         LogUtil.SuppressOnThisThread = true;
         try
         {
-            Dictionary<SupplyRoute, Result> results = new Dictionary<SupplyRoute, Result>(jobs.Count);
+            Dictionary<SupplyRoute, Result> results = new(jobs.Count);
             List<string> log = null;
 
             try
@@ -109,7 +109,7 @@ public class SupplyRouteWarmer
                     catch (Exception e)
                     {
                         // Leave this route dirty so it retries; buffer the message (no logger call here).
-                        if (log is null) log = new List<string>();
+                        log ??= [];
                         log.Add($"SupplyRouteWarmer pathfind threw (route left dirty): {e}");
                     }
                 }
@@ -118,7 +118,7 @@ public class SupplyRouteWarmer
             {
                 // Backstop: the worker must never die from an unhandled exception. Buffer and still
                 // publish whatever was computed so warming isn't permanently stalled.
-                if (log is null) log = new List<string>();
+                log ??= [];
                 log.Add($"SupplyRouteWarmer background computation failed: {e}");
             }
 

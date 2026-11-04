@@ -91,7 +91,7 @@ public class FoundingCostValidator : ISettlementFoundingValidator
 
         double distMult = FoundingCostUtil.ComputeDistanceMultiplier(tile);
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         for (int i = 0; i < costs.Count; i++)
         {
             FCResourceCost entry = costs[i];

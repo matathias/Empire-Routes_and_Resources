@@ -187,7 +187,7 @@ public class DeliveryCaravan : WorldObject
 
     public override string GetInspectString()
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         string baseStr = base.GetInspectString();
         if (!baseStr.NullOrEmpty()) sb.Append(baseStr);
 

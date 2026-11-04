@@ -72,7 +72,7 @@ public class BuildingNeedExtension : DefModExtension, IBuildingDetailSection
                 Widgets.DrawBoxSolid(new Rect(contentRect.x, curY, 3f, 22f), input.resource.color);
                 float x = contentRect.x + 3f + 4f;
                 GUI.DrawTexture(new Rect(x, curY + 1f, 20f, 20f), input.resource.Icon);
-                Rect labelRect = new Rect(x + 24f, curY, contentRect.width - 31f, 22f);
+                Rect labelRect = new(x + 24f, curY, contentRect.width - 31f, 22f);
                 Widgets.Label(labelRect, "SC_BuildingNeedInput".Translate(input.amount.ToString("0.##"), input.resource.LabelCap));
                 curY += 22f;
             }
@@ -97,7 +97,7 @@ public class BuildingNeedExtension : DefModExtension, IBuildingDetailSection
                 Widgets.DrawBoxSolid(new Rect(contentRect.x, curY, 3f, 22f), bonus.resource.color);
                 float x = contentRect.x + 3f + 4f;
                 GUI.DrawTexture(new Rect(x, curY + 1f, 20f, 20f), bonus.resource.Icon);
-                Rect labelRect = new Rect(x + 24f, curY, contentRect.width - 31f, 22f);
+                Rect labelRect = new(x + 24f, curY, contentRect.width - 31f, 22f);
                 GUI.color = Color.green;
                 Widgets.Label(labelRect, "SC_BuildingCapBonus".Translate(bonus.amount.ToString("0.##"), bonus.resource.LabelCap));
                 GUI.color = Color.white;
@@ -111,7 +111,7 @@ public class BuildingNeedExtension : DefModExtension, IBuildingDetailSection
 
     public string GetCardDescription(BuildingFCDef def)
     {
-        List<string> parts = new List<string>();
+        List<string> parts = [];
         if (hasInputs)
         {
             string needStr = string.Join(", ", inputs.Select(i => i.amount.ToString("0.##") + " " + i.resource.LabelCap));

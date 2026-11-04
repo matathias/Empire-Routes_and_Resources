@@ -22,24 +22,24 @@ public class WorldObjectComp_SupplyChain : WorldObjectComp, IStatModifierProvide
 {
     private const string ALLOC_KEY_PREFIX = "SupplyChain.";
 
-    private Dictionary<ResourceTypeDef, double> allocations = new Dictionary<ResourceTypeDef, double>();
-    private HashSet<ResourceTypeDef> autoMaxResources = new HashSet<ResourceTypeDef>();
+    private Dictionary<ResourceTypeDef, double> allocations = [];
+    private HashSet<ResourceTypeDef> autoMaxResources = [];
     // Manual value snapshot taken when auto-max is enabled; restored when the player turns it off.
-    private Dictionary<ResourceTypeDef, double> autoMaxFallback = new Dictionary<ResourceTypeDef, double>();
+    private Dictionary<ResourceTypeDef, double> autoMaxFallback = [];
 
     // Tithe injection: how many stockpile units per resource per day to convert to tithe budget
-    private Dictionary<ResourceTypeDef, double> titheInjections = new Dictionary<ResourceTypeDef, double>();
+    private Dictionary<ResourceTypeDef, double> titheInjections = [];
     // Stores the actual amount drawn in the most recent daily consume step (may be less than
     // configured if the stockpile was short). Read by GetDailyExternalTitheBudget. Transient.
-    private Dictionary<ResourceTypeDef, double> lastTitheDrawn = new Dictionary<ResourceTypeDef, double>();
+    private Dictionary<ResourceTypeDef, double> lastTitheDrawn = [];
     // Per-resource consecutive-shortfall day counter for owner-initiated allocation self-reduction. Transient.
-    private Dictionary<ResourceTypeDef, int> shortfallDays = new Dictionary<ResourceTypeDef, int>();
+    private Dictionary<ResourceTypeDef, int> shortfallDays = [];
     private const int SHORTFALL_REDUCE_DAYS = 5;
 
     // Complex mode fields
-    private Dictionary<ResourceTypeDef, double> localStockpiles = new Dictionary<ResourceTypeDef, double>();
-    private Dictionary<ResourceTypeDef, double> localCaps = new Dictionary<ResourceTypeDef, double>();
-    private List<SellOrder> localSellOrders = new List<SellOrder>();
+    private Dictionary<ResourceTypeDef, double> localStockpiles = [];
+    private Dictionary<ResourceTypeDef, double> localCaps = [];
+    private List<SellOrder> localSellOrders = [];
     private DictionaryStockpile localStockpileDict;
 
     private bool localCapsDirty = true;
@@ -49,8 +49,8 @@ public class WorldObjectComp_SupplyChain : WorldObjectComp, IStatModifierProvide
     // incrementally as routes are created/deleted (see WorldComponent_SupplyChain link/unlink).
     private int connectedPartners;
     private int hubScore;
-    private HashSet<WorldSettlementFC> outPartners = new HashSet<WorldSettlementFC>();
-    private HashSet<WorldSettlementFC> inPartners = new HashSet<WorldSettlementFC>();
+    private HashSet<WorldSettlementFC> outPartners = [];
+    private HashSet<WorldSettlementFC> inPartners = [];
     public IEnumerable<WorldSettlementFC> OutPartners => outPartners;
     public IEnumerable<WorldSettlementFC> InPartners => inPartners;
 
@@ -60,8 +60,7 @@ public class WorldObjectComp_SupplyChain : WorldObjectComp, IStatModifierProvide
     {
         get
         {
-            if (cachedSettlement is null)
-                cachedSettlement = parent as WorldSettlementFC;
+            cachedSettlement ??= parent as WorldSettlementFC;
             return cachedSettlement;
         }
     }
@@ -85,10 +84,8 @@ public class WorldObjectComp_SupplyChain : WorldObjectComp, IStatModifierProvide
     /// </summary>
     public void InitLocalStockpile()
     {
-        if (localStockpiles is null)
-            localStockpiles = new Dictionary<ResourceTypeDef, double>();
-        if (localCaps is null)
-            localCaps = new Dictionary<ResourceTypeDef, double>();
+        localStockpiles ??= [];
+        localCaps ??= [];
         localStockpileDict = new DictionaryStockpile(localStockpiles, localCaps);
     }
 
@@ -220,7 +217,7 @@ public class WorldObjectComp_SupplyChain : WorldObjectComp, IStatModifierProvide
         if (statModsDirty || cachedStatMods is null)
         {
             if (cachedStatMods is null)
-                cachedStatMods = new Dictionary<FCStatDef, double>();
+                cachedStatMods = [];
             else
                 cachedStatMods.Clear();
             statModsDirty = false;
@@ -450,7 +447,7 @@ public class WorldObjectComp_SupplyChain : WorldObjectComp, IStatModifierProvide
     public void SyncAllAutoMaxAllocations()
     {
         if (autoMaxResources.Count == 0) return;
-        List<ResourceTypeDef> snapshot = new List<ResourceTypeDef>(autoMaxResources);
+        List<ResourceTypeDef> snapshot = new(autoMaxResources);
         foreach (ResourceTypeDef def in snapshot)
             SyncAutoMaxAllocation(def);
     }
@@ -579,7 +576,7 @@ public class WorldObjectComp_SupplyChain : WorldObjectComp, IStatModifierProvide
             ResourceFC resource = ws.GetResource(kv.Key);
             if (resource is null)
             {
-                if (toRemove is null) toRemove = new List<ResourceTypeDef>();
+                toRemove ??= [];
                 toRemove.Add(kv.Key);
                 continue;
             }
@@ -589,7 +586,7 @@ public class WorldObjectComp_SupplyChain : WorldObjectComp, IStatModifierProvide
 
             if (clamped <= 0)
             {
-                if (toRemove is null) toRemove = new List<ResourceTypeDef>();
+                toRemove ??= [];
                 toRemove.Add(kv.Key);
                 LogSC.Warning($"Clearing allocation for {kv.Key.label} at {ws.Name}: current production is 0 (was {kv.Value:F1}).");
                 continue;
@@ -601,7 +598,7 @@ public class WorldObjectComp_SupplyChain : WorldObjectComp, IStatModifierProvide
 
             if (clamped < kv.Value)
             {
-                if (toClamp is null) toClamp = new List<KeyValuePair<ResourceTypeDef, double>>();
+                toClamp ??= [];
                 toClamp.Add(new KeyValuePair<ResourceTypeDef, double>(kv.Key, clamped));
                 LogSC.Warning($"Reduced allocation for {kv.Key.label} at {ws.Name} from {kv.Value:F1} to {clamped:F1} to fit current production.");
             }
@@ -673,32 +670,25 @@ public class WorldObjectComp_SupplyChain : WorldObjectComp, IStatModifierProvide
     {
         base.PostExposeData();
         Scribe_Collections.Look(ref allocations, "scAllocations", LookMode.Def, LookMode.Value);
-        if (allocations is null)
-            allocations = new Dictionary<ResourceTypeDef, double>();
+        allocations ??= [];
 
         Scribe_Collections.Look(ref autoMaxResources, "scAutoMax", LookMode.Def);
-        if (autoMaxResources is null)
-            autoMaxResources = new HashSet<ResourceTypeDef>();
+        autoMaxResources ??= [];
 
         Scribe_Collections.Look(ref autoMaxFallback, "scAutoMaxFallback", LookMode.Def, LookMode.Value);
-        if (autoMaxFallback is null)
-            autoMaxFallback = new Dictionary<ResourceTypeDef, double>();
+        autoMaxFallback ??= [];
 
         Scribe_Collections.Look(ref localStockpiles, "localStockpile", LookMode.Def, LookMode.Value);
-        if (localStockpiles is null)
-            localStockpiles = new Dictionary<ResourceTypeDef, double>();
+        localStockpiles ??= [];
 
         Scribe_Collections.Look(ref localCaps, "localCaps", LookMode.Def, LookMode.Value);
-        if (localCaps is null)
-            localCaps = new Dictionary<ResourceTypeDef, double>();
+        localCaps ??= [];
 
         Scribe_Collections.Look(ref localSellOrders, "localSellOrders", LookMode.Deep);
-        if (localSellOrders is null)
-            localSellOrders = new List<SellOrder>();
+        localSellOrders ??= [];
 
         Scribe_Collections.Look(ref titheInjections, "titheInjections", LookMode.Def, LookMode.Value);
-        if (titheInjections is null)
-            titheInjections = new Dictionary<ResourceTypeDef, double>();
+        titheInjections ??= [];
 
         Scribe_Values.Look(ref connectedPartners, "connectedPartners", 0);
         Scribe_Values.Look(ref hubScore, "hubScore", 0);

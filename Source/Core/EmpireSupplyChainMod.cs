@@ -45,14 +45,14 @@ public class SupplyChainSettings : ModSettings
     private static Dictionary<string, int> startingResources = DefaultStartingResources();
 
     private static Dictionary<string, int> DefaultStartingResources() =>
-        new Dictionary<string, int> { { "RTD_Food", 5 }, { "RTD_Logging", 2 }, { "RTD_Mining", 2 } };
+        new() { { "RTD_Food", 5 }, { "RTD_Logging", 2 }, { "RTD_Mining", 2 } };
 
     public static int GetStartingAmount(string defName) =>
         startingResources.TryGetValue(defName, out int v) ? v : 0;
 
     // Tabbed settings window state
     private static int settingsTab = 0;
-    private static List<TabRecord> settingsTabs = new List<TabRecord>();
+    private static List<TabRecord> settingsTabs = [];
     private static Vector2 scrollGeneral, scrollFounding, scrollComplex;
     private static float heightGeneral, heightFounding, heightComplex;
 
@@ -89,7 +89,7 @@ public class SupplyChainSettings : ModSettings
         settingsTabs.Add(new TabRecord("SC_SettingsTabFounding".Translate(), delegate { settingsTab = 1; }, settingsTab == 1));
         settingsTabs.Add(new TabRecord("SC_SettingsTabComplex".Translate(), delegate { settingsTab = 2; }, settingsTab == 2));
 
-        Rect contentRect = new Rect(inRect.x, inRect.y + 40f, inRect.width, inRect.height - 40f);
+        Rect contentRect = new(inRect.x, inRect.y + 40f, inRect.width, inRect.height - 40f);
         Widgets.DrawMenuSection(contentRect);
         TabDrawer.DrawTabs(contentRect, settingsTabs);
 
@@ -106,8 +106,8 @@ public class SupplyChainSettings : ModSettings
     private void DoGeneralTab(Rect rect)
     {
         Rect viewRect = ScrollUtil.BeginScrollView(rect, ref scrollGeneral, heightGeneral);
-        Rect listRect = new Rect(viewRect.x, viewRect.y, viewRect.width, float.MaxValue);
-        Listing_Standard ls = new Listing_Standard();
+        Rect listRect = new(viewRect.x, viewRect.y, viewRect.width, float.MaxValue);
+        Listing_Standard ls = new();
         ls.Begin(listRect);
         Listing_StandardExtensions.ResetRowStripe();
 
@@ -149,8 +149,7 @@ public class SupplyChainSettings : ModSettings
         ls.Gap(12f);
 
         ls.Label("SC_SettingsBaseCap".Translate(baseCapPerSettlement.ToString("F0")));
-        if (capBuffer is null)
-            capBuffer = baseCapPerSettlement.ToString("F0");
+        capBuffer ??= baseCapPerSettlement.ToString("F0");
         ls.TextFieldNumeric(ref baseCapPerSettlement, ref capBuffer, 10f, 500f);
         ls.Gap(12f);
 
@@ -166,32 +165,28 @@ public class SupplyChainSettings : ModSettings
     private void DoFoundingTab(Rect rect)
     {
         Rect viewRect = ScrollUtil.BeginScrollView(rect, ref scrollFounding, heightFounding);
-        Rect listRect = new Rect(viewRect.x, viewRect.y, viewRect.width, float.MaxValue);
-        Listing_Standard ls = new Listing_Standard();
+        Rect listRect = new(viewRect.x, viewRect.y, viewRect.width, float.MaxValue);
+        Listing_Standard ls = new();
         ls.Begin(listRect);
         Listing_StandardExtensions.ResetRowStripe();
 
         ls.Label("SC_SettingsFoundingThreshold".Translate(freeSettlementThreshold.ToString()));
-        if (thresholdBuffer is null)
-            thresholdBuffer = freeSettlementThreshold.ToString();
+        thresholdBuffer ??= freeSettlementThreshold.ToString();
         ls.TextFieldNumeric(ref freeSettlementThreshold, ref thresholdBuffer, 0, 1000);
         ls.Gap(6f);
 
         ls.Label("SC_SettingsDistanceNorm".Translate(distanceNormalizingDays.ToString("F1")));
-        if (distNormBuffer is null)
-            distNormBuffer = distanceNormalizingDays.ToString("F1");
+        distNormBuffer ??= distanceNormalizingDays.ToString("F1");
         ls.TextFieldNumeric(ref distanceNormalizingDays, ref distNormBuffer, 0.001f, 100f);
         ls.Gap(6f);
 
         ls.Label("SC_SettingsBaseSurcharge".Translate(baseSilverSurcharge.ToString()));
-        if (surchargeBuffer is null)
-            surchargeBuffer = baseSilverSurcharge.ToString();
+        surchargeBuffer ??= baseSilverSurcharge.ToString();
         ls.TextFieldNumeric(ref baseSilverSurcharge, ref surchargeBuffer, 0, 100000);
         ls.Gap(6f);
 
         ls.Label("SC_SettingsResourceMultiplier".Translate(resourceCostMultiplier.ToString("F2")));
-        if (resourceCostMultBuffer is null)
-            resourceCostMultBuffer = resourceCostMultiplier.ToString("F2");
+        resourceCostMultBuffer ??= resourceCostMultiplier.ToString("F2");
         ls.TextFieldNumeric(ref resourceCostMultiplier, ref resourceCostMultBuffer, 0.1f, 10f);
         ls.Gap(12f);
 
@@ -217,8 +212,8 @@ public class SupplyChainSettings : ModSettings
     private void DoComplexTab(Rect rect)
     {
         Rect viewRect = ScrollUtil.BeginScrollView(rect, ref scrollComplex, heightComplex);
-        Rect listRect = new Rect(viewRect.x, viewRect.y, viewRect.width, float.MaxValue);
-        Listing_Standard ls = new Listing_Standard();
+        Rect listRect = new(viewRect.x, viewRect.y, viewRect.width, float.MaxValue);
+        Listing_Standard ls = new();
         ls.Begin(listRect);
         Listing_StandardExtensions.ResetRowStripe();
 
@@ -236,20 +231,17 @@ public class SupplyChainSettings : ModSettings
         ls.Label("SC_SettingsRouteDecay".Translate(
             routeDecayPerDay.ToString("F2"),
             (FormulaUtil.RouteEfficiency(5.0) * 100).ToString("F0")));
-        if (routeDecayBuffer is null)
-            routeDecayBuffer = routeDecayPerDay.ToString("F2");
+        routeDecayBuffer ??= routeDecayPerDay.ToString("F2");
         ls.TextFieldNumeric(ref routeDecayPerDay, ref routeDecayBuffer, 0.01f, 1f);
         ls.Gap(12f);
 
         ls.Label("SC_SettingsLocalCap".Translate(localCapBase.ToString("F0")));
-        if (localCapBuffer is null)
-            localCapBuffer = localCapBase.ToString("F0");
+        localCapBuffer ??= localCapBase.ToString("F0");
         ls.TextFieldNumeric(ref localCapBase, ref localCapBuffer, 10f, 500f);
         ls.Gap(12f);
 
         ls.Label("SC_SettingsDefaultRouteFreq".Translate(defaultRouteFrequencyDays.ToString()));
-        if (routeFreqBuffer is null)
-            routeFreqBuffer = defaultRouteFrequencyDays.ToString();
+        routeFreqBuffer ??= defaultRouteFrequencyDays.ToString();
         ls.TextFieldNumeric(ref defaultRouteFrequencyDays, ref routeFreqBuffer, minRouteFrequencyDays, maxRouteFrequencyDays);
 
         heightComplex = ls.CurHeight + 12f;

@@ -6,15 +6,15 @@ public static class SupplyChainCache
 
     // BuildingFCDef -> BuildingNeedExtension lookup cache (defs don't change mid-game)
     private static Dictionary<BuildingFCDef, BuildingNeedExtension> _buildingExtCache
-        = new Dictionary<BuildingFCDef, BuildingNeedExtension>();
+        = [];
 
     // Settlement -> WorldObjectComp_SupplyChain lookup cache
     private static Dictionary<WorldSettlementFC, WorldObjectComp_SupplyChain> _compCache
-        = new Dictionary<WorldSettlementFC, WorldObjectComp_SupplyChain>();
+        = [];
 
     // Settlement -> WorldObjectComp_SettlementNeeds lookup cache
     private static Dictionary<WorldSettlementFC, WorldObjectComp_SettlementNeeds> _needsCompCache
-        = new Dictionary<WorldSettlementFC, WorldObjectComp_SettlementNeeds>();
+        = [];
 
     // Cached def lists (defs don't change mid-game)
     private static List<SettlementNeedDef> _cachedNeedDefs;
@@ -24,8 +24,7 @@ public static class SupplyChainCache
     {
         get
         {
-            if (_comp is null)
-                _comp = Find.World?.GetComponent<WorldComponent_SupplyChain>();
+            _comp ??= Find.World?.GetComponent<WorldComponent_SupplyChain>();
             return _comp;
         }
     }
@@ -34,8 +33,7 @@ public static class SupplyChainCache
     {
         get
         {
-            if (_cachedNeedDefs is null)
-                _cachedNeedDefs = DefDatabase<SettlementNeedDef>.AllDefsListForReading;
+            _cachedNeedDefs ??= DefDatabase<SettlementNeedDef>.AllDefsListForReading;
             return _cachedNeedDefs;
         }
     }
@@ -44,8 +42,7 @@ public static class SupplyChainCache
     {
         get
         {
-            if (_cachedResourceTypeDefs is null)
-                _cachedResourceTypeDefs = DefDatabase<ResourceTypeDef>.AllDefsListForReading;
+            _cachedResourceTypeDefs ??= DefDatabase<ResourceTypeDef>.AllDefsListForReading;
             return _cachedResourceTypeDefs;
         }
     }

@@ -147,11 +147,11 @@ public class SettlementNeedDef : Def
     /// </summary>
     public List<KeyValuePair<ResourceTypeDef, double>> GetResourceSplit(TechLevel tech)
     {
-        List<KeyValuePair<ResourceTypeDef, double>> result = new List<KeyValuePair<ResourceTypeDef, double>>();
+        List<KeyValuePair<ResourceTypeDef, double>> result = [];
         if (resources is null || resources.Count == 0) return result;
 
         double total = 0.0;
-        List<double> weights = new List<double>(resources.Count);
+        List<double> weights = new(resources.Count);
         foreach (SettlementNeedResourceInput entry in resources)
         {
             if (entry?.resource is null) { weights.Add(0.0); continue; }
@@ -256,7 +256,7 @@ public class SettlementNeedDef : Def
                 }
             }
 
-            NeedState ns = new NeedState(needId, res, subDemand, prevFulfilledFallback,
+            NeedState ns = new(needId, res, subDemand, prevFulfilledFallback,
                 subLabel, NeedCategory.Base, penalties,
                 scaledBonuses, maxSurplusRatio, this);
             emit(ns);
