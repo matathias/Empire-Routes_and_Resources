@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace FactionColonies.SupplyChain;
@@ -228,6 +229,7 @@ public class FCWindow_FoundingSource : Window, IFoundingCompanionWindow
     /// <summary>
     /// Opens the companion window if conditions are met (Complex mode, above threshold, has extension).
     /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)] // Harmony-patched by EmpireVOE; an inlined copy would bypass the patch
     public static void TryOpen()
     {
         WorldComponent_SupplyChain wc = SupplyChainCache.Comp;

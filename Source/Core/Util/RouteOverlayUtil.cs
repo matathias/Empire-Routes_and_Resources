@@ -18,7 +18,7 @@ public static class RouteOverlayUtil
     {
         get
         {
-            if (routeLineMat is null)
+            if (routeLineMat == null)
                 routeLineMat = MaterialPool.MatFrom(
                     GenDraw.LineTexPath, ShaderDatabase.WorldOverlayTransparent,
                     new Color(0.4f, 1f, 0.4f, 1f), 3590);
@@ -31,7 +31,7 @@ public static class RouteOverlayUtil
     {
         get
         {
-            if (orbitalRouteLineMat is null)
+            if (orbitalRouteLineMat == null)
                 orbitalRouteLineMat = MaterialPool.MatFrom(
                     GenDraw.LineTexPath, ShaderDatabase.WorldOverlayTransparent,
                     new Color(0.6f, 1f, 0.6f, 1f), 3590);
@@ -44,7 +44,7 @@ public static class RouteOverlayUtil
     {
         get
         {
-            if (routeArrowMat is null)
+            if (routeArrowMat == null)
                 routeArrowMat = MaterialPool.MatFrom(
                     "UI/Widgets/ArrowRight", ShaderDatabase.WorldOverlayTransparent,
                     new Color(0.2f, 0.8f, 0.2f, 0.9f), 3591);

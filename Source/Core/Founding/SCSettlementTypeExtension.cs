@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace FactionColonies.SupplyChain;
 
 public class FCResourceCost
@@ -36,6 +38,7 @@ public class SCSettlementTypeExtension : SettlementTypeExtension
         return baseCost + FoundingCostUtil.ComputeSilverSurcharge(tile);
     }
 
+    [MethodImpl(MethodImplOptions.NoInlining)] // Harmony-patched by EmpireVOE; an inlined copy would bypass the patch
     public override int GetCreationTime(PlanetTile destination)
     {
         WorldSettlementFC nearest = FoundingCostUtil.FindNearestSettlement(destination);

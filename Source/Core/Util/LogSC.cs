@@ -26,6 +26,7 @@ public static class LogSC
         if (!message.Enabled) return;
         Log.Message($"{Slug} {message.ToStringAndClear()}");
     }
+
     public static void MessageForce(string message)
     {
         Log.Message($"{Slug} {message}");
