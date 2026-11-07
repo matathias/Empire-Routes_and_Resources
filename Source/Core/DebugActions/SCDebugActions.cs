@@ -36,7 +36,7 @@ public static class SCDebugActions
         }
     }
 
-    [DebugAction("Empire Refactored: Routes & Resources", "Fill all stockpiles", allowedGameStates = AllowedGameStates.Playing)]
+    [EmpireDebugAction("Empire Refactored: Routes & Resources", "Fill all stockpiles", allowedGameStates = AllowedGameStates.Playing)]
     private static void FillAllStockpiles()
     {
         ForEachStockpile((stockpile, label) =>
@@ -52,7 +52,7 @@ public static class SCDebugActions
         Log.Message("[Empire-SupplyChain] Debug: All stockpiles filled to cap.");
     }
 
-    [DebugAction("Empire Refactored: Routes & Resources", "Empty all stockpiles", allowedGameStates = AllowedGameStates.Playing)]
+    [EmpireDebugAction("Empire Refactored: Routes & Resources", "Empty all stockpiles", allowedGameStates = AllowedGameStates.Playing)]
     private static void EmptyAllStockpiles()
     {
         ForEachStockpile((stockpile, label) =>
@@ -70,7 +70,7 @@ public static class SCDebugActions
         Log.Message("[Empire-SupplyChain] Debug: All stockpiles emptied.");
     }
 
-    [DebugAction("Empire Refactored: Routes & Resources", "Force resolve needs", allowedGameStates = AllowedGameStates.Playing)]
+    [EmpireDebugAction("Empire Refactored: Routes & Resources", "Force resolve needs", allowedGameStates = AllowedGameStates.Playing)]
     private static void ForceResolveNeeds()
     {
         WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
@@ -100,7 +100,7 @@ public static class SCDebugActions
         Log.Message("[Empire-SupplyChain] Debug: Needs resolved.");
     }
 
-    [DebugAction("Empire Refactored: Routes & Resources", "Force dispatch all due routes", allowedGameStates = AllowedGameStates.Playing)]
+    [EmpireDebugAction("Empire Refactored: Routes & Resources", "Force dispatch all due routes", allowedGameStates = AllowedGameStates.Playing)]
     private static void ForceDispatchAllRoutes()
     {
         WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
@@ -111,7 +111,7 @@ public static class SCDebugActions
             + comp.PendingDeliveries.Count + " deliveries in transit.");
     }
 
-    [DebugAction("Empire Refactored: Routes & Resources", "Force arrive all deliveries", allowedGameStates = AllowedGameStates.Playing)]
+    [EmpireDebugAction("Empire Refactored: Routes & Resources", "Force arrive all deliveries", allowedGameStates = AllowedGameStates.Playing)]
     private static void ForceArriveAllDeliveries()
     {
         WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
@@ -122,7 +122,7 @@ public static class SCDebugActions
         Log.Message("[Empire-SupplyChain] Debug: Forced arrival of " + count + " deliveries.");
     }
 
-    [DebugAction("Empire Refactored: Routes & Resources", "Force execute sell orders", allowedGameStates = AllowedGameStates.Playing)]
+    [EmpireDebugAction("Empire Refactored: Routes & Resources", "Force execute sell orders", allowedGameStates = AllowedGameStates.Playing)]
     private static void ForceExecuteSellOrders()
     {
         WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
@@ -135,7 +135,7 @@ public static class SCDebugActions
         Log.Message("[Empire-SupplyChain] Debug: PreTaxResolution executed (includes sell orders).");
     }
 
-    [DebugAction("Empire Refactored: Routes & Resources", "Print stockpile state", allowedGameStates = AllowedGameStates.Playing)]
+    [EmpireDebugAction("Empire Refactored: Routes & Resources", "Print stockpile state", allowedGameStates = AllowedGameStates.Playing)]
     private static void PrintStockpileState()
     {
         WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
@@ -182,7 +182,7 @@ public static class SCDebugActions
         Log.Message(sb.ToString());
     }
 
-    [DebugAction("Empire Refactored: Routes & Resources", "Force full tax cycle", allowedGameStates = AllowedGameStates.Playing)]
+    [EmpireDebugAction("Empire Refactored: Routes & Resources", "Force full tax cycle", allowedGameStates = AllowedGameStates.Playing)]
     private static void ForceFullTaxCycle()
     {
         WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
@@ -203,7 +203,7 @@ public static class SCDebugActions
     /// 1 unit. Switches to Complex mode first (routes only run there). Once travel times overlap
     /// this puts up to 90 delivery caravans pathfinding across the map at once. Re-runnable.
     /// </summary>
-    [DebugAction("Empire Refactored: Routes & Resources", "Stress test: 10 settlements + daily route mesh", allowedGameStates = AllowedGameStates.Playing)]
+    [EmpireDebugAction("Empire Refactored: Routes & Resources", "Stress test: 10 settlements + daily route mesh", allowedGameStates = AllowedGameStates.Playing)]
     private static void StressTestRouteMesh()
     {
         const int settlementCount = 10;
@@ -294,7 +294,7 @@ public static class SCDebugActions
         }
     }
 
-    [DebugAction("Empire Refactored: Routes & Resources", "Force dispatch all routes x10", allowedGameStates = AllowedGameStates.Playing)]
+    [EmpireDebugAction("Empire Refactored: Routes & Resources", "Force dispatch all routes x10", allowedGameStates = AllowedGameStates.Playing)]
     private static void ForceDispatchAllRoutesTenTimes()
     {
         WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
@@ -307,7 +307,7 @@ public static class SCDebugActions
             + comp.PendingDeliveries.Count + " deliveries in transit.");
     }
 
-    [DebugAction("Empire Refactored: Routes & Resources", "Clear all supply caravans", allowedGameStates = AllowedGameStates.Playing)]
+    [EmpireDebugAction("Empire Refactored: Routes & Resources", "Clear all supply caravans", allowedGameStates = AllowedGameStates.Playing)]
     private static void ClearAllSupplyCaravans()
     {
         WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
