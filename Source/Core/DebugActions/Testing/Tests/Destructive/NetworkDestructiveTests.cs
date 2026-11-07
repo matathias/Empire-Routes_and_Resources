@@ -1,29 +1,23 @@
 namespace FactionColonies.SupplyChain;
 
 /* DESTRUCTIVE: links/unlinks real routes on live settlement comps to verify trade-network partner
-   tracking. The two throwaway routes created here are removed again in a finally block, restoring
-   the partner sets. Not otherwise reverted. */
+   tracking. May create a transient settlement to get an unpartnered pair. The two throwaway routes
+   created here are removed again in a finally block, restoring the partner sets. Not otherwise
+   reverted. */
 public static class NetworkDestructiveTests
 {
     [EmpireDestructiveTest("SC.Destructive.Network")]
     public static void PartnerLink_DroppedOnlyWhenLastRouteRemoved()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
-        if (wc is null) TestAssert.Skip("No SupplyChain world component");
-        ResourceTypeDef r = SupplyChainCache.AllResourceTypeDefs.FirstOrDefault();
-        if (r is null) TestAssert.Skip("No resource types defined");
-
-        WorldSettlementFC src = SCDestructiveTestUtil.SettlementAt(f, 0);
-        WorldSettlementFC dst = SCDestructiveTestUtil.SettlementAt(f, 1);
-        if (src is null || dst is null || src == dst) TestAssert.Skip("Need two distinct settlements");
-
-        WorldObjectComp_SupplyChain srcComp = SupplyChainCache.GetSettlementComp(src);
-        WorldObjectComp_SupplyChain dstComp = SupplyChainCache.GetSettlementComp(dst);
-        if (srcComp is null || dstComp is null) TestAssert.Skip("Missing settlement comps");
+        WorldComponent_SupplyChain wc = SCDestructiveTestUtil.RequireWorldComp();
+        ResourceTypeDef r = SCDestructiveTestUtil.RequireAnyResource();
 
         // The pair must not already be partnered, or we can't attribute the membership change.
-        if (Contains(srcComp.OutPartners, dst)) TestAssert.Skip("src->dst are already trade partners in this save");
+        (WorldSettlementFC src, WorldSettlementFC dst) = SCDestructiveTestUtil.EnsureUnpartneredPair();
+        WorldObjectComp_SupplyChain srcComp = SCDestructiveTestUtil.RequireSettlementComp(src);
+        WorldObjectComp_SupplyChain dstComp = SCDestructiveTestUtil.RequireSettlementComp(dst);
+        TestAssert.IsFalse(Contains(srcComp.OutPartners, dst), "precondition: src->dst are not yet trade partners");
 
         var route1 = new SupplyRoute(src, dst, r, 10.0);
         var route2 = new SupplyRoute(src, dst, r, 10.0);

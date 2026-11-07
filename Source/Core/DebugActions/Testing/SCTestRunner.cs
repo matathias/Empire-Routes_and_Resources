@@ -18,19 +18,19 @@ public static class SCTestRunner
 
     /*-*-*- Standard (non-destructive) tier -*-*-*/
 
-    [DebugAction(DebugCategory, "Run All Tests", allowedGameStates = AllowedGameStates.Playing)]
+    [DebugAction(DebugCategory, "Run All Tests", allowedGameStates = AllowedGameStates.Invalid)]
     public static void RunAll() => RunTests(null, destructive: false);
 
-    [DebugAction(DebugCategory, "Run Tests by Category", allowedGameStates = AllowedGameStates.Playing)]
+    [DebugAction(DebugCategory, "Run Tests by Category", allowedGameStates = AllowedGameStates.Invalid)]
     public static void RunByCategory() => ShowCategoryMenu(destructive: false);
 
     /*-*-*- Destructive tier (save-first, mutates live state) -*-*-*/
 
-    [DebugAction(DebugCategory, "Run Destructive Tests", allowedGameStates = AllowedGameStates.Playing)]
+    [DebugAction(DebugCategory, "Run Destructive Tests", allowedGameStates = AllowedGameStates.Invalid)]
     public static void RunAllDestructive() =>
         ConfirmDestructive(() => RunTests(null, destructive: true));
 
-    [DebugAction(DebugCategory, "Run Destructive Tests by Category", allowedGameStates = AllowedGameStates.Playing)]
+    [DebugAction(DebugCategory, "Run Destructive Tests by Category", allowedGameStates = AllowedGameStates.Invalid)]
     public static void RunDestructiveByCategory() =>
         ConfirmDestructive(() => ShowCategoryMenu(destructive: true));
 
@@ -78,17 +78,19 @@ public static class SCTestRunner
         foreach (var (method, attr) in list)
         {
             string testName = $"[{attr.Category}] {method.DeclaringType.Name}.{method.Name}";
+            string skipReason = EmpireTestRunner.GameStateSkipReason(attr);
+            if (skipReason is not null)
+            {
+                skipped++;
+                LogSC.Message($"SKIP: {testName} -- {skipReason}");
+                skipDetails.Add($"  SKIP: {testName} -- {skipReason}");
+                continue;
+            }
             try
             {
                 method.Invoke(null, null);
                 passed++;
                 LogSC.Message($"PASS: {testName}");
-            }
-            catch (TargetInvocationException tie) when (tie.InnerException is TestSkippedException tse)
-            {
-                skipped++;
-                LogSC.Message($"SKIP: {testName} -- {tse.Message}");
-                skipDetails.Add($"  SKIP: {testName} -- {tse.Message}");
             }
             catch (TargetInvocationException tie) when (tie.InnerException is TestFailedException tfe)
             {
@@ -134,7 +136,7 @@ public static class SCTestRunner
             .GetTypes()
             .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Static))
             .Select(m => (method: m, attr: m.GetCustomAttribute<EmpireTestAttribute>()))
-            .Where(pair => pair.attr is not null)
+            .Where(pair => pair.attr is not null && EmpireTestRunner.IsInSuite(pair.attr))
             .OrderBy(pair => pair.attr.Category)
             .ThenBy(pair => pair.method.Name)
             .ToList();

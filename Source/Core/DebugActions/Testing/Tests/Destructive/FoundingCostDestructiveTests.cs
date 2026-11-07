@@ -9,8 +9,8 @@ public static class FoundingCostDestructiveTests
     public static void ComputeDistanceMultiplier_AtExistingSettlement_IsAboutOne()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldSettlementFC s = SCDestructiveTestUtil.FirstOrTransient(f);
-        if (s is null || !s.Tile.Valid) TestAssert.Skip("No settlement with a valid tile");
+        WorldSettlementFC s = SCDestructiveTestUtil.EnsureSCSettlement();
+        TestAssert.IsTrue(s.Tile.Valid, $"Settlement '{s.Name}' has an invalid tile");
 
         FoundingCostUtil.InvalidateCache();
         double mult = FoundingCostUtil.ComputeDistanceMultiplier(s.Tile);
@@ -26,10 +26,9 @@ public static class FoundingCostDestructiveTests
     public static void CanFoundSettlement_BelowFreeThreshold_AlwaysAllowed()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
-        if (comp is null) TestAssert.Skip("No SupplyChain world component");
-        WorldSettlementFC s = SCDestructiveTestUtil.FirstOrTransient(f);
-        if (s is null || !s.Tile.Valid) TestAssert.Skip("No settlement with a valid tile");
+        WorldComponent_SupplyChain comp = SCDestructiveTestUtil.RequireWorldComp();
+        WorldSettlementFC s = SCDestructiveTestUtil.EnsureSCSettlement();
+        TestAssert.IsTrue(s.Tile.Valid, $"Settlement '{s.Name}' has an invalid tile");
 
         int origThreshold = SupplyChainSettings.freeSettlementThreshold;
         try
@@ -55,8 +54,8 @@ public static class FoundingCostDestructiveTests
         // nearest settlement to a settlement's own tile is itself (travel ~0), so the surcharge
         // there must be ~0 and never negative.
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldSettlementFC s = SCDestructiveTestUtil.FirstOrTransient(f);
-        if (s is null || !s.Tile.Valid) TestAssert.Skip("No settlement with a valid tile");
+        WorldSettlementFC s = SCDestructiveTestUtil.EnsureSCSettlement();
+        TestAssert.IsTrue(s.Tile.Valid, $"Settlement '{s.Name}' has an invalid tile");
 
         FoundingCostUtil.InvalidateCache();
         int surcharge = FoundingCostUtil.ComputeSilverSurcharge(s.Tile);
@@ -74,10 +73,9 @@ public static class FoundingCostDestructiveTests
         // the below-threshold test never reaches. It must evaluate cleanly and, when it rejects,
         // supply a player-facing reason.
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
-        if (comp is null) TestAssert.Skip("No SupplyChain world component");
-        WorldSettlementFC s = SCDestructiveTestUtil.FirstOrTransient(f);
-        if (s is null || !s.Tile.Valid) TestAssert.Skip("No settlement with a valid tile");
+        WorldComponent_SupplyChain comp = SCDestructiveTestUtil.RequireWorldComp();
+        WorldSettlementFC s = SCDestructiveTestUtil.EnsureSCSettlement();
+        TestAssert.IsTrue(s.Tile.Valid, $"Settlement '{s.Name}' has an invalid tile");
 
         int origThreshold = SupplyChainSettings.freeSettlementThreshold;
         try

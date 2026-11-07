@@ -9,13 +9,8 @@ public static class SupplyRouteDestructiveTests
     public static void Dispatch_DrawsFromSource_ArrivesWithEfficiencyLoss()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        ResourceTypeDef r = SupplyChainCache.AllResourceTypeDefs.FirstOrDefault();
-        if (r is null) TestAssert.Skip("No resource types defined");
-
-        WorldSettlementFC src = SCDestructiveTestUtil.SettlementAt(f, 0);
-        WorldSettlementFC dst = SCDestructiveTestUtil.SettlementAt(f, 1);
-        if (src is null || dst is null) TestAssert.Skip("Could not obtain two settlements");
-        if (src == dst) TestAssert.Skip("Only one settlement available; need a distinct source and destination");
+        ResourceTypeDef r = SCDestructiveTestUtil.RequireAnyResource();
+        (WorldSettlementFC src, WorldSettlementFC dst) = SCDestructiveTestUtil.EnsureTwoSettlements();
 
         var route = new SupplyRoute(src, dst, r, 50.0);
         TestAssert.DoesNotThrow(() => route.RecacheIfDirty(), "RecacheIfDirty threw");
@@ -51,18 +46,13 @@ public static class SupplyRouteDestructiveTests
     public static void Dispatch_DestinationFullOnArrival_ExcessLost()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        ResourceTypeDef r = SupplyChainCache.AllResourceTypeDefs.FirstOrDefault();
-        if (r is null) TestAssert.Skip("No resource types defined");
-
-        WorldSettlementFC src = SCDestructiveTestUtil.SettlementAt(f, 0);
-        WorldSettlementFC dst = SCDestructiveTestUtil.SettlementAt(f, 1);
-        if (src is null || dst is null) TestAssert.Skip("Could not obtain two settlements");
-        if (src == dst) TestAssert.Skip("Only one settlement available; need a distinct source and destination");
+        ResourceTypeDef r = SCDestructiveTestUtil.RequireAnyResource();
+        (WorldSettlementFC src, WorldSettlementFC dst) = SCDestructiveTestUtil.EnsureTwoSettlements();
 
         var route = new SupplyRoute(src, dst, r, 50.0);
         route.RecacheIfDirty();
         double eff = route.CachedEfficiency;
-        if (eff <= 0.0) TestAssert.Skip("Route resolved to zero efficiency");
+        TestAssert.GreaterThan(eff, 0.0, "Route efficiency should be positive between valid settlements");
 
         DictionaryStockpile sourceSp = SCTestHelper.MakeStockpile(r, 100.0, 100.0);
         DictionaryStockpile destSp = SCTestHelper.MakeStockpile(r, 0.0, 1.0); // tiny cap forces overflow on arrival
@@ -89,18 +79,13 @@ public static class SupplyRouteDestructiveTests
         // into a stockpile. Their over-cap arrival is silently lost — pool resources have no
         // silver value, so there is no overflow auto-sell anywhere in their flow.
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        ResourceTypeDef r = SupplyChainCache.AllResourceTypeDefs.FirstOrDefault(dr => dr.isPoolResource);
-        if (r is null) TestAssert.Skip("No pool resource types defined");
-
-        WorldSettlementFC src = SCDestructiveTestUtil.SettlementAt(f, 0);
-        WorldSettlementFC dst = SCDestructiveTestUtil.SettlementAt(f, 1);
-        if (src is null || dst is null) TestAssert.Skip("Could not obtain two settlements");
-        if (src == dst) TestAssert.Skip("Only one settlement available; need a distinct source and destination");
+        ResourceTypeDef r = SCDestructiveTestUtil.RequirePoolResource();
+        (WorldSettlementFC src, WorldSettlementFC dst) = SCDestructiveTestUtil.EnsureTwoSettlements();
 
         var route = new SupplyRoute(src, dst, r, 50.0);
         route.RecacheIfDirty();
         double eff = route.CachedEfficiency;
-        if (eff <= 0.0) TestAssert.Skip("Route resolved to zero efficiency");
+        TestAssert.GreaterThan(eff, 0.0, "Route efficiency should be positive between valid settlements");
 
         DictionaryStockpile sourceSp = SCTestHelper.MakeStockpile(r, 100.0, 100.0);
         DictionaryStockpile destSp = SCTestHelper.MakeStockpile(r, 0.0, 1000.0);
@@ -134,12 +119,9 @@ public static class SupplyRouteDestructiveTests
     public static void SetFrequencyDays_OutOfRange_ClampsToBounds()
     {
         // A10: dispatch frequency is clamped to [minRouteFrequencyDays, maxRouteFrequencyDays].
-        ResourceTypeDef r = SupplyChainCache.AllResourceTypeDefs.FirstOrDefault();
-        if (r is null) TestAssert.Skip("No resource types defined");
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldSettlementFC src = SCDestructiveTestUtil.SettlementAt(f, 0);
-        WorldSettlementFC dst = SCDestructiveTestUtil.SettlementAt(f, 1);
-        if (src is null || dst is null || src == dst) TestAssert.Skip("Need two distinct settlements");
+        ResourceTypeDef r = SCDestructiveTestUtil.RequireAnyResource();
+        (WorldSettlementFC src, WorldSettlementFC dst) = SCDestructiveTestUtil.EnsureTwoSettlements();
 
         var route = new SupplyRoute(src, dst, r, 10.0);
         route.SetFrequencyDays(-999);
@@ -155,19 +137,16 @@ public static class SupplyRouteDestructiveTests
     {
         // A10: dispatch order is list order — when the shared source can't feed both routes, the
         // earlier route draws its full amount and the later one only gets the remainder.
-        ResourceTypeDef r = SupplyChainCache.AllResourceTypeDefs.FirstOrDefault();
-        if (r is null) TestAssert.Skip("No resource types defined");
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldSettlementFC src = SCDestructiveTestUtil.SettlementAt(f, 0);
-        WorldSettlementFC dst = SCDestructiveTestUtil.SettlementAt(f, 1);
-        if (src is null || dst is null || src == dst) TestAssert.Skip("Need two distinct settlements");
+        ResourceTypeDef r = SCDestructiveTestUtil.RequireAnyResource();
+        (WorldSettlementFC src, WorldSettlementFC dst) = SCDestructiveTestUtil.EnsureTwoSettlements();
 
         var first = new SupplyRoute(src, dst, r, 50.0);
         var second = new SupplyRoute(src, dst, r, 50.0);
         first.RecacheIfDirty();
         second.RecacheIfDirty();
-        if (first.CachedEfficiency <= 0 || second.CachedEfficiency <= 0)
-            TestAssert.Skip("Route efficiency resolved to zero");
+        TestAssert.GreaterThan(first.CachedEfficiency, 0.0, "Route efficiency should be positive between valid settlements");
+        TestAssert.GreaterThan(second.CachedEfficiency, 0.0, "Route efficiency should be positive between valid settlements");
 
         // Shared source holds 60 — enough for the first route's full 50, leaving 10 for the second.
         DictionaryStockpile sourceSp = SCTestHelper.MakeStockpile(r, 60.0, 1000.0);
@@ -189,12 +168,9 @@ public static class SupplyRouteDestructiveTests
     {
         // A10/A13: a registered ISupplyRouteModifier is invoked during the efficiency recompute, and
         // its (deliberately out-of-range) return is clamped back into [0,1].
-        ResourceTypeDef r = SupplyChainCache.AllResourceTypeDefs.FirstOrDefault();
-        if (r is null) TestAssert.Skip("No resource types defined");
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldSettlementFC src = SCDestructiveTestUtil.SettlementAt(f, 0);
-        WorldSettlementFC dst = SCDestructiveTestUtil.SettlementAt(f, 1);
-        if (src is null || dst is null || src == dst) TestAssert.Skip("Need two distinct settlements");
+        ResourceTypeDef r = SCDestructiveTestUtil.RequireAnyResource();
+        (WorldSettlementFC src, WorldSettlementFC dst) = SCDestructiveTestUtil.EnsureTwoSettlements();
 
         var route = new SupplyRoute(src, dst, r, 10.0);
         var mod = new FixedEfficiencyModifier(5.0); // out of range on purpose to exercise the clamp

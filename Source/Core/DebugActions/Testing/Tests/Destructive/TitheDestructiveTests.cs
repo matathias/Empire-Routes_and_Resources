@@ -9,18 +9,9 @@ public static class TitheDestructiveTests
     public static void ResolveTitheInjection_ShortStockpile_DrawsPartialAndReportsSilver()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldSettlementFC s = SCDestructiveTestUtil.FirstOrTransient(f);
-        if (s is null) TestAssert.Skip("No settlement available");
-        WorldObjectComp_SupplyChain comp = SupplyChainCache.GetSettlementComp(s);
-        if (comp is null) TestAssert.Skip("No settlement comp");
-
         // Need a tithe-able resource the settlement actually tracks (GetResource -> ResourceFC).
-        ResourceTypeDef target = null;
-        foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
-        {
-            if (def.CanTithe && s.GetResource(def) is not null) { target = def; break; }
-        }
-        if (target is null) TestAssert.Skip("No tithe-able resource tracked by the settlement");
+        WorldSettlementFC s = SCDestructiveTestUtil.EnsureSettlementTracking(def => def.CanTithe, out ResourceTypeDef target);
+        WorldObjectComp_SupplyChain comp = SCDestructiveTestUtil.RequireSettlementComp(s);
 
         double origInjection = comp.GetTitheInjection(target);
         try

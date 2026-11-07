@@ -2,24 +2,20 @@ namespace FactionColonies.SupplyChain;
 
 /* DESTRUCTIVE: fires SCEventHandler_Stockpile against a live settlement's real stockpile (the
    faction pile in Simple mode, the local pile in Complex). It credits/draws resources and, in the
-   convert-to-silver case, pays out one-time silver. Not reverted. */
+   convert-to-silver case, pays out one-time silver. May create a transient settlement. Not reverted. */
 public static class EventHandlerDestructiveTests
 {
     [EmpireDestructiveTest("SC.Destructive.Event")]
     public static void FlatCredit_IncreasesStockpile()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
-        if (wc is null) TestAssert.Skip("No SupplyChain world component");
-        WorldSettlementFC s = SCDestructiveTestUtil.FirstOrTransient(f);
-        if (s is null) TestAssert.Skip("No settlement available");
+        WorldComponent_SupplyChain wc = SCDestructiveTestUtil.RequireWorldComp();
+        WorldSettlementFC s = SCDestructiveTestUtil.EnsureSCSettlement();
+        ResourceTypeDef r = SCDestructiveTestUtil.RequireNonPoolResource();
 
-        ResourceTypeDef r = FirstNonPoolResource();
-        if (r is null) TestAssert.Skip("No non-pool resource available");
-
-        IStockpile sp = StockpileFor(wc, s);
-        if (sp is null) TestAssert.Skip("No stockpile available for the settlement");
-        if (sp.GetAmount(r) >= sp.GetCap(r) - 0.01) TestAssert.Skip("Target stockpile is already at cap; a credit is unobservable");
+        // A credit into a full pile is unobservable, so make room first.
+        IStockpile sp = SCDestructiveTestUtil.LiveStockpileFor(wc, s);
+        SCDestructiveTestUtil.EnsureHeadroom(sp, r);
 
         double before = sp.GetAmount(r);
 
@@ -39,16 +35,11 @@ public static class EventHandlerDestructiveTests
     public static void FlatGain_ConvertToSilver_DoesNotChangeStockpile()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
-        if (wc is null) TestAssert.Skip("No SupplyChain world component");
-        WorldSettlementFC s = SCDestructiveTestUtil.FirstOrTransient(f);
-        if (s is null) TestAssert.Skip("No settlement available");
+        WorldComponent_SupplyChain wc = SCDestructiveTestUtil.RequireWorldComp();
+        WorldSettlementFC s = SCDestructiveTestUtil.EnsureSCSettlement();
+        ResourceTypeDef r = SCDestructiveTestUtil.RequireNonPoolResource();
 
-        ResourceTypeDef r = FirstNonPoolResource();
-        if (r is null) TestAssert.Skip("No non-pool resource available");
-
-        IStockpile sp = StockpileFor(wc, s);
-        if (sp is null) TestAssert.Skip("No stockpile available for the settlement");
+        IStockpile sp = SCDestructiveTestUtil.LiveStockpileFor(wc, s);
 
         double before = sp.GetAmount(r);
 
@@ -63,21 +54,6 @@ public static class EventHandlerDestructiveTests
             "A convertToSilver flat gain is paid as silver and must not change the stockpile");
 
         DestructiveTestUtil.AssertEmpireInvariants(f, "EventHandler_FlatGainSilver");
-    }
-
-    private static ResourceTypeDef FirstNonPoolResource()
-    {
-        foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
-            if (!def.isPoolResource) return def;
-        return null;
-    }
-
-    // The handler resolves the same stockpile object: EnsureLocalStockpile initializes and returns
-    // the persistent local wrapper, which the handler's own GetStockpile then reads/mutates.
-    private static IStockpile StockpileFor(WorldComponent_SupplyChain wc, WorldSettlementFC s)
-    {
-        if (wc.Mode == SupplyChainMode.Simple) return wc.Stockpile;
-        return SupplyChainCache.GetSettlementComp(s)?.EnsureLocalStockpile();
     }
 
     private static FCEvent MakeEvent(WorldSettlementFC s)

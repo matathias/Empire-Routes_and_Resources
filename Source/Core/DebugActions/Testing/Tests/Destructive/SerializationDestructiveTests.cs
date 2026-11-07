@@ -13,8 +13,7 @@ public static class SerializationDestructiveTests
     [EmpireDestructiveTest("SC.Destructive.Serialization")]
     public static void SellOrder_RoundTrips()
     {
-        ResourceTypeDef r = SupplyChainCache.AllResourceTypeDefs.FirstOrDefault();
-        if (r is null) TestAssert.Skip("No resource types defined");
+        ResourceTypeDef r = SCDestructiveTestUtil.RequireAnyResource();
 
         SellOrder original = new(r, 37.5);
         SellOrder loaded = ScribeRoundTrip(original, "sellOrder");
@@ -27,8 +26,7 @@ public static class SerializationDestructiveTests
     [EmpireDestructiveTest("SC.Destructive.Serialization")]
     public static void NeedState_RoundTrips()
     {
-        ResourceTypeDef r = SupplyChainCache.AllResourceTypeDefs.FirstOrDefault();
-        if (r is null) TestAssert.Skip("No resource types defined");
+        ResourceTypeDef r = SCDestructiveTestUtil.RequireAnyResource();
 
         NeedState original = new("need.test", r, 20.0, 8.0, "Test Need", NeedCategory.Base);
         NeedState loaded = ScribeRoundTrip(original, "needState");

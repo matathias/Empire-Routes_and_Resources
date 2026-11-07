@@ -2,17 +2,16 @@ namespace FactionColonies.SupplyChain;
 
 /* DESTRUCTIVE + INVASIVE: toggles the faction-wide supply-chain mode, which redistributes every
    settlement's resources and re-staggers routes. The original mode is restored in a finally block
-   (itself a second switch). Run only when a live mode round-trip on the current save is acceptable.
-   Not otherwise reverted. */
+   (itself a second switch). May create a transient settlement. Run only when a live mode round-trip
+   on the current save is acceptable. Not otherwise reverted. */
 public static class ModeSwitchDestructiveTests
 {
     [EmpireDestructiveTest("SC.Destructive.Mode")]
     public static void SwitchSimpleToComplex_DistributesAndClearsFactionStockpile()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
-        if (wc is null) TestAssert.Skip("No SupplyChain world component");
-        if (f.settlements.Count == 0) TestAssert.Skip("Mode switch needs at least one settlement");
+        WorldComponent_SupplyChain wc = SCDestructiveTestUtil.RequireWorldComp();
+        SCDestructiveTestUtil.EnsureSCSettlement(); // the switch distributes into settlement-local piles
 
         SupplyChainMode original = wc.Mode;
         try
@@ -21,13 +20,7 @@ public static class ModeSwitchDestructiveTests
             if (wc.Mode != SupplyChainMode.Simple) wc.SwitchMode(SupplyChainMode.Simple);
 
             // Over-cap pool resources are capped silently (not distributed), so pick a normal one.
-            ResourceTypeDef r = null;
-            foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
-            {
-                if (def.isPoolResource) continue;
-                r = def; break;
-            }
-            if (r is null) TestAssert.Skip("No non-pool resource to seed");
+            ResourceTypeDef r = SCDestructiveTestUtil.RequireNonPoolResource();
 
             // Seed a small amount into the faction stockpile (small enough to sit under local caps,
             // so the switch distributes it rather than auto-selling the over-cap remainder).
@@ -70,17 +63,9 @@ public static class ModeSwitchDestructiveTests
     public static void SwitchToComplex_InitializesLocalStockpilesForExistingSettlements()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
-        if (wc is null) TestAssert.Skip("No SupplyChain world component");
-        if (f.settlements.Count == 0) TestAssert.Skip("Local stockpile init needs at least one settlement");
-
-        ResourceTypeDef r = null;
-        foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
-        {
-            if (def.isPoolResource) continue;
-            r = def; break;
-        }
-        if (r is null) TestAssert.Skip("No non-pool resource to check caps against");
+        WorldComponent_SupplyChain wc = SCDestructiveTestUtil.RequireWorldComp();
+        SCDestructiveTestUtil.EnsureSCSettlement(); // local stockpile init needs at least one settlement
+        ResourceTypeDef r = SCDestructiveTestUtil.RequireNonPoolResource();
 
         SupplyChainMode original = wc.Mode;
         try

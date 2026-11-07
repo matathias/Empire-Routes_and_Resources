@@ -10,15 +10,14 @@ public static class AllocationDestructiveTests
     public static void SetAllocation_FarAboveProduction_AcceptedAndClamped()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldObjectComp_SupplyChain comp = GetComp(f, out ResourceTypeDef r);
-        if (comp is null || r is null) TestAssert.Skip("No settlement comp / resource available");
+        WorldObjectComp_SupplyChain comp = GetComp(out ResourceTypeDef r);
 
         // Over-production allocations are accepted; the day's production deposits uncapped and any
         // true surplus is reconciled by the daily overflow sweep, so a billion-unit request must not
-        // be rejected and must not drive income negative. SetAllocation still returns false only when
-        // the settlement does not track the resource.
+        // be rejected and must not drive income negative. SetAllocation returns false only when the
+        // settlement does not track the resource, and GetComp picked one it tracks.
         bool accepted = comp.SetAllocation(r, 1e9);
-        if (!accepted) TestAssert.Skip("Settlement does not track resource " + r.defName);
+        TestAssert.IsTrue(accepted, "SetAllocation must accept an over-production amount for tracked resource " + r.defName);
 
         DestructiveTestUtil.AssertEmpireInvariants(f, "SetAllocation_FarAboveProduction");
     }
@@ -27,15 +26,25 @@ public static class AllocationDestructiveTests
     public static void SetAllocation_Zero_AcceptedAndReadBack()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldObjectComp_SupplyChain comp = GetComp(f, out ResourceTypeDef r);
-        if (comp is null || r is null) TestAssert.Skip("No settlement comp / resource available");
-        if (comp.IsAutoMax(r)) TestAssert.Skip("Resource is auto-max; manual allocation read-back does not apply");
+        WorldObjectComp_SupplyChain comp = GetComp(out ResourceTypeDef r);
 
-        // The zero-path only returns false when the settlement does not track this resource
-        // (no ResourceFC). That is not a logic failure, so skip rather than fail.
-        bool accepted = comp.SetAllocation(r, 0.0);
-        if (!accepted) TestAssert.Skip("Settlement does not track resource " + r.defName);
-        TestAssert.AreEqual(0.0, comp.GetAllocation(r), 0.001, "GetAllocation should read back the manual zero");
+        // An auto-max resource reads back its live max, not the manual value, so turn auto-max off
+        // for the duration of the check.
+        bool before = comp.IsAutoMax(r);
+        try
+        {
+            comp.SetAutoMax(r, false);
+            TestAssert.IsFalse(comp.IsAutoMax(r), "precondition: auto-max is off for " + r.defName);
+
+            // The zero-path only returns false when the settlement does not track this resource.
+            bool accepted = comp.SetAllocation(r, 0.0);
+            TestAssert.IsTrue(accepted, "SetAllocation(0) must be accepted for tracked resource " + r.defName);
+            TestAssert.AreEqual(0.0, comp.GetAllocation(r), 0.001, "GetAllocation should read back the manual zero");
+        }
+        finally
+        {
+            comp.SetAutoMax(r, before); // restore prior state
+        }
 
         DestructiveTestUtil.AssertEmpireInvariants(f, "SetAllocation_Zero");
     }
@@ -44,17 +53,14 @@ public static class AllocationDestructiveTests
     public static void AutoMax_Toggle_RoundTrips()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldObjectComp_SupplyChain comp = GetComp(f, out ResourceTypeDef r);
-        if (comp is null || r is null) TestAssert.Skip("No settlement comp / resource available");
+        WorldObjectComp_SupplyChain comp = GetComp(out ResourceTypeDef r);
 
         bool before = comp.IsAutoMax(r);
         try
         {
             comp.SetAutoMax(r, true);
-            // If the settlement does not track this resource, the sync drops the flag again.
-            // That is expected, not a failure, so skip.
-            if (!comp.IsAutoMax(r))
-                TestAssert.Skip("Settlement does not track resource " + r.defName + " (auto-max not applicable)");
+            // The sync only drops the flag again when the settlement does not track the resource.
+            TestAssert.IsTrue(comp.IsAutoMax(r), "Auto-max should stick for tracked resource " + r.defName);
             comp.SetAutoMax(r, false);
             TestAssert.IsFalse(comp.IsAutoMax(r), "Auto-max should be disabled after SetAutoMax(false)");
         }
@@ -74,20 +80,15 @@ public static class AllocationDestructiveTests
         // allocations, clamped at 0. Regardless of live production/other allocations it must stay
         // within [0, rawTotalProduction] — a negative or over-production value is a LiveMaxFor bug.
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        ResourceTypeDef r = SupplyChainCache.AllResourceTypeDefs.FirstOrDefault();
-        WorldSettlementFC s = SCDestructiveTestUtil.FirstOrTransient(f);
-        if (r is null || s is null) TestAssert.Skip("No settlement / resource available");
-        WorldObjectComp_SupplyChain comp = SupplyChainCache.GetSettlementComp(s);
-        if (comp is null) TestAssert.Skip("No settlement comp");
-
-        ResourceFC rfc = s.GetResource(r);
-        if (rfc is null) TestAssert.Skip("Settlement does not track resource " + r.defName);
+        WorldSettlementFC s = SCDestructiveTestUtil.EnsureSettlementTracking(def => !def.isPoolResource, out ResourceTypeDef r);
+        WorldObjectComp_SupplyChain comp = SCDestructiveTestUtil.RequireSettlementComp(s);
+        ResourceFC rfc = TestAssert.NotNull(s.GetResource(r), "Settlement does not track resource " + r.defName);
 
         bool before = comp.IsAutoMax(r);
         try
         {
             comp.SetAutoMax(r, true);
-            if (!comp.IsAutoMax(r)) TestAssert.Skip("Auto-max not applicable for " + r.defName);
+            TestAssert.IsTrue(comp.IsAutoMax(r), "Auto-max should stick for tracked resource " + r.defName);
 
             double live = comp.GetAllocation(r);
             TestAssert.GreaterThan(live, -0.001, "Auto-max allocation is never negative");
@@ -102,10 +103,10 @@ public static class AllocationDestructiveTests
         DestructiveTestUtil.AssertEmpireInvariants(f, "AutoMax_GetAllocation_Bounds");
     }
 
-    private static WorldObjectComp_SupplyChain GetComp(FactionFC f, out ResourceTypeDef r)
+    /// <summary>The SupplyChain comp of a settlement that tracks a non-pool resource, plus that resource.</summary>
+    private static WorldObjectComp_SupplyChain GetComp(out ResourceTypeDef r)
     {
-        r = SupplyChainCache.AllResourceTypeDefs.FirstOrDefault();
-        WorldSettlementFC s = SCDestructiveTestUtil.FirstOrTransient(f);
-        return s is null ? null : SupplyChainCache.GetSettlementComp(s);
+        WorldSettlementFC s = SCDestructiveTestUtil.EnsureSettlementTracking(def => !def.isPoolResource, out r);
+        return SCDestructiveTestUtil.RequireSettlementComp(s);
     }
 }
