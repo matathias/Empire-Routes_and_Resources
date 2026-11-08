@@ -118,9 +118,17 @@ internal static class UIUtilSC
                 "SC_BuyOption".Translate(capturedQty.ToString(), def.LabelCap, cost.ToString()),
                 delegate
                 {
-                    if (PaymentUtil.PaySilver(cost, "SC_BuyReason".Translate(def.LabelCap)))
+                    // The game keeps running while the menu is open, so the pile may have filled
+                    // since it was built: buy only what still fits, and charge only for that.
+                    int fits = (int)Math.Min(capturedQty, Math.Max(0, stockpile.GetCap(def) - stockpile.GetAmount(def)));
+                    if (fits <= 0)
                     {
-                        stockpile.Credit(def, capturedQty);
+                        Messages.Message("SC_CannotBuyFull".Translate(def.LabelCap), MessageTypeDefOf.RejectInput, false);
+                        return;
+                    }
+                    if (PaymentUtil.PaySilver(fits * FCSettings.silverPerResource, "SC_BuyReason".Translate(def.LabelCap)))
+                    {
+                        stockpile.Credit(def, fits);
                         onPurchased?.Invoke();
                     }
                 }));

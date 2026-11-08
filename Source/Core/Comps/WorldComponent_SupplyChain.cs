@@ -345,6 +345,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
             // (New games don't reach this branch; their references are already live at FinalizeInit,
             // which handles them.)
             SupplyChainCache.ClearCompCache();
+            ReportSettlementsMissingComp();
 
             // Reconcile the loaded mode with the global setting (it may have changed while this save
             // was unloaded). SwitchMode redistributes stockpiles across settlements, so running it at
@@ -365,6 +366,22 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
     }
 
     // --- Helpers ---
+
+    /// <summary>
+    /// Every Empire settlement gets a supply comp from its world-object def, so a settlement without
+    /// one means its def was changed or patched out from under this mod. Its goods are invisible to
+    /// both modes, so say so loudly instead of letting stockpiles silently go missing.
+    /// </summary>
+    private static void ReportSettlementsMissingComp()
+    {
+        FactionFC faction = FindFC.FactionComp;
+        if (faction is null) return;
+        foreach (WorldSettlementFC settlement in faction.settlements)
+        {
+            if (settlement is null || GetComp(settlement) is not null) continue;
+            LogSC.Error($"Settlement {settlement.Name} (def {settlement.def?.defName}) has no WorldObjectComp_SupplyChain. Its stockpile and needs are not tracked; another mod may be replacing or patching its world-object def.");
+        }
+    }
 
     private void RecalculateCaps()
     {

@@ -186,14 +186,17 @@ public static class NeedResolver
             }
         }
 
-        // Compute surplus ratios (post-all-draws, faction-wide shared stockpile)
+        // Compute surplus ratios (post-all-draws). The stockpile is shared by every settlement, so
+        // it is measured against the faction-wide demand for the resource, not one settlement's:
+        // otherwise each of N settlements would see about N times the real surplus.
         foreach (KeyValuePair<WorldObjectComp_SettlementNeeds, List<NeedState>> kv in compStates)
         {
             foreach (NeedState state in kv.Value)
             {
                 if (state.surplusBonuses is null || state.demanded <= 0 || state.IsShort)
                     continue;
-                state.surplusRatio = stockpile.GetAmount(state.resource) / state.demanded;
+                double factionDemand = totalDemandPerResource.TryGetValue(state.resource, out double total) ? total : state.demanded;
+                state.surplusRatio = stockpile.GetAmount(state.resource) / factionDemand;
             }
         }
 
