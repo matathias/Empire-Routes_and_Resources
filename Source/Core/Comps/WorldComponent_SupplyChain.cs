@@ -137,7 +137,10 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         EnsureCapsAndStockpiles();
         if (mode == SupplyChainMode.Complex)
             RebuildAllPartnerSets(FindFC.FactionComp);
-        ReconcileDeliveryCaravans();
+        // Not on load: every caravan's linkedDelivery is still unresolved here, so the reconcile would
+        // treat them all as orphans and destroy them. The PostLoadInit pass runs it instead.
+        if (!fromLoad)
+            ReconcileDeliveryCaravans();
 
         // Routes are already path-dirty from load (PostLoadInit); align the road-version baseline so the
         // first tick doesn't treat load as a spurious "roads changed" (the warmer will warm them anyway).
@@ -979,6 +982,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         List<PendingDelivery> arrived = null;
         foreach (PendingDelivery d in pendingDeliveries)
         {
+            if (d.caravan is { Destroyed: true }) d.caravan = null;
             if (d.caravan is not null) continue;   // a live caravan drives this delivery's arrival
             if (now < d.arrivalTick) continue;
             arrived ??= [];
@@ -1056,6 +1060,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         {
             foreach (PendingDelivery d in pendingDeliveries)
             {
+                if (d.caravan is { Destroyed: true }) d.caravan = null;
                 if (d.caravan is not null) continue;
                 if (d.pathTiles is not null && d.pathTiles.Count >= 2)
                     DeliveryCaravan.Spawn(d);
