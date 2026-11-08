@@ -296,7 +296,7 @@ internal static class UIUtilSC
         foreach (ResourceTypeDef def in resources)
         {
             string btnLabel = def.label.CapitalizeFirst();
-            float btnW = (def.Icon is not null ? 20f : 0f) + Text.CalcSize(btnLabel).x + 10f;
+            float btnW = (def.Icon != null ? 20f : 0f) + Text.CalcSize(btnLabel).x + 10f;
             if (UIUtil.ButtonFlatIcon(new Rect(x, y, btnW, height), btnLabel,
                 def.Icon, labelColor: def.color, highlighted: filter == def))
                 filter = def;

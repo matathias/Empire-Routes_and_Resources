@@ -119,11 +119,32 @@ public class FoundingCostValidator : ISettlementFoundingValidator
         IStockpile stockpile = GetStockpile(tile);
         if (stockpile is null) return;
 
+        lastFounding = new FoundingDraw(tile, stockpile);
         foreach (FCResourceCost entry in costs)
         {
             double needed = FormulaUtil.ResourceCost(entry.amount, distMult) * costMultiplier;
-            stockpile.TryDraw(entry.resource, needed, out _);
+            stockpile.TryDraw(entry.resource, needed, out double drawn);
+            if (drawn > 0) lastFounding.drawn.Add((entry.resource, drawn));
         }
+    }
+
+    /* What the last founding drew, so a founding that fails before its settlement exists can be
+     * given back. Only the most recent one: the caller cancels in the same call that founded it. */
+    private sealed class FoundingDraw(PlanetTile tile, IStockpile stockpile)
+    {
+        public readonly PlanetTile tile = tile;
+        public readonly IStockpile stockpile = stockpile;
+        public readonly List<(ResourceTypeDef resource, double amount)> drawn = [];
+    }
+
+    private FoundingDraw lastFounding;
+
+    void ISettlementFoundingValidator.OnFoundingCancelled(PlanetTile tile, WorldSettlementDef type)
+    {
+        if (lastFounding is null || lastFounding.tile != tile) return;
+        foreach ((ResourceTypeDef resource, double amount) in lastFounding.drawn)
+            lastFounding.stockpile.Credit(resource, amount);
+        lastFounding = null;
     }
 
     /// <summary>

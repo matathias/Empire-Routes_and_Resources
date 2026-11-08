@@ -983,19 +983,29 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
                 // makes value != num true every frame, which fires the drag-slider
                 // sound continuously even when idle.
                 // An allocation above the current max (production fell) is drawn at the
-                // max but left stored as-is: only a real slider move rewrites it, so the
+                // max but left stored as-is: only touching the slider rewrites it, so the
                 // over-subscribed allocation can grow back into headroom on its own.
                 float maxSlider = FloorToAllocGrid(maxAlloc);
                 float sliderVal = Math.Min(FloorToAllocGrid(currentAlloc), maxSlider);
 
+                Rect sliderRect = new(cx + 150f, curY + 8f, 240f, rowHeight - 16f);
+                // Grabbing an over-allocated slider and leaving it at the max returns an unchanged
+                // value, so treat the click itself as setting the allocation to the max.
+                bool grabbedOverAllocated = FloorToAllocGrid(currentAlloc) > maxSlider
+                    && Event.current.type == EventType.MouseDown && Mouse.IsOver(sliderRect);
+
                 float newVal = Widgets.HorizontalSlider(
-                    new Rect(cx + 150f, curY + 8f, 240f, rowHeight - 16f),
+                    sliderRect,
                     sliderVal, 0f, maxSlider, false,
                     null, null, null, AllocStep);
 
                 if (Math.Abs(newVal - sliderVal) > 0.01f)
                 {
                     SetAllocation(def, newVal);
+                }
+                else if (grabbedOverAllocated)
+                {
+                    SetAllocation(def, maxSlider);
                 }
 
                 Widgets.Label(new Rect(cx + 400f, curY, 90f, rowHeight),

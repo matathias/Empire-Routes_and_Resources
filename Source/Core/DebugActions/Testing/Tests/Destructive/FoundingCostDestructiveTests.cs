@@ -92,4 +92,45 @@ public static class FoundingCostDestructiveTests
 
         DestructiveTestUtil.AssertEmpireInvariants(f, "CanFoundSettlement_AboveThreshold");
     }
+
+    [EmpireDestructiveTest("SC.Destructive.Founding")]
+    public static void FoundingCancelled_GivesBackWhatTheFoundingDrew()
+    {
+        // A founding that fails after the validators were notified (e.g. an outpost conversion
+        // whose settlement creation throws) must get its resources back. Founding on an existing
+        // settlement's tile makes that settlement the source in both modes.
+        FactionFC f = DestructiveTestUtil.RequireFaction();
+        WorldComponent_SupplyChain comp = SCDestructiveTestUtil.RequireWorldComp();
+        WorldSettlementFC s = SCDestructiveTestUtil.EnsureSCSettlement();
+        WorldSettlementDef type = DefDatabase<WorldSettlementDef>.AllDefsListForReading
+            .FirstOrDefault(d => FoundingCostUtil.GetFoundingResourceCosts(d)?.Count > 0);
+        TestAssert.IsNotNull(type, "No settlement type has founding resource costs");
+        IStockpile stockpile = TestAssert.NotNull(WorldComponent_SupplyChain.StockpileFor(s), "The source settlement has a stockpile");
+
+        List<ResourceTypeDef> resources = FoundingCostUtil.GetFoundingResourceCosts(type).Select(c => c.resource).Distinct().ToList();
+        foreach (ResourceTypeDef r in resources) stockpile.Credit(r, 50);
+        Dictionary<ResourceTypeDef, double> before = resources.ToDictionary(r => r, r => stockpile.GetAmount(r));
+
+        int origThreshold = SupplyChainSettings.freeSettlementThreshold;
+        try
+        {
+            SupplyChainSettings.freeSettlementThreshold = 0; // the founding draws resources
+            FoundingCostValidator validator = new(comp);
+            FoundingCostUtil.InvalidateCache();
+            validator.OnSettlementFounded(s.Tile, type, 1f);
+            TestAssert.IsTrue(resources.Any(r => stockpile.GetAmount(r) < before[r] - 0.001),
+                "The founding should have drawn some of its resources");
+
+            ((ISettlementFoundingValidator)validator).OnFoundingCancelled(s.Tile, type);
+            foreach (ResourceTypeDef r in resources)
+                TestAssert.AreEqual(before[r], stockpile.GetAmount(r), tolerance: 0.001,
+                    message: $"{r.defName} should be back to its amount before the founding");
+        }
+        finally
+        {
+            SupplyChainSettings.freeSettlementThreshold = origThreshold;
+        }
+
+        DestructiveTestUtil.AssertEmpireInvariants(f, "FoundingCancelled_GivesBackWhatTheFoundingDrew");
+    }
 }
