@@ -32,7 +32,8 @@ public class NeedState : IExposable
     /// <summary>
     /// Surplus ratio and bonus data. surplusRatio is set by NeedResolver post-draw:
     /// stockpile remaining / demanded. surplusBonuses and maxSurplusRatio are copied
-    /// from the SettlementNeedDef. Not serialized — recomputed each resolution,
+    /// from the SettlementNeedDef. surplusRatio is serialized so the bonuses survive a
+    /// save/load; the bonus data is not, and is recomputed each resolution. Both are
     /// preserved between cycles by RebuildNeedStates.
     /// </summary>
     public double surplusRatio;
@@ -40,6 +41,15 @@ public class NeedState : IExposable
     public double maxSurplusRatio;
 
     public float Satisfaction => demanded > 0 ? (float)(fulfilled / demanded) : 1f;
+
+    /// <summary>
+    /// Absorbs floating-point error left by sequential proportional draws, so a need
+    /// filled to within this amount of its demand counts as met.
+    /// </summary>
+    public const double MetTolerance = 1e-6;
+
+    /// <summary>True when the need has demand and was fulfilled short of it (beyond <see cref="MetTolerance"/>).</summary>
+    public bool IsShort => demanded > 0 && fulfilled + MetTolerance < demanded;
 
     public NeedState()
     {
@@ -71,5 +81,6 @@ public class NeedState : IExposable
         Scribe_Values.Look(ref fulfilled, "fulfilled");
         Scribe_Values.Look(ref label, "label");
         Scribe_Values.Look(ref category, "category");
+        Scribe_Values.Look(ref surplusRatio, "surplusRatio");
     }
 }

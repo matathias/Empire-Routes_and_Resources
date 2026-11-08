@@ -998,18 +998,16 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
                 // (float)Math.Round(0.9) == 0.89999997 vs the slider's 0.90000004)
                 // makes value != num true every frame, which fires the drag-slider
                 // sound continuously even when idle.
-                float sliderVal = FloorToAllocGrid(currentAlloc);
+                // An allocation above the current max (production fell) is drawn at the
+                // max but left stored as-is: only a real slider move rewrites it, so the
+                // over-subscribed allocation can grow back into headroom on its own.
                 float maxSlider = FloorToAllocGrid(maxAlloc);
+                float sliderVal = Math.Min(FloorToAllocGrid(currentAlloc), maxSlider);
 
                 float newVal = Widgets.HorizontalSlider(
                     new Rect(cx + 150f, curY + 8f, 240f, rowHeight - 16f),
                     sliderVal, 0f, maxSlider, false,
                     null, null, null, AllocStep);
-
-                // newVal is already a multiple of AllocStep and clamped to
-                // [0, maxSlider]; clamp once more to correct a stale over-allocation.
-                if (newVal > maxSlider)
-                    newVal = maxSlider;
 
                 if (Math.Abs(newVal - sliderVal) > 0.01f)
                 {

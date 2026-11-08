@@ -107,7 +107,7 @@ public class WorldObjectComp_SettlementNeeds : WorldObjectComp, IStatModifierPro
             INeedProvider provider = comp as INeedProvider;
             if (provider is null) continue;
             List<NeedEntry> compNeeds = [];
-            provider.CollectNeeds(ws, compNeeds);
+            if (!NeedResolver.TryCollectNeeds(provider, ws, compNeeds)) continue;
             foreach (NeedEntry entry in compNeeds)
             {
                 if (entry.resource is null || entry.amount <= 0) continue;
@@ -131,7 +131,7 @@ public class WorldObjectComp_SettlementNeeds : WorldObjectComp, IStatModifierPro
         hasAnyShortfall = false;
         foreach (NeedState state in needStates)
         {
-            if (state.demanded > 0 && state.fulfilled < state.demanded)
+            if (state.IsShort)
             {
                 hasAnyShortfall = true;
                 return;
@@ -183,7 +183,7 @@ public class WorldObjectComp_SettlementNeeds : WorldObjectComp, IStatModifierPro
             // 1. Penalties for unmet needs
             foreach (NeedState state in needStates)
             {
-                if (state.penalties is null || state.demanded <= 0 || state.fulfilled >= state.demanded)
+                if (state.penalties is null || !state.IsShort)
                     continue;
                 double shortfall = state.demanded - state.fulfilled;
                 foreach (NeedPenalty penalty in state.penalties)
@@ -271,7 +271,7 @@ public class WorldObjectComp_SettlementNeeds : WorldObjectComp, IStatModifierPro
         // Penalty descriptions
         foreach (NeedState state in needStates)
         {
-            if (state.penalties is null || state.demanded <= 0 || state.fulfilled >= state.demanded)
+            if (state.penalties is null || !state.IsShort)
                 continue;
             double shortfall = state.demanded - state.fulfilled;
             foreach (NeedPenalty penalty in state.penalties)

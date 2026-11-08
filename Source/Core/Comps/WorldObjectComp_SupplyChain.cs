@@ -188,10 +188,11 @@ public class WorldObjectComp_SupplyChain : WorldObjectComp, IStatModifierProvide
 
     public void ClearPartners()
     {
-        bool any = outPartners.Count > 0 || inPartners.Count > 0;
         outPartners.Clear();
         inPartners.Clear();
-        if (any) RecomputeNetwork();
+        // Always recompute: after a load the partner sets start empty while the saved
+        // network counters still hold their old values, which must be reset too.
+        RecomputeNetwork();
     }
 
     private void RecomputeNetwork()

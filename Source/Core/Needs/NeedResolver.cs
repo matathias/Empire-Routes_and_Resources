@@ -37,7 +37,7 @@ public static class NeedResolver
         // 3. Compute surplus ratios (post-all-draws)
         foreach (NeedState state in states)
         {
-            if (state.surplusBonuses is null || state.demanded <= 0 || state.fulfilled < state.demanded)
+            if (state.surplusBonuses is null || state.demanded <= 0 || state.IsShort)
                 continue;
             state.surplusRatio = stockpile.GetAmount(state.resource) / state.demanded;
         }
@@ -99,7 +99,7 @@ public static class NeedResolver
                 if (provider is null) continue;
 
                 List<NeedEntry> compNeeds = [];
-                provider.CollectNeeds(settlement, compNeeds);
+                if (!TryCollectNeeds(provider, settlement, compNeeds)) continue;
 
                 foreach (NeedEntry entry in compNeeds)
                 {
@@ -191,7 +191,7 @@ public static class NeedResolver
         {
             foreach (NeedState state in kv.Value)
             {
-                if (state.surplusBonuses is null || state.demanded <= 0 || state.fulfilled < state.demanded)
+                if (state.surplusBonuses is null || state.demanded <= 0 || state.IsShort)
                     continue;
                 state.surplusRatio = stockpile.GetAmount(state.resource) / state.demanded;
             }
@@ -209,7 +209,14 @@ public static class NeedResolver
         // Notify providers of their resolution results
         foreach (KeyValuePair<INeedProvider, List<NeedResolution>> kv in providerResolutions)
         {
-            kv.Key.OnNeedsResolved(kv.Value);
+            try
+            {
+                kv.Key.OnNeedsResolved(kv.Value);
+            }
+            catch (Exception e)
+            {
+                LogSC.Error($"INeedProvider {kv.Key.GetType().Name} threw in OnNeedsResolved: {e}");
+            }
         }
 
         // Settlements with no demands still need cleared states
@@ -276,6 +283,29 @@ public static class NeedResolver
             }
 
             bComp.SetBuildingActive(slot, canAfford);
+        }
+    }
+
+    /// <summary>
+    /// Asks one provider for its needs, isolating a provider that throws so the rest of the
+    /// caller's pass (other providers, other settlements) still runs. On a throw the list is
+    /// cleared, so no partial entries leak through, and false is returned. Logged once per
+    /// provider type, since some callers run every UI frame.
+    /// </summary>
+    internal static bool TryCollectNeeds(INeedProvider provider, WorldSettlementFC settlement, List<NeedEntry> needs)
+    {
+        try
+        {
+            provider.CollectNeeds(settlement, needs);
+            return true;
+        }
+        catch (Exception e)
+        {
+            needs.Clear();
+            string typeName = provider.GetType().FullName;
+            Log.ErrorOnce($"{LogSC.DebugGate.Slug} INeedProvider {typeName} threw while collecting needs: {e}",
+                $"SC_NeedProvider_{typeName}".GetHashCode());
+            return false;
         }
     }
 

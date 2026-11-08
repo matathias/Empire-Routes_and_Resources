@@ -605,7 +605,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
             INeedProvider provider = woc as INeedProvider;
             if (provider is null) continue;
             List<NeedEntry> entries = [];
-            provider.CollectNeeds(settlement, entries);
+            if (!NeedResolver.TryCollectNeeds(provider, settlement, entries)) continue;
             foreach (NeedEntry entry in entries)
             {
                 if (entry.resource != def) continue;
