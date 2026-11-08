@@ -6,6 +6,8 @@ public static class FoundingCostUtil
     private static WorldSettlementFC cachedNearest;
     private static double cachedTravelDays;
     private static int cachedSettlementCount;
+    // Travel time falls as roads are built, so a result cached before a road change is stale
+    private static int cachedRoadVersion = -1;
 
     /// <summary>
     /// Returns the per-type founding resource costs declared on the settlement def's
@@ -64,11 +66,14 @@ public static class FoundingCostUtil
     {
         int currentCount = FindFC.Settlements?.Count ?? 0;
 
-        if (targetTile == cachedTile && currentCount == cachedSettlementCount)
+        if (targetTile == cachedTile && currentCount == cachedSettlementCount
+            && cachedRoadVersion == RouteRoadChangeTracker.Version
+            && cachedNearest is not { Destroyed: true })
             return;
 
         cachedTile = targetTile;
         cachedSettlementCount = currentCount;
+        cachedRoadVersion = RouteRoadChangeTracker.Version;
         cachedNearest = FindNearestSettlementUncached(targetTile);
 
         // Use nearest settlement tile, or fall back to player's capital

@@ -1298,6 +1298,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
 
     public void OnSettlementCreated(WorldSettlementFC settlement)
     {
+        FoundingCostUtil.InvalidateCache();
         SupplyChainCache.ClearCompCache();
         InvalidateAllRoutes();
         capsAndStockpilesDirty = true;
@@ -1351,6 +1352,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
 
     public void OnSettlementRemoved(WorldSettlementFC settlement)
     {
+        FoundingCostUtil.InvalidateCache();
         // Drop every active route touching this settlement through the atomic UnlinkRoute so the
         // route list and partner sets stay consistent. Snapshot first (can't mutate while iterating).
         List<SupplyRoute> touching = null;

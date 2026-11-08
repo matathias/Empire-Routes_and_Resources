@@ -260,6 +260,8 @@ public static class SupplyChainStartup
         {
             SupplyChainCache.InvalidateCache();
             SupplyRouteModifierRegistry.ClearAll();
+            // Holds a settlement reference, which must not carry over into another game
+            FoundingCostUtil.InvalidateCache();
         });
     }
 }
