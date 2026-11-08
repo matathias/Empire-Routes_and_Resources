@@ -422,6 +422,18 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         return SupplyChainCache.GetSettlementComp(settlement);
     }
 
+    /// <summary>
+    /// The stockpile that holds <paramref name="settlement"/>'s goods: the faction-wide pile in Simple
+    /// mode, or the settlement's own (created on demand) in Complex mode. Null when SupplyChain isn't
+    /// running or the settlement has no SupplyChain comp.
+    /// </summary>
+    public static IStockpile StockpileFor(WorldSettlementFC settlement)
+    {
+        WorldComponent_SupplyChain wc = SupplyChainCache.Comp;
+        if (wc is null || settlement is null) return null;
+        return wc.mode == SupplyChainMode.Simple ? wc.Stockpile : GetComp(settlement)?.EnsureLocalStockpile();
+    }
+
     // --- Flow Calculation & Cache ---
 
     internal struct CompNeedLine
@@ -1308,7 +1320,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
             if (def.isPoolResource) continue;
             int amt = SupplyChainSettings.GetStartingAmount(def.defName);
             if (amt <= 0) continue;
-            startSp ??= mode == SupplyChainMode.Simple ? Stockpile : GetComp(settlement)?.EnsureLocalStockpile();
+            startSp ??= StockpileFor(settlement);
             if (startSp is null) break;
             startSp.Credit(def, amt);
         }

@@ -36,7 +36,7 @@ public class SCEventHandler_Stockpile : FCEventHandlerExtension
         {
             if (settlement is null) continue;
 
-            IStockpile stockpile = GetStockpile(wc, settlement);
+            IStockpile stockpile = WorldComponent_SupplyChain.StockpileFor(settlement);
             if (stockpile is null) continue;
 
             bool applyMult = multAppliedPiles.Add(stockpile);
@@ -121,13 +121,4 @@ public class SCEventHandler_Stockpile : FCEventHandlerExtension
         return new List<ResourceTypeDef>(SupplyChainCache.AllResourceTypeDefs);
     }
 
-    private IStockpile GetStockpile(WorldComponent_SupplyChain wc, WorldSettlementFC settlement)
-    {
-        if (wc.Mode == SupplyChainMode.Simple)
-            return wc.Stockpile;
-
-        WorldObjectComp_SupplyChain comp = SupplyChainCache.GetSettlementComp(settlement);
-        if (comp is null) return null;
-        return comp.GetStockpile();
-    }
 }
