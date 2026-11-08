@@ -50,6 +50,9 @@ public class SupplyChainSettings : ModSettings
     public static int GetStartingAmount(string defName) =>
         startingResources.TryGetValue(defName, out int v) ? v : 0;
 
+    // Stockpile-able resources in slider order, built on first draw of the founding tab.
+    private static List<ResourceTypeDef> startingResourceDefs;
+
     // Tabbed settings window state
     private static int settingsTab = 0;
     private static List<TabRecord> settingsTabs = [];
@@ -194,8 +197,8 @@ public class SupplyChainSettings : ModSettings
         ls.GapLine(12f);
         ls.Label("SC_SettingsStartingResourcesHeader".Translate());
         ls.Gap(6f);
-        foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs
-                     .Where(d => !d.isPoolResource).OrderBy(d => d.uiPriority))
+        startingResourceDefs ??= FactionCache.NonPoolResourceTypeDefs.OrderBy(d => d.uiPriority).ToList();
+        foreach (ResourceTypeDef def in startingResourceDefs)
         {
             int cur = GetStartingAmount(def.defName);
             int nv = ls.SliderTextField("SC_StartRes_" + def.defName, def.LabelCap, cur, 0, 100);

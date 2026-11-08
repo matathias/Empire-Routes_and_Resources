@@ -102,15 +102,10 @@ public class WorldObjectComp_SettlementNeeds : WorldObjectComp, IStatModifierPro
         // (BuildingFC.active), settled daily by NeedResolver.ResolveBuildingDormancy.
 
         // 2. Comp-provided needs (from INeedProvider)
-        foreach (WorldObjectComp comp in ws.AllComps)
+        NeedResolver.ForEachProviderNeeds(ws, delegate(INeedProvider provider, List<NeedEntry> compNeeds)
         {
-            INeedProvider provider = comp as INeedProvider;
-            if (provider is null) continue;
-            List<NeedEntry> compNeeds = [];
-            if (!NeedResolver.TryCollectNeeds(provider, ws, compNeeds)) continue;
             foreach (NeedEntry entry in compNeeds)
             {
-                if (entry.resource is null || entry.amount <= 0) continue;
                 prevSatisfaction.TryGetValue(entry.needId, out double ratio);
                 prevSurplusRatio.TryGetValue(entry.needId, out double prevSurplus);
                 NeedState ns = new(entry.needId, entry.resource, entry.amount, ratio * entry.amount,
@@ -119,7 +114,7 @@ public class WorldObjectComp_SettlementNeeds : WorldObjectComp, IStatModifierPro
                 ns.surplusRatio = prevSurplus;
                 newStates.Add(ns);
             }
-        }
+        });
 
         needStates = newStates;
         UpdateHasAnyShortfall();
@@ -198,8 +193,7 @@ public class WorldObjectComp_SettlementNeeds : WorldObjectComp, IStatModifierPro
             {
                 if (state.surplusBonuses is null || state.surplusRatio <= 0)
                     continue;
-                double maxSR = state.maxSurplusRatio > 0 ? state.maxSurplusRatio : 2.0;
-                double fraction = Math.Min(1.0, state.surplusRatio / maxSR);
+                double fraction = SurplusFraction(state);
                 foreach (NeedSurplusBonus bonus in state.surplusBonuses)
                 {
                     if (bonus.stat == stat)
@@ -211,20 +205,32 @@ public class WorldObjectComp_SettlementNeeds : WorldObjectComp, IStatModifierPro
         {
             // Tax efficiency: 1.0 + 0.20 * averageSatisfaction
             FCStatDef taxEffStat = SCStatDefOf.SC_TaxEfficiency;
-            if (stat == taxEffStat && needStates.Count > 0)
-            {
-                double sum = 0;
-                int count = 0;
-                foreach (NeedState state in needStates)
-                {
-                    if (state.demanded > 0) { sum += state.Satisfaction; count++; }
-                }
-                if (count > 0)
-                    value = FormulaUtil.TaxEfficiency(sum / count);
-            }
+            if (stat == taxEffStat && TryGetAverageSatisfaction(out double avgSat))
+                value = FormulaUtil.TaxEfficiency(avgSat);
         }
 
         return value;
+    }
+
+    // How far a need's surplus is toward its full bonus, from 0 to 1. A need with no max surplus
+    // ratio set reaches the full bonus at twice its demand.
+    private static double SurplusFraction(NeedState state)
+    {
+        double maxSR = state.maxSurplusRatio > 0 ? state.maxSurplusRatio : 2.0;
+        return Math.Min(1.0, state.surplusRatio / maxSR);
+    }
+
+    // Average satisfaction over the needs with a positive demand; false when there are none.
+    private bool TryGetAverageSatisfaction(out double average)
+    {
+        double sum = 0;
+        int count = 0;
+        foreach (NeedState state in needStates)
+        {
+            if (state.demanded > 0) { sum += state.Satisfaction; count++; }
+        }
+        average = count > 0 ? sum / count : 0;
+        return count > 0;
     }
 
     // Unrest is displayed inverted from the other daily-drift stats: a rise in unrest is
@@ -284,7 +290,7 @@ public class WorldObjectComp_SettlementNeeds : WorldObjectComp, IStatModifierPro
                 // .Resolve() flattens the TaggedString to a string while preserving the <color> tag;
                 // the implicit string conversion would instead StripTags() and drop the color.
                 string line = "SC_UnmetNeedPenalty".Translate(state.label, ColorizePenalty(val, stat)).Resolve();
-                desc = desc is null ? line : desc + "\n" + line;
+                desc = desc is null ? line : $"{desc}\n{line}";
             }
         }
 
@@ -293,8 +299,7 @@ public class WorldObjectComp_SettlementNeeds : WorldObjectComp, IStatModifierPro
         {
             if (state.surplusBonuses is null || state.surplusRatio <= 0)
                 continue;
-            double maxSR = state.maxSurplusRatio > 0 ? state.maxSurplusRatio : 2.0;
-            double fraction = Math.Min(1.0, state.surplusRatio / maxSR);
+            double fraction = SurplusFraction(state);
             foreach (NeedSurplusBonus bonus in state.surplusBonuses)
             {
                 if (bonus.stat != stat) continue;
@@ -307,28 +312,18 @@ public class WorldObjectComp_SettlementNeeds : WorldObjectComp, IStatModifierPro
                 bool unrestStat = IsUnrestStat(bonus.stat);
                 string line = TextUtil.AdditiveBonusLine(val, (bonus.label ?? state.label).CapitalizeFirst(),
                     invert: unrestStat, hardinvert: unrestStat);
-                desc = desc is null ? line : desc + "\n" + line;
+                desc = desc is null ? line : $"{desc}\n{line}";
             }
         }
 
         // Tax efficiency description
         FCStatDef taxEffStat = SCStatDefOf.SC_TaxEfficiency;
-        if (stat == taxEffStat && needStates.Count > 0)
+        if (stat == taxEffStat && TryGetAverageSatisfaction(out double avgSat))
         {
-            double sum = 0;
-            int count = 0;
-            foreach (NeedState state in needStates)
-            {
-                if (state.demanded > 0) { sum += state.Satisfaction; count++; }
-            }
-            if (count > 0)
-            {
-                double avgSat = sum / count;
-                double mult = FormulaUtil.TaxEfficiency(avgSat);
-                string line = "SC_TaxEfficiencyDesc".Translate(
-                    (avgSat * 100).ToString("F0"), (mult * 100).ToString("F0"));
-                desc = desc is null ? line : desc + "\n" + line;
-            }
+            double mult = FormulaUtil.TaxEfficiency(avgSat);
+            string line = "SC_TaxEfficiencyDesc".Translate(
+                (avgSat * 100).ToString("F0"), (mult * 100).ToString("F0"));
+            desc = desc is null ? line : $"{desc}\n{line}";
         }
 
         return desc;

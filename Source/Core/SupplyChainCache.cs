@@ -18,7 +18,6 @@ public static class SupplyChainCache
 
     // Cached def lists (defs don't change mid-game)
     private static List<SettlementNeedDef> _cachedNeedDefs;
-    private static List<ResourceTypeDef> _cachedResourceTypeDefs;
 
     public static WorldComponent_SupplyChain Comp
     {
@@ -35,15 +34,6 @@ public static class SupplyChainCache
         {
             _cachedNeedDefs ??= DefDatabase<SettlementNeedDef>.AllDefsListForReading;
             return _cachedNeedDefs;
-        }
-    }
-
-    public static List<ResourceTypeDef> AllResourceTypeDefs
-    {
-        get
-        {
-            _cachedResourceTypeDefs ??= DefDatabase<ResourceTypeDef>.AllDefsListForReading;
-            return _cachedResourceTypeDefs;
         }
     }
 
@@ -109,6 +99,5 @@ public static class SupplyChainCache
         _compCache.Clear();
         _needsCompCache.Clear();
         _cachedNeedDefs = null;
-        _cachedResourceTypeDefs = null;
     }
 }

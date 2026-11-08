@@ -41,7 +41,7 @@ public static class SCDebugActions
     {
         ForEachStockpile((stockpile, label) =>
         {
-            foreach (ResourceTypeDef rtd in SupplyChainCache.AllResourceTypeDefs)
+            foreach (ResourceTypeDef rtd in FactionCache.AllResourceTypeDefs)
             {
                 double cap = stockpile.GetCap(rtd);
                 double current = stockpile.GetAmount(rtd);
@@ -57,7 +57,7 @@ public static class SCDebugActions
     {
         ForEachStockpile((stockpile, label) =>
         {
-            foreach (ResourceTypeDef rtd in SupplyChainCache.AllResourceTypeDefs)
+            foreach (ResourceTypeDef rtd in FactionCache.AllResourceTypeDefs)
             {
                 double current = stockpile.GetAmount(rtd);
                 if (current > 0)
@@ -147,7 +147,7 @@ public static class SCDebugActions
         ForEachStockpile((stockpile, label) =>
         {
             sb.AppendLine("  " + label + ":");
-            foreach (ResourceTypeDef rtd in SupplyChainCache.AllResourceTypeDefs)
+            foreach (ResourceTypeDef rtd in FactionCache.AllResourceTypeDefs)
             {
                 double amount = stockpile.GetAmount(rtd);
                 double cap = stockpile.GetCap(rtd);

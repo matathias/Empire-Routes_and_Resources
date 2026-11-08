@@ -76,7 +76,7 @@ public static class NeedResolverDestructiveTests
         List<NeedState> states = needsComp.NeedStates;
         TestAssert.IsTrue(states is not null && states.Count > 0, "Settlement should have active needs to compare");
 
-        foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
+        foreach (ResourceTypeDef def in FactionCache.AllResourceTypeDefs)
         {
             double resolvedBase = 0.0;
             foreach (NeedState ns in states)
@@ -110,7 +110,7 @@ public static class NeedResolverDestructiveTests
 
         ResourceTypeDef target = null;
         double totalDemand = 0.0;
-        foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
+        foreach (ResourceTypeDef def in FactionCache.AllResourceTypeDefs)
         {
             double d = SumNeedDemand(f, def);
             if (d > 0.0) { target = def; totalDemand = d; break; }

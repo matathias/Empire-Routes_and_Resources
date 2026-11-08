@@ -35,12 +35,7 @@ public static class NeedResolver
         ResolveCompNeeds(settlement, stockpile, states);
 
         // 3. Compute surplus ratios (post-all-draws)
-        foreach (NeedState state in states)
-        {
-            if (state.surplusBonuses is null || state.demanded <= 0 || state.IsShort)
-                continue;
-            state.surplusRatio = stockpile.GetAmount(state.resource) / state.demanded;
-        }
+        ApplySurplusRatios(states, stockpile, null);
 
         comp.SetNeedStates(states);
         settlement.InvalidateStatCache();
@@ -93,18 +88,10 @@ public static class NeedResolver
             // (all-or-nothing) via ResolveBuildingDormancy, not the proportional need model.
 
             // Comp-provided needs (e.g., specialist needs via INeedProvider)
-            foreach (WorldObjectComp woc in settlement.AllComps)
+            ForEachProviderNeeds(settlement, delegate(INeedProvider provider, List<NeedEntry> compNeeds)
             {
-                INeedProvider provider = woc as INeedProvider;
-                if (provider is null) continue;
-
-                List<NeedEntry> compNeeds = [];
-                if (!TryCollectNeeds(provider, settlement, compNeeds)) continue;
-
                 foreach (NeedEntry entry in compNeeds)
                 {
-                    if (entry.resource is null || entry.amount <= 0) continue;
-
                     allDemands.Add(new NeedDemandEntry
                     {
                         settlement = settlement,
@@ -120,7 +107,7 @@ public static class NeedResolver
                         maxSurplusRatio = entry.maxSurplusRatio
                     });
                 }
-            }
+            });
         }
 
         // Calculate fill rate per resource
@@ -190,15 +177,7 @@ public static class NeedResolver
         // it is measured against the faction-wide demand for the resource, not one settlement's:
         // otherwise each of N settlements would see about N times the real surplus.
         foreach (KeyValuePair<WorldObjectComp_SettlementNeeds, List<NeedState>> kv in compStates)
-        {
-            foreach (NeedState state in kv.Value)
-            {
-                if (state.surplusBonuses is null || state.demanded <= 0 || state.IsShort)
-                    continue;
-                double factionDemand = totalDemandPerResource.TryGetValue(state.resource, out double total) ? total : state.demanded;
-                state.surplusRatio = stockpile.GetAmount(state.resource) / factionDemand;
-            }
-        }
+            ApplySurplusRatios(kv.Value, stockpile, totalDemandPerResource);
 
         // Apply results
         foreach (KeyValuePair<WorldObjectComp_SettlementNeeds, List<NeedState>> kv in compStates)
@@ -290,67 +269,89 @@ public static class NeedResolver
     }
 
     /// <summary>
-    /// Asks one provider for its needs, isolating a provider that throws so the rest of the
-    /// caller's pass (other providers, other settlements) still runs. On a throw the list is
-    /// cleared, so no partial entries leak through, and false is returned. Logged once per
-    /// provider type, since some callers run every UI frame.
+    /// Calls <paramref name="onProvider"/> once for each INeedProvider comp on the settlement, with
+    /// the needs it contributes. Entries with no resource or a non-positive amount are dropped, so
+    /// every caller (resolution and the flow display alike) counts the same needs. A provider that
+    /// throws is skipped, so the rest of the caller's pass still runs; it is logged once per provider
+    /// type, since some callers run every UI frame. The list is reused between providers, so callers
+    /// must not keep it.
     /// </summary>
-    internal static bool TryCollectNeeds(INeedProvider provider, WorldSettlementFC settlement, List<NeedEntry> needs)
+    internal static void ForEachProviderNeeds(WorldSettlementFC settlement, Action<INeedProvider, List<NeedEntry>> onProvider)
     {
-        try
+        List<NeedEntry> needs = null;
+        foreach (WorldObjectComp comp in settlement.AllComps)
         {
-            provider.CollectNeeds(settlement, needs);
-            return true;
-        }
-        catch (Exception e)
-        {
+            if (comp is not INeedProvider provider) continue;
+
+            needs ??= [];
             needs.Clear();
-            string typeName = provider.GetType().FullName;
-            Log.ErrorOnce($"{LogSC.DebugGate.Slug} INeedProvider {typeName} threw while collecting needs: {e}",
-                $"SC_NeedProvider_{typeName}".GetHashCode());
-            return false;
+            try
+            {
+                provider.CollectNeeds(settlement, needs);
+            }
+            catch (Exception e)
+            {
+                string typeName = provider.GetType().FullName;
+                Log.ErrorOnce($"{LogSC.DebugGate.Slug} INeedProvider {typeName} threw while collecting needs: {e}",
+                    $"SC_NeedProvider_{typeName}".GetHashCode());
+                continue;
+            }
+
+            needs.RemoveAll(entry => entry.resource is null || entry.amount <= 0);
+            onProvider(provider, needs);
+        }
+    }
+
+    /// <summary>
+    /// Sets the surplus ratio of each satisfied state that carries surplus bonuses: what is left in
+    /// the stockpile after all draws, over the demand. With <paramref name="sharedDemand"/> (a stockpile
+    /// shared by several settlements) the demand is the total for the resource across all of them.
+    /// </summary>
+    private static void ApplySurplusRatios(List<NeedState> states, IStockpile stockpile,
+        Dictionary<ResourceTypeDef, double> sharedDemand)
+    {
+        foreach (NeedState state in states)
+        {
+            if (state.surplusBonuses is null || state.demanded <= 0 || state.IsShort)
+                continue;
+            double demand = sharedDemand is not null && sharedDemand.TryGetValue(state.resource, out double total)
+                ? total
+                : state.demanded;
+            state.surplusRatio = stockpile.GetAmount(state.resource) / demand;
         }
     }
 
     private static void ResolveCompNeeds(WorldSettlementFC settlement, IStockpile stockpile, List<NeedState> states)
     {
-        foreach (WorldObjectComp comp in settlement.AllComps)
+        ForEachProviderNeeds(settlement, delegate(INeedProvider provider, List<NeedEntry> compNeeds)
         {
-            INeedProvider provider = comp as INeedProvider;
-            if (provider is null) continue;
+            List<NeedResolution> resolutions = [];
+            foreach (NeedEntry entry in compNeeds)
+            {
+                double drawn;
+                stockpile.TryDraw(entry.resource, entry.amount, out drawn);
+
+                states.Add(new NeedState(entry.needId, entry.resource, entry.amount, drawn,
+                    entry.label, NeedCategory.Comp, entry.penalties,
+                    entry.surplusBonuses, entry.maxSurplusRatio));
+
+                resolutions.Add(new NeedResolution
+                {
+                    needId = entry.needId,
+                    demanded = entry.amount,
+                    fulfilled = drawn
+                });
+            }
 
             try
             {
-                List<NeedEntry> compNeeds = [];
-                provider.CollectNeeds(settlement, compNeeds);
-
-                List<NeedResolution> resolutions = [];
-                foreach (NeedEntry entry in compNeeds)
-                {
-                    if (entry.resource is null || entry.amount <= 0) continue;
-
-                    double drawn;
-                    stockpile.TryDraw(entry.resource, entry.amount, out drawn);
-
-                    states.Add(new NeedState(entry.needId, entry.resource, entry.amount, drawn,
-                        entry.label, NeedCategory.Comp, entry.penalties,
-                        entry.surplusBonuses, entry.maxSurplusRatio));
-
-                    resolutions.Add(new NeedResolution
-                    {
-                        needId = entry.needId,
-                        demanded = entry.amount,
-                        fulfilled = drawn
-                    });
-                }
-
                 provider.OnNeedsResolved(resolutions);
             }
             catch (Exception e)
             {
-                LogSC.Error("INeedProvider " + comp.GetType().Name + " threw during need resolution: " + e);
+                LogSC.Error($"INeedProvider {provider.GetType().Name} threw in OnNeedsResolved: {e}");
             }
-        }
+        });
     }
 
     private struct NeedDemandEntry

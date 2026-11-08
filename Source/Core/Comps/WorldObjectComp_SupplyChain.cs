@@ -130,24 +130,14 @@ public class WorldObjectComp_SupplyChain : WorldObjectComp, IStatModifierProvide
 
     public void RecalculateLocalCaps()
     {
-        foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
+        foreach (ResourceTypeDef def in FactionCache.AllResourceTypeDefs)
         {
             localCaps[def] = SupplyChainSettings.localCapBase;
         }
 
         WorldSettlementFC ws = WorldSettlement;
         if (ws?.BuildingsComp is null) return;
-        foreach (BuildingFC building in ws.BuildingsComp.Buildings)
-        {
-            if (building.def is null || building.def == BuildingFCDefOf.Empty) continue;
-            BuildingNeedExtension ext = SupplyChainCache.GetBuildingNeedExt(building.def);
-            if (ext?.capBonuses is null) continue;
-            foreach (BuildingCapBonus bonus in ext.capBonuses)
-            {
-                if (bonus.resource is not null && localCaps.ContainsKey(bonus.resource))
-                    localCaps[bonus.resource] += bonus.amount;
-            }
-        }
+        BuildingNeedExtension.AddBuildingCapBonuses(ws, localCaps);
         localCapsDirty = false;
     }
 

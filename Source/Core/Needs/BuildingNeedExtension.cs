@@ -26,6 +26,26 @@ public class BuildingNeedExtension : DefModExtension, IBuildingDetailSection
     public List<BuildingResourceInput> inputs;
     public List<BuildingCapBonus> capBonuses;
 
+    /// <summary>
+    /// Adds the cap bonuses of every building in <paramref name="settlement"/> to
+    /// <paramref name="caps"/>. Only resources already keyed in <paramref name="caps"/> are raised.
+    /// </summary>
+    internal static void AddBuildingCapBonuses(WorldSettlementFC settlement, Dictionary<ResourceTypeDef, double> caps)
+    {
+        if (settlement?.BuildingsComp is null) return;
+        foreach (BuildingFC building in settlement.BuildingsComp.Buildings)
+        {
+            if (building.def is null || building.def == BuildingFCDefOf.Empty) continue;
+            BuildingNeedExtension ext = SupplyChainCache.GetBuildingNeedExt(building.def);
+            if (ext?.capBonuses is null) continue;
+            foreach (BuildingCapBonus bonus in ext.capBonuses)
+            {
+                if (bonus.resource is not null && caps.ContainsKey(bonus.resource))
+                    caps[bonus.resource] += bonus.amount;
+            }
+        }
+    }
+
     private bool hasInputs => inputs?.Count > 0;
     private bool hasCaps => capBonuses?.Count > 0;
     private bool hasBoth => hasInputs && hasCaps;

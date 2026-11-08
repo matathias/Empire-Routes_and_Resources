@@ -42,7 +42,7 @@ public class SellOrder : IExposable
         // Apply sell rate multiplier stat if a settlement context is available
         if (settlement is not null && FindFC.FactionComp is not null)
         {
-            FCStatDef sellRateStat = DefDatabase<FCStatDef>.GetNamedSilentFail("SC_SellRateMultiplier");
+            FCStatDef sellRateStat = SCStatDefOf.SC_SellRateMultiplier;
             if (sellRateStat is not null)
             {
                 double mult = FindFC.FactionComp.GetStatValue(sellRateStat, settlement);

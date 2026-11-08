@@ -118,7 +118,7 @@ public class SCEventHandler_Stockpile : FCEventHandlerExtension
     {
         if (resource is not null)
             return [resource];
-        return new List<ResourceTypeDef>(SupplyChainCache.AllResourceTypeDefs);
+        return new List<ResourceTypeDef>(FactionCache.AllResourceTypeDefs);
     }
 
 }

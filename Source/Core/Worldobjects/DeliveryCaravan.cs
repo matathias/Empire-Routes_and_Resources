@@ -134,7 +134,7 @@ public class DeliveryCaravan : WorldObject
         if (arrivedHandled) return;
         arrivedHandled = true;
 
-        WorldComponent_SupplyChain comp = Find.World.GetComponent<WorldComponent_SupplyChain>();
+        WorldComponent_SupplyChain comp = SupplyChainCache.Comp;
         comp?.CompleteDelivery(linkedDelivery);
         if (!Destroyed) Destroy();
     }

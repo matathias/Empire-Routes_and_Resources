@@ -159,9 +159,35 @@ internal static class UIUtilSC
         Find.WindowStack.Add(new FloatMenu(options));
     }
 
+    /// <summary>
+    /// A button showing <paramref name="current"/>'s name, or <paramref name="emptyLabel"/> when
+    /// nothing is picked; clicking it opens a menu of <paramref name="choices"/> (less
+    /// <paramref name="exclude"/>) that calls <paramref name="onPick"/>. Each option is the settlement's
+    /// name followed by <paramref name="suffix"/>, when one is given.
+    /// </summary>
+    internal static void SettlementPickerButton(Rect rect, WorldSettlementFC current, string emptyLabel,
+        IEnumerable<WorldSettlementFC> choices, Func<WorldSettlementFC, string> suffix,
+        Action<WorldSettlementFC> onPick, WorldSettlementFC exclude = null)
+    {
+        string label = current is not null ? current.Name : emptyLabel;
+        if (!Widgets.ButtonText(rect, label)) return;
+
+        List<FloatMenuOption> options = [];
+        if (choices is not null)
+        {
+            foreach (WorldSettlementFC s in choices)
+            {
+                if (exclude is not null && s == exclude) continue;
+                WorldSettlementFC captured = s;
+                string optionLabel = suffix is null ? s.Name : $"{s.Name}{suffix(s)}";
+                options.Add(new FloatMenuOption(optionLabel, () => onPick(captured)));
+            }
+        }
+        Find.WindowStack.Add(new FloatMenu(options));
+    }
+
     /// <summary>Resources a sell order can name: every non-pool resource.</summary>
-    internal static IEnumerable<ResourceTypeDef> SellableResources =>
-        SupplyChainCache.AllResourceTypeDefs.Where(def => !def.isPoolResource);
+    internal static IEnumerable<ResourceTypeDef> SellableResources => FactionCache.NonPoolResourceTypeDefs;
 
     /// <summary>
     /// The "Add: [resource] [amount] [Add]" row at <paramref name="x"/>. Clicking Add with a resource

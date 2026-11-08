@@ -200,7 +200,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         float curX = 0f;
         bool any = false;
 
-        foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
+        foreach (ResourceTypeDef def in FactionCache.AllResourceTypeDefs)
         {
             double cap = localStockpileDict.GetCap(def);
             if (cap <= 0) continue;
@@ -257,7 +257,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         float curX = rect.x;
         float curY = rect.y + 2f;
 
-        foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
+        foreach (ResourceTypeDef def in FactionCache.AllResourceTypeDefs)
         {
             double cap = localStockpileDict.GetCap(def);
             if (cap <= 0) continue;
@@ -380,7 +380,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
         // Count resources for height calculation
         int resourceCount = 0;
-        foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
+        foreach (ResourceTypeDef def in FactionCache.AllResourceTypeDefs)
         {
             double cap = localStockpileDict?.GetCap(def) ?? 0;
             if (cap > 0) resourceCount++;
@@ -405,7 +405,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         if (barWidth < 100f) barWidth = 100f;
 
         int idx = 0;
-        foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
+        foreach (ResourceTypeDef def in FactionCache.AllResourceTypeDefs)
         {
             double amount = localStockpileDict?.GetAmount(def) ?? 0;
             double cap = localStockpileDict?.GetCap(def) ?? 0;
@@ -581,8 +581,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
             Widgets.Label(new Rect(cx + 148f, curY, 130f, 26f),
                 "SC_UnitsPerPeriod".Translate(order.amountPerPeriod.ToString("F1")));
 
-            float expectedSilver = (float)(order.amountPerPeriod * FCSettings.silverPerResource
-                * SupplyChainSettings.overflowPenaltyRate);
+            float expectedSilver = FormulaUtil.OverflowSilver(order.amountPerPeriod);
             GUI.color = new Color(0.7f, 1f, 0.7f);
             Widgets.Label(new Rect(cx + 284f, curY, 100f, 26f),
                 "SC_ExpectedSilver".Translate(expectedSilver.ToString("F0")));
@@ -869,34 +868,19 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
         // Resource picker
         UIUtilSC.ResourcePickerButton(new Rect(bx, curY, 110f, 24f), newRouteResource, "SC_ResourcePicker".Translate(),
-            SupplyChainCache.AllResourceTypeDefs, r => newRouteResource = r);
+            FactionCache.AllResourceTypeDefs, r => newRouteResource = r);
         bx += 114f;
 
         // Other settlement picker
         float pickerW = width - (bx - x) - 74f - 52f - 54f - 8f;
         if (pickerW < 120f) pickerW = 120f;
 
-        string otherLabel = newRouteOther is not null
-            ? newRouteOther.Name
-            : (string)"SC_PickSettlement".Translate();
-        if (Widgets.ButtonText(new Rect(bx, curY, pickerW, 24f), otherLabel))
-        {
-            List<FloatMenuOption> options = [];
-            foreach (WorldSettlementFC s in faction.settlements)
-            {
-                if (s == ws) continue;
-                WorldSettlementFC captured = s;
-                string label = s.Name;
-                if (newRouteResource is not null)
-                {
-                    label += newRouteIsOutgoing
-                        ? UIUtilSC.RouteNeedSuffix(s, newRouteResource)
-                        : UIUtilSC.RouteProductionSuffix(s, newRouteResource);
-                }
-                options.Add(new FloatMenuOption(label, delegate { newRouteOther = captured; }));
-            }
-            Find.WindowStack.Add(new FloatMenu(options));
-        }
+        ResourceTypeDef resource = newRouteResource;
+        Func<WorldSettlementFC, string> suffix = resource is null ? null
+            : newRouteIsOutgoing ? s => UIUtilSC.RouteNeedSuffix(s, resource)
+            : s => UIUtilSC.RouteProductionSuffix(s, resource);
+        UIUtilSC.SettlementPickerButton(new Rect(bx, curY, pickerW, 24f), newRouteOther,
+            "SC_PickSettlement".Translate(), faction.settlements, suffix, s => newRouteOther = s, exclude: ws);
         bx += pickerW + 4f;
 
         if (UIUtilSC.DrawRouteFormTail(bx, curY, ref newRouteAmount, ref newRouteAmountBuffer,

@@ -388,27 +388,14 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         FactionFC faction = FindFC.FactionComp;
         int numSettlements = faction?.settlements.Count ?? 0;
 
-        foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
+        foreach (ResourceTypeDef def in FactionCache.AllResourceTypeDefs)
         {
             factionCaps[def] = numSettlements * SupplyChainSettings.baseCapPerSettlement;
         }
 
         if (faction is null) return;
         foreach (WorldSettlementFC settlement in faction.settlements)
-        {
-            if (settlement.BuildingsComp is null) continue;
-            foreach (BuildingFC building in settlement.BuildingsComp.Buildings)
-            {
-                if (building.def is null || building.def == BuildingFCDefOf.Empty) continue;
-                BuildingNeedExtension ext = SupplyChainCache.GetBuildingNeedExt(building.def);
-                if (ext?.capBonuses is null) continue;
-                foreach (BuildingCapBonus bonus in ext.capBonuses)
-                {
-                    if (bonus.resource is not null && factionCaps.ContainsKey(bonus.resource))
-                        factionCaps[bonus.resource] += bonus.amount;
-                }
-            }
-        }
+            BuildingNeedExtension.AddBuildingCapBonuses(settlement, factionCaps);
     }
 
     private void InitAllLocalStockpiles()
@@ -617,43 +604,45 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
             }
         }
 
-        foreach (WorldObjectComp woc in settlement.AllComps)
+        // A ref parameter cannot be captured by the callback, so the comp-need fields are copied
+        // out and written back after.
+        double compNeeds = flow.compNeeds;
+        List<CompNeedLine> compNeedLines = flow.compNeedLines;
+        NeedResolver.ForEachProviderNeeds(settlement, delegate(INeedProvider provider, List<NeedEntry> entries)
         {
-            INeedProvider provider = woc as INeedProvider;
-            if (provider is null) continue;
-            List<NeedEntry> entries = [];
-            if (!NeedResolver.TryCollectNeeds(provider, settlement, entries)) continue;
             foreach (NeedEntry entry in entries)
             {
                 if (entry.resource != def) continue;
-                flow.compNeeds += entry.amount;
+                compNeeds += entry.amount;
 
                 // Store labeled line for tooltip display
                 string lineLabel = entry.label ?? entry.needId;
-                if (flow.compNeedLines is null)
+                if (compNeedLines is null)
                 {
-                    flow.compNeedLines = [new CompNeedLine { label = lineLabel, amount = entry.amount }];
+                    compNeedLines = [new CompNeedLine { label = lineLabel, amount = entry.amount }];
                 }
                 else
                 {
                     // Merge entries with the same label
                     bool merged = false;
-                    for (int i = 0; i < flow.compNeedLines.Count; i++)
+                    for (int i = 0; i < compNeedLines.Count; i++)
                     {
-                        if (flow.compNeedLines[i].label == lineLabel)
+                        if (compNeedLines[i].label == lineLabel)
                         {
-                            CompNeedLine line = flow.compNeedLines[i];
+                            CompNeedLine line = compNeedLines[i];
                             line.amount += entry.amount;
-                            flow.compNeedLines[i] = line;
+                            compNeedLines[i] = line;
                             merged = true;
                             break;
                         }
                     }
                     if (!merged)
-                        flow.compNeedLines.Add(new CompNeedLine { label = lineLabel, amount = entry.amount });
+                        compNeedLines.Add(new CompNeedLine { label = lineLabel, amount = entry.amount });
                 }
             }
-        }
+        });
+        flow.compNeeds = compNeeds;
+        flow.compNeedLines = compNeedLines;
     }
 
     // --- Mode Switching ---
@@ -875,7 +864,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         if (sp is null) return 0f;
 
         float total = 0f;
-        foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
+        foreach (ResourceTypeDef def in FactionCache.AllResourceTypeDefs)
         {
             double amount = sp.GetAmount(def);
             double cap = sp.GetCap(def);
@@ -1333,9 +1322,8 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         // immediately in penalty on its first day.
         // Stockpile resolved lazily so an all-zero configuration touches nothing.
         IStockpile startSp = null;
-        foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
+        foreach (ResourceTypeDef def in FactionCache.NonPoolResourceTypeDefs)
         {
-            if (def.isPoolResource) continue;
             int amt = SupplyChainSettings.GetStartingAmount(def.defName);
             if (amt <= 0) continue;
             startSp ??= StockpileFor(settlement);
@@ -1523,7 +1511,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         // Pre-calculate counts for scroll height
         FactionFC simpleFaction = FindFC.FactionComp;
         int resourceCount = 0;
-        foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
+        foreach (ResourceTypeDef def in FactionCache.AllResourceTypeDefs)
         {
             resourceCount++;
         }
@@ -1569,7 +1557,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         if (barWidth < 100f) barWidth = 100f;
 
         int resIdx = 0;
-        foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
+        foreach (ResourceTypeDef def in FactionCache.AllResourceTypeDefs)
         {
             double amount = stockpile.GetAmount(def);
             double cap = stockpile.GetCap(def);
@@ -1689,8 +1677,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
             Widgets.Label(new Rect(cx + 150f, drawY, 130f, sellRowH),
                 "SC_UnitsPerPeriod".Translate(order.amountPerPeriod.ToString("F1")));
 
-            float expectedSilver = (float)(order.amountPerPeriod * FCSettings.silverPerResource
-                * SupplyChainSettings.overflowPenaltyRate);
+            float expectedSilver = FormulaUtil.OverflowSilver(order.amountPerPeriod);
             GUI.color = new Color(0.7f, 1f, 0.7f);
             Widgets.Label(new Rect(cx + 290f, drawY, 100f, sellRowH),
                 "SC_ExpectedSilver".Translate(expectedSilver.ToString("F0")));
@@ -1885,7 +1872,7 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         if (resourceColumnsDirty || cachedResourceColumns is null)
         {
             cachedResourceColumns = [];
-            foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
+            foreach (ResourceTypeDef def in FactionCache.AllResourceTypeDefs)
             {
                 bool anyHasCap = false;
                 foreach (WorldSettlementFC s in faction.settlements)
@@ -2198,41 +2185,22 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
 
         // Resource picker (first)
         UIUtilSC.ResourcePickerButton(new Rect(bx, curY, 110f, 24f), newRouteResource, "SC_ResourcePicker".Translate(),
-            SupplyChainCache.AllResourceTypeDefs, r => newRouteResource = r);
+            FactionCache.AllResourceTypeDefs, r => newRouteResource = r);
         bx += 114f;
 
         // Source picker (with production info if resource selected)
-        string srcLabel = newRouteSource is not null ? newRouteSource.Name : (string)"SC_SourcePicker".Translate();
-        if (Widgets.ButtonText(new Rect(bx, curY, pickerW, 24f), srcLabel))
-        {
-            List<FloatMenuOption> options = [];
-            foreach (WorldSettlementFC s in faction.settlements)
-            {
-                WorldSettlementFC captured = s;
-                string label = s.Name;
-                if (newRouteResource is not null)
-                    label += UIUtilSC.RouteProductionSuffix(s, newRouteResource);
-                options.Add(new FloatMenuOption(label, delegate { newRouteSource = captured; }));
-            }
-            Find.WindowStack.Add(new FloatMenu(options));
-        }
+        ResourceTypeDef resource = newRouteResource;
+        UIUtilSC.SettlementPickerButton(new Rect(bx, curY, pickerW, 24f), newRouteSource,
+            "SC_SourcePicker".Translate(), faction.settlements,
+            resource is not null ? s => UIUtilSC.RouteProductionSuffix(s, resource) : null,
+            s => newRouteSource = s);
         bx += pickerW + 4f;
 
         // Dest picker (with need info if resource selected)
-        string destLabel = newRouteDest is not null ? newRouteDest.Name : (string)"SC_DestPicker".Translate();
-        if (Widgets.ButtonText(new Rect(bx, curY, pickerW, 24f), destLabel))
-        {
-            List<FloatMenuOption> options = [];
-            foreach (WorldSettlementFC s in faction.settlements)
-            {
-                WorldSettlementFC captured = s;
-                string label = s.Name;
-                if (newRouteResource is not null)
-                    label += UIUtilSC.RouteNeedSuffix(s, newRouteResource);
-                options.Add(new FloatMenuOption(label, delegate { newRouteDest = captured; }));
-            }
-            Find.WindowStack.Add(new FloatMenu(options));
-        }
+        UIUtilSC.SettlementPickerButton(new Rect(bx, curY, pickerW, 24f), newRouteDest,
+            "SC_DestPicker".Translate(), faction.settlements,
+            resource is not null ? s => UIUtilSC.RouteNeedSuffix(s, resource) : null,
+            s => newRouteDest = s);
         bx += pickerW + 4f;
 
         if (UIUtilSC.DrawRouteFormTail(bx, curY, ref newRouteAmount, ref newRouteAmountBuffer,
@@ -2286,23 +2254,8 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         Widgets.Label(new Rect(0f, curY, 40f, 26f), "SC_AddColon".Translate());
 
         // Settlement picker
-        string settLabel = newTitheSettlement is not null ? newTitheSettlement.Name : (string)"SC_PickSettlement".Translate();
-        if (Widgets.ButtonText(new Rect(44f, curY, 200f, 24f), settLabel))
-        {
-            List<FloatMenuOption> options = [];
-            if (faction is not null)
-            {
-                foreach (WorldSettlementFC s in faction.settlements)
-                {
-                    WorldSettlementFC captured = s;
-                    options.Add(new FloatMenuOption(s.Name, delegate
-                    {
-                        newTitheSettlement = captured;
-                    }));
-                }
-            }
-            Find.WindowStack.Add(new FloatMenu(options));
-        }
+        UIUtilSC.SettlementPickerButton(new Rect(44f, curY, 200f, 24f), newTitheSettlement,
+            "SC_PickSettlement".Translate(), faction?.settlements, null, s => newTitheSettlement = s);
 
         // Resource picker. Only tithable resources: SetTitheInjection silently no-ops on the rest.
         UIUtilSC.ResourcePickerButton(new Rect(250f, curY, 130f, 24f), newTitheResource, "SC_PickResource".Translate(),

@@ -28,16 +28,16 @@ public static class SCDestructiveTestUtil
 
     /// <summary>The first resource type def. The base mod ships resource types, so none is a failure.</summary>
     public static ResourceTypeDef RequireAnyResource() =>
-        TestAssert.NotNull(SupplyChainCache.AllResourceTypeDefs.FirstOrDefault(), "No resource types defined");
+        TestAssert.NotNull(FactionCache.AllResourceTypeDefs.FirstOrDefault(), "No resource types defined");
 
     /// <summary>The first non-pool resource type def (the base mod ships several).</summary>
     public static ResourceTypeDef RequireNonPoolResource() =>
-        TestAssert.NotNull(SupplyChainCache.AllResourceTypeDefs.FirstOrDefault(def => !def.isPoolResource),
+        TestAssert.NotNull(FactionCache.AllResourceTypeDefs.FirstOrDefault(def => !def.isPoolResource),
             "No non-pool resource types defined");
 
     /// <summary>The first pool resource type def (the base mod ships research and power).</summary>
     public static ResourceTypeDef RequirePoolResource() =>
-        TestAssert.NotNull(SupplyChainCache.AllResourceTypeDefs.FirstOrDefault(def => def.isPoolResource),
+        TestAssert.NotNull(FactionCache.AllResourceTypeDefs.FirstOrDefault(def => def.isPoolResource),
             "No pool resource types defined");
 
     /*-*-*-*-*/
@@ -178,7 +178,7 @@ public static class SCDestructiveTestUtil
     {
         var amounts = new Dictionary<ResourceTypeDef, double>();
         var caps = new Dictionary<ResourceTypeDef, double>();
-        foreach (ResourceTypeDef r in SupplyChainCache.AllResourceTypeDefs)
+        foreach (ResourceTypeDef r in FactionCache.AllResourceTypeDefs)
         {
             amounts[r] = 1e9;
             caps[r] = 1e9;
@@ -269,7 +269,7 @@ public static class SCDestructiveTestUtil
     private static void AssertOneStockpileNonNegative(IStockpile sp, string ctx)
     {
         if (sp is null) return;
-        foreach (ResourceTypeDef r in SupplyChainCache.AllResourceTypeDefs)
+        foreach (ResourceTypeDef r in FactionCache.AllResourceTypeDefs)
             TestAssert.GreaterThan(sp.GetAmount(r), -0.001, ctx + ": negative stockpile amount for " + r.defName);
     }
 }
