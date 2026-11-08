@@ -307,7 +307,7 @@ public static class NeedResolver
     /// the stockpile after all draws, over the demand. With <paramref name="sharedDemand"/> (a stockpile
     /// shared by several settlements) the demand is the total for the resource across all of them.
     /// </summary>
-    private static void ApplySurplusRatios(List<NeedState> states, IStockpile stockpile,
+    internal static void ApplySurplusRatios(List<NeedState> states, IStockpile stockpile,
         Dictionary<ResourceTypeDef, double> sharedDemand)
     {
         foreach (NeedState state in states)

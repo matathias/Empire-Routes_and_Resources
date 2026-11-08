@@ -2051,13 +2051,40 @@ public class WorldComponent_SupplyChain : WorldComponent, ITaxTickParticipant, I
         float fbH = 22f;
         Text.Font = GameFont.Tiny;
 
+        bool allActive = routeFilterResource is null;
+        if (UIUtil.ButtonFlat(new Rect(fbX, curY, 40f, fbH), (string)"SC_All".Translate(), highlighted: allActive))
+            routeFilterResource = null;
+        fbX += 44f;
+
         HashSet<ResourceTypeDef> routeResources = [];
         foreach (SupplyRoute r in supplyRoutes)
         {
             if (r.IsValid() && r.resource is not null)
                 routeResources.Add(r.resource);
         }
-        UIUtilSC.DrawResourceFilterBar(fbX, curY, fbH, routeResources, ref routeFilterResource);
+
+        // The faction tab's filter buttons keep their own layout: a fixed 28px of padding around the
+        // label, with the icon drawn first so the button's background covers it.
+        foreach (ResourceTypeDef filterDef in routeResources)
+        {
+            bool active = routeFilterResource == filterDef;
+            string btnLabel = filterDef.label.CapitalizeFirst();
+            float btnW = Text.CalcSize(btnLabel).x + 28f;
+            if (filterDef.Icon != null)
+                GUI.DrawTexture(new Rect(fbX + 4f, curY + 3f, 16f, 16f), filterDef.Icon);
+            if (UIUtil.ButtonFlat(new Rect(fbX, curY, btnW, fbH), $"   {btnLabel}", labelColor: filterDef.color,
+                    highlighted: active))
+            {
+                routeFilterResource = filterDef;
+                break;
+            }
+
+            fbX += btnW + 4f;
+        }
+
+        // Reset filter if filtered resource has no routes
+        if (routeFilterResource is not null && !routeResources.Contains(routeFilterResource))
+            routeFilterResource = null;
 
         Text.Font = GameFont.Small;
         curY += fbH + 4f;

@@ -39,6 +39,34 @@ public static class SerializationDestructiveTests
         TestAssert.IsTrue(loaded.category == NeedCategory.Base, "category survives");
     }
 
+    [EmpireDestructiveTest("SC.Destructive.Serialization")]
+    public static void NeedState_SurplusRatio_RoundTrips()
+    {
+        ResourceTypeDef r = SCDestructiveTestUtil.RequireAnyResource();
+
+        NeedState original = new("need.surplus", r, 20.0, 20.0, "Surplus Need", NeedCategory.Base);
+        original.surplusRatio = 1.75;
+        NeedState loaded = ScribeRoundTrip(original, "needStateSurplus");
+
+        TestAssert.IsNotNull(loaded, "Round-tripped need state should not be null");
+        TestAssert.AreEqual(1.75, loaded.surplusRatio, 0.0001, "surplusRatio survives, so surplus bonuses outlast a reload");
+    }
+
+    [EmpireDestructiveTest("SC.Destructive.Serialization")]
+    public static void NeedState_ZeroSurplusRatio_LoadsAsZero()
+    {
+        // A zero ratio is the default and is left out of the save, which is also how a state saved
+        // before the ratio was kept looks; it must load as zero.
+        ResourceTypeDef r = SCDestructiveTestUtil.RequireAnyResource();
+
+        NeedState original = new("need.nosurplus", r, 20.0, 5.0, "Short Need", NeedCategory.Base);
+        NeedState loaded = ScribeRoundTrip(original, "needStateNoSurplus");
+
+        TestAssert.IsNotNull(loaded, "Round-tripped need state should not be null");
+        TestAssert.AreEqual(0.0, loaded.surplusRatio, 0.0001);
+        TestAssert.AreEqual(5.0, loaded.fulfilled, 0.001, "fulfilled survives");
+    }
+
     /// <summary>
     /// Deep-saves <paramref name="obj"/> to a temp file and loads it back into a fresh instance.
     /// Only valid for IExposable types with no cross-references. Hard-resets Scribe and deletes the

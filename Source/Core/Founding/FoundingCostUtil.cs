@@ -3,7 +3,7 @@ namespace FactionColonies.SupplyChain;
 public static class FoundingCostUtil
 {
     private static PlanetTile cachedTile = PlanetTile.Invalid;
-    private static WorldSettlementFC cachedNearest;
+    internal static WorldSettlementFC cachedNearest;
     private static double cachedTravelDays;
     private static int cachedSettlementCount;
     // Travel time falls as roads are built, so a result cached before a road change is stale

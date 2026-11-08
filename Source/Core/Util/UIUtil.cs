@@ -120,7 +120,7 @@ internal static class UIUtilSC
                 {
                     // The game keeps running while the menu is open, so the pile may have filled
                     // since it was built: buy only what still fits, and charge only for that.
-                    int fits = (int)Math.Min(capturedQty, Math.Max(0, stockpile.GetCap(def) - stockpile.GetAmount(def)));
+                    int fits = QuantityThatFits(capturedQty, stockpile, def);
                     if (fits <= 0)
                     {
                         Messages.Message("SC_CannotBuyFull".Translate(def.LabelCap), MessageTypeDefOf.RejectInput, false);
@@ -136,6 +136,11 @@ internal static class UIUtilSC
 
         Find.WindowStack.Add(new FloatMenu(options));
     }
+
+    /// <summary>How many of <paramref name="requested"/> whole units of <paramref name="def"/> still fit
+    /// under <paramref name="stockpile"/>'s cap; 0 when the pile is full or over its cap.</summary>
+    internal static int QuantityThatFits(int requested, IStockpile stockpile, ResourceTypeDef def) =>
+        (int)Math.Min(requested, Math.Max(0, stockpile.GetCap(def) - stockpile.GetAmount(def)));
 
     /* Shared rows for the faction tab and the settlement tab */
 

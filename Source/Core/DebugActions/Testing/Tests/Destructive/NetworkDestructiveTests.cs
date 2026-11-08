@@ -48,6 +48,37 @@ public static class NetworkDestructiveTests
         DestructiveTestUtil.AssertEmpireInvariants(f, "PartnerLink_LastRouteDrop");
     }
 
+    [EmpireDestructiveTest("SC.Destructive.Network")]
+    public static void ClearPartners_EmptySets_StillResetsStaleCounters()
+    {
+        // After a load the partner sets start empty while the saved partner/hub counters keep their
+        // old values. Clearing the (already empty) sets must still zero the counters and their bonuses.
+        FactionFC f = DestructiveTestUtil.RequireFaction();
+        WorldSettlementFC s = SCDestructiveTestUtil.EnsureSCSettlement(x =>
+        {
+            WorldObjectComp_SupplyChain c = SupplyChainCache.GetSettlementComp(x);
+            return c is not null && !c.OutPartners.Any() && !c.InPartners.Any();
+        });
+        WorldObjectComp_SupplyChain sc = SCDestructiveTestUtil.RequireSettlementComp(s);
+        FCStatDef happiness = FCStatDefOf.happinessGainedBase;
+        FCStatDef sellRate = SCStatDefOf.SC_SellRateMultiplier;
+
+        sc.SetNetworkInfo(3, 2);
+        TestAssert.AreEqual(happiness.IdentityValue + FormulaUtil.HappinessNetworkBonus(3), sc.GetStatModifier(happiness), 0.0001,
+            "precondition: the stale counters grant a happiness bonus");
+        TestAssert.GreaterThan(sc.GetStatModifier(sellRate), sellRate.IdentityValue,
+            "precondition: the stale counters grant a sell-rate bonus");
+
+        sc.ClearPartners();
+
+        TestAssert.AreEqual(happiness.IdentityValue, sc.GetStatModifier(happiness), 0.0001,
+            "ClearPartners on empty sets must reset the stale happiness bonus");
+        TestAssert.AreEqual(sellRate.IdentityValue, sc.GetStatModifier(sellRate), 0.0001,
+            "ClearPartners on empty sets must reset the stale sell-rate bonus");
+
+        DestructiveTestUtil.AssertEmpireInvariants(f, "ClearPartners_StaleCounters");
+    }
+
     private static bool Contains(IEnumerable<WorldSettlementFC> set, WorldSettlementFC s)
     {
         foreach (WorldSettlementFC x in set)
