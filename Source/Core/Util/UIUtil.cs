@@ -128,4 +128,186 @@ internal static class UIUtilSC
 
         Find.WindowStack.Add(new FloatMenu(options));
     }
+
+    /* Shared rows for the faction tab and the settlement tab */
+
+    /// <summary>
+    /// A button showing <paramref name="current"/>'s label, or <paramref name="emptyLabel"/> when
+    /// nothing is picked; clicking it opens a menu of <paramref name="choices"/> that calls
+    /// <paramref name="onPick"/>.
+    /// </summary>
+    internal static void ResourcePickerButton(Rect rect, ResourceTypeDef current, string emptyLabel,
+        IEnumerable<ResourceTypeDef> choices, Action<ResourceTypeDef> onPick)
+    {
+        string label = current is not null ? current.label.CapitalizeFirst() : emptyLabel;
+        if (!Widgets.ButtonText(rect, label)) return;
+
+        List<FloatMenuOption> options = [];
+        foreach (ResourceTypeDef def in choices)
+        {
+            ResourceTypeDef captured = def;
+            options.Add(new FloatMenuOption(def.label.CapitalizeFirst(), () => onPick(captured)));
+        }
+        Find.WindowStack.Add(new FloatMenu(options));
+    }
+
+    /// <summary>Resources a sell order can name: every non-pool resource.</summary>
+    internal static IEnumerable<ResourceTypeDef> SellableResources =>
+        SupplyChainCache.AllResourceTypeDefs.Where(def => !def.isPoolResource);
+
+    /// <summary>
+    /// The "Add: [resource] [amount] [Add]" row at <paramref name="x"/>. Clicking Add with a resource
+    /// and a positive amount calls <paramref name="onAdd"/>, then clears the resource and amount.
+    /// Advances <paramref name="curY"/> past the row.
+    /// </summary>
+    internal static void DrawAddResourceRow(float x, ref float curY, ResourceTypeDef resource,
+        Action<ResourceTypeDef> setResource, IEnumerable<ResourceTypeDef> choices,
+        ref float amount, ref string amountBuffer, Action<ResourceTypeDef, float> onAdd)
+    {
+        Text.Anchor = TextAnchor.MiddleLeft;
+        Widgets.Label(new Rect(x, curY, 40f, 26f), "SC_AddColon".Translate());
+
+        ResourcePickerButton(new Rect(x + 44f, curY, 130f, 24f), resource, "SC_PickResource".Translate(), choices, setResource);
+
+        Widgets.TextFieldNumeric(new Rect(x + 180f, curY, 80f, 24f), ref amount, ref amountBuffer, 0f, 9999f);
+
+        if (Widgets.ButtonText(new Rect(x + 268f, curY, 60f, 24f), "SC_Add".Translate())
+            && resource is not null && amount > 0)
+        {
+            onAdd(resource, amount);
+            setResource(null);
+            amount = 0;
+            amountBuffer = "";
+        }
+
+        Text.Anchor = TextAnchor.UpperLeft;
+        curY += 28f;
+    }
+
+    /// <summary>Width of <see cref="DrawAddResourceRow"/>, for centering it.</summary>
+    internal const float AddResourceRowWidth = 40f + 4f + 130f + 6f + 80f + 8f + 60f;
+
+    /// <summary>A route-form menu suffix with <paramref name="settlement"/>'s daily need for
+    /// <paramref name="resource"/>, or "" when no active need uses it.</summary>
+    internal static string RouteNeedSuffix(WorldSettlementFC settlement, ResourceTypeDef resource)
+    {
+        foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
+        {
+            if (!needDef.IsActiveForSettlement(settlement) || !needDef.UsesResource(resource)) continue;
+            double demand = needDef.CalculateDemand(settlement)
+                * needDef.GetResourceFraction(FindFC.TechLevel, resource);
+            return "SC_RouteFormNeedSuffix".Translate(demand.ToString("F1"));
+        }
+        return "";
+    }
+
+    /// <summary>A route-form menu suffix with <paramref name="settlement"/>'s daily production of
+    /// <paramref name="resource"/>, or "" when it has none.</summary>
+    internal static string RouteProductionSuffix(WorldSettlementFC settlement, ResourceTypeDef resource)
+    {
+        ResourceFC res = settlement.GetResource(resource);
+        return res is null ? "" : (string)"SC_RouteFormProdSuffix".Translate(res.rawTotalProduction.ToString("F1"));
+    }
+
+    /// <summary>
+    /// The tail of an add-route form starting at <paramref name="x"/>: amount, frequency (days between
+    /// deliveries) and the Add button. Returns true when Add is clicked.
+    /// </summary>
+    internal static bool DrawRouteFormTail(float x, float y, ref float amount, ref string amountBuffer,
+        ref int frequency, ref string frequencyBuffer)
+    {
+        Widgets.TextFieldNumeric(new Rect(x, y, 70f, 24f), ref amount, ref amountBuffer, 0f, 9999f);
+        x += 74f;
+
+        Rect freqRect = new(x, y, 44f, 24f);
+        Widgets.TextFieldNumeric(freqRect, ref frequency, ref frequencyBuffer,
+            SupplyChainSettings.minRouteFrequencyDays, SupplyChainSettings.maxRouteFrequencyDays);
+        TooltipHandler.TipRegion(freqRect, "SC_FrequencyTooltip".Translate());
+        x += 48f;
+
+        return Widgets.ButtonText(new Rect(x, y, 50f, 24f), "SC_Add".Translate());
+    }
+
+    /// <summary>Width of <see cref="DrawRouteFormTail"/>.</summary>
+    internal const float RouteFormTailWidth = 74f + 48f + 50f;
+
+    /// <summary>Creates and links a route, clamping <paramref name="frequency"/> to the allowed range.</summary>
+    internal static void LinkNewRoute(WorldComponent_SupplyChain wc, WorldSettlementFC source,
+        WorldSettlementFC destination, ResourceTypeDef resource, float amount, int frequency)
+    {
+        SupplyRoute route = new(source, destination, resource, amount);
+        route.frequencyDays = Mathf.Clamp(frequency,
+            SupplyChainSettings.minRouteFrequencyDays, SupplyChainSettings.maxRouteFrequencyDays);
+        wc.LinkRoute(route);
+        wc.DirtyFlowCache();
+    }
+
+    /// <summary>
+    /// The route list's filter bar at (<paramref name="x"/>, <paramref name="y"/>): "All", then one
+    /// button per resource in <paramref name="resources"/>. Clicking one sets
+    /// <paramref name="filter"/>; a filter whose resource is no longer listed is cleared.
+    /// </summary>
+    internal static void DrawResourceFilterBar(float x, float y, float height, HashSet<ResourceTypeDef> resources,
+        ref ResourceTypeDef filter)
+    {
+        if (UIUtil.ButtonFlat(new Rect(x, y, 40f, height), (string)"SC_All".Translate(), highlighted: filter is null))
+            filter = null;
+        x += 44f;
+
+        foreach (ResourceTypeDef def in resources)
+        {
+            string btnLabel = def.label.CapitalizeFirst();
+            float btnW = (def.Icon is not null ? 20f : 0f) + Text.CalcSize(btnLabel).x + 10f;
+            if (UIUtil.ButtonFlatIcon(new Rect(x, y, btnW, height), btnLabel,
+                def.Icon, labelColor: def.color, highlighted: filter == def))
+                filter = def;
+            x += btnW + 4f;
+        }
+
+        if (filter is not null && !resources.Contains(filter))
+            filter = null;
+    }
+
+    internal const float RouteAccentW = 4f;
+
+    /// <summary>
+    /// The left edge of route row <paramref name="index"/> in <paramref name="shown"/>: the zebra
+    /// highlight, the resource and efficiency accent strips, and the reorder arrows. Returns true when
+    /// an arrow moved the route; the caller then stops drawing, since the route list changed under it.
+    /// <paramref name="contentX"/> is where the row's own columns start.
+    /// </summary>
+    internal static bool DrawRouteRowLead(float y, float width, float rowH, List<SupplyRoute> shown, int index,
+        WorldComponent_SupplyChain wc, out Color effAccent, out bool pathReady, out float contentX)
+    {
+        SupplyRoute route = shown[index];
+
+        // Cheap efficiency refresh only — the expensive travel-time/path pathfind is warmed off
+        // the UI thread by SupplyRouteWarmer; show a placeholder until it's ready.
+        route.RecacheEfficiencyIfDirty();
+        pathReady = route.PathReady;
+
+        if (index % 2 == 0) Widgets.DrawHighlight(new Rect(0f, y, width, rowH));
+
+        float eff = (float)route.CachedEfficiency;
+        effAccent = pathReady ? AccentUtil.GetStatColor(eff * 100f, false) : Color.gray;
+        Widgets.DrawBoxSolid(new Rect(0f, y, RouteAccentW, rowH), route.resource?.color ?? Color.gray);
+        Widgets.DrawBoxSolid(new Rect(RouteAccentW + 2f, y, RouteAccentW, rowH), effAccent);
+
+        // Reorder arrows: dispatch precedence is list order
+        float reorderX = RouteAccentW * 2 + 6f;
+        float arrowH = rowH / 2f;
+        contentX = reorderX + 14f;
+        if (index > 0 && Widgets.ButtonImage(new Rect(reorderX, y, 14f, arrowH), TexButton.ReorderUp))
+        {
+            wc.MoveRouteBefore(route, shown[index - 1]);
+            return true;
+        }
+        if (index < shown.Count - 1 && Widgets.ButtonImage(new Rect(reorderX, y + arrowH, 14f, arrowH), TexButton.ReorderDown))
+        {
+            wc.MoveRouteAfter(route, shown[index + 1]);
+            return true;
+        }
+        TooltipHandler.TipRegion(new Rect(reorderX, y, 14f, rowH), "SC_RouteReorderTooltip".Translate());
+        return false;
+    }
 }

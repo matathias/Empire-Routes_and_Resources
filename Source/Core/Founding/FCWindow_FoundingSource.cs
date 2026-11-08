@@ -219,11 +219,7 @@ public class FCWindow_FoundingSource : Window, IFoundingCompanionWindow
         if (worldComp.Mode == SupplyChainMode.Simple)
             return worldComp.Stockpile;
 
-        WorldSettlementFC source = validator.GetEffectiveSource(tile);
-        if (source is null) return null;
-
-        WorldObjectComp_SupplyChain comp = SupplyChainCache.GetSettlementComp(source);
-        return comp?.GetStockpile();
+        return WorldComponent_SupplyChain.StockpileFor(validator.GetEffectiveSource(tile));
     }
 
     /// <summary>

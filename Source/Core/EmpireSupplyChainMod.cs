@@ -272,23 +272,10 @@ public class EmpireSupplyChainMod : Mod
     {
         settings = GetSettings<SupplyChainSettings>();
         
-        string modVersion = content?.ModMetaData?.ModVersion;
-        if (modVersion.NullOrEmpty())
-        {
-            LogSC.MessageForce("Did not load a mod version");
-        }
-        else
-        {
-            LogSC.MessageForce($"v{modVersion}");
-        }
+        ModVersionUtil.LogLoaded(content, LogSC.MessageForce);
     }
 
-    public static string GetModVersion()
-    {
-        var mod = LoadedModManager.GetMod<EmpireSupplyChainMod>();
-        string version = mod?.Content?.ModMetaData?.ModVersion;
-        return version.NullOrEmpty() ? "Unknown" : version;
-    }
+    public static string GetModVersion() => ModVersionUtil.Get<EmpireSupplyChainMod>();
 
     public override string SettingsCategory() => "SC_SettingsCategory".Translate();
 

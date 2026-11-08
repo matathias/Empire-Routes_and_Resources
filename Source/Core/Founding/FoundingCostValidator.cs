@@ -158,11 +158,7 @@ public class FoundingCostValidator : ISettlementFoundingValidator
         if (worldComp.Mode == SupplyChainMode.Simple)
             return worldComp.Stockpile;
 
-        WorldSettlementFC source = GetEffectiveSource(tile);
-        if (source is null) return null;
-
-        WorldObjectComp_SupplyChain comp = SupplyChainCache.GetSettlementComp(source);
-        return comp?.GetStockpile();
+        return WorldComponent_SupplyChain.StockpileFor(GetEffectiveSource(tile));
     }
 
     private string GetSourceName(PlanetTile tile)

@@ -254,8 +254,7 @@ public static class DailyAccrualDestructiveTests
 
         foreach (WorldSettlementFC s in f.settlements)
         {
-            WorldObjectComp_SupplyChain sc = SupplyChainCache.GetSettlementComp(s);
-            IStockpile sp = comp.Mode == SupplyChainMode.Simple ? comp.Stockpile : sc?.GetStockpile();
+            IStockpile sp = WorldComponent_SupplyChain.StockpileFor(s);
             if (sp is null) continue;
             WorldSettlementFC captured = s;
             TestAssert.DoesNotThrow(

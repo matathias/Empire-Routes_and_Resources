@@ -700,11 +700,6 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         float fbX = rect.x;
         float fbH = 22f;
 
-        bool allActive = routeFilterResource is null;
-        if (UIUtil.ButtonFlat(new Rect(fbX, filterY, 40f, fbH), (string)"SC_All".Translate(), highlighted: allActive))
-            routeFilterResource = null;
-        fbX += 44f;
-
         HashSet<ResourceTypeDef> routeResources = [];
         foreach (SupplyRoute r in wc.SupplyRoutes)
         {
@@ -712,20 +707,7 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
             if (newRouteIsOutgoing && r.source == ws) routeResources.Add(r.resource);
             else if (!newRouteIsOutgoing && r.destination == ws) routeResources.Add(r.resource);
         }
-        foreach (ResourceTypeDef filterDef in routeResources)
-        {
-            bool active = routeFilterResource == filterDef;
-            ResourceTypeDef captured = filterDef;
-            string btnLabel = filterDef.label.CapitalizeFirst();
-            float btnW = (filterDef.Icon is not null ? 20f : 0f) + Text.CalcSize(btnLabel).x + 10f;
-            if (UIUtil.ButtonFlatIcon(new Rect(fbX, filterY, btnW, fbH), btnLabel,
-                filterDef.Icon, labelColor: filterDef.color, highlighted: active))
-                routeFilterResource = captured;
-            fbX += btnW + 4f;
-        }
-
-        if (routeFilterResource is not null && !routeResources.Contains(routeFilterResource))
-            routeFilterResource = null;
+        UIUtilSC.DrawResourceFilterBar(fbX, filterY, fbH, routeResources, ref routeFilterResource);
 
         Text.Font = GameFont.Tiny;
 
@@ -749,45 +731,15 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         Rect viewRect = ScrollUtil.BeginScrollView(scrollRect, ref scrollPosRoutes, totalHeight);
         float curY = 4f;
 
-        float dualAccentStart = (AccentW * 2) + 6f;
         SupplyRoute routeToRemove = null;
         for (int v = 0; v < shown.Count; v++)
         {
             SupplyRoute route = shown[v];
             bool isOutgoing = route.source == ws;
-
-            // Cheap efficiency refresh only — the expensive travel-time/path pathfind is warmed off
-            // the UI thread by SupplyRouteWarmer; show a placeholder until it's ready.
-            route.RecacheEfficiencyIfDirty();
-            bool pathReady = route.PathReady;
-
-            Rect rowRect = new(0f, curY, viewRect.width, 28f);
-            if (v % 2 == 0) Widgets.DrawHighlight(rowRect);
-
-            // Dual accent bars: resource color + efficiency color
+            if (UIUtilSC.DrawRouteRowLead(curY, viewRect.width, 28f, shown, v, wc, out Color effAccent, out bool pathReady, out float leadX))
+                break;
             float eff = (float)route.CachedEfficiency;
-            Color routeAccent = route.resource?.color ?? Color.gray;
-            Color effAccent = pathReady ? AccentUtil.GetStatColor(eff * 100f, false) : Color.gray;
-            Widgets.DrawBoxSolid(new Rect(0f, curY, AccentW, 28f), routeAccent);
-            Widgets.DrawBoxSolid(new Rect(AccentW + 2f, curY, AccentW, 28f), effAccent);
-
-            // Reorder arrows (dispatch precedence = list order). Break after a move — the master
-            // list just changed underneath us; the next frame redraws the new order.
-            float reorderX = dualAccentStart;
-            float arrowH2 = 14f;
-            if (v > 0 && Widgets.ButtonImage(new Rect(reorderX, curY, 14f, arrowH2), TexButton.ReorderUp))
-            {
-                wc.MoveRouteBefore(route, shown[v - 1]);
-                break;
-            }
-            if (v < shown.Count - 1 && Widgets.ButtonImage(new Rect(reorderX, curY + arrowH2, 14f, arrowH2), TexButton.ReorderDown))
-            {
-                wc.MoveRouteAfter(route, shown[v + 1]);
-                break;
-            }
-            TooltipHandler.TipRegion(new Rect(reorderX, curY, 14f, 28f), "SC_RouteReorderTooltip".Translate());
-
-            float cx = dualAccentStart + 18f;
+            float cx = leadX + 4f;
             Text.Anchor = TextAnchor.MiddleLeft;
 
             // Direction label
@@ -916,19 +868,8 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         float bx = x + 74f;
 
         // Resource picker
-        string resLabel = newRouteResource is not null
-            ? newRouteResource.label.CapitalizeFirst()
-            : (string)"SC_ResourcePicker".Translate();
-        if (Widgets.ButtonText(new Rect(bx, curY, 110f, 24f), resLabel))
-        {
-            List<FloatMenuOption> options = [];
-            foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
-            {
-                ResourceTypeDef captured = def;
-                options.Add(new FloatMenuOption(def.label.CapitalizeFirst(), delegate { newRouteResource = captured; }));
-            }
-            Find.WindowStack.Add(new FloatMenu(options));
-        }
+        UIUtilSC.ResourcePickerButton(new Rect(bx, curY, 110f, 24f), newRouteResource, "SC_ResourcePicker".Translate(),
+            SupplyChainCache.AllResourceTypeDefs, r => newRouteResource = r);
         bx += 114f;
 
         // Other settlement picker
@@ -948,26 +889,9 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
                 string label = s.Name;
                 if (newRouteResource is not null)
                 {
-                    if (newRouteIsOutgoing)
-                    {
-                        foreach (SettlementNeedDef needDef in SupplyChainCache.AllNeedDefs)
-                        {
-                            if (!needDef.IsActiveForSettlement(captured)) continue;
-                            if (needDef.UsesResource(newRouteResource))
-                            {
-                                double demand = needDef.CalculateDemand(captured)
-                                    * needDef.GetResourceFraction(FindFC.TechLevel, newRouteResource);
-                                label += "SC_RouteFormNeedSuffix".Translate(demand.ToString("F1"));
-                                break;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        ResourceFC res = s.GetResource(newRouteResource);
-                        if (res is not null)
-                            label += "SC_RouteFormProdSuffix".Translate(res.rawTotalProduction.ToString("F1"));
-                    }
+                    label += newRouteIsOutgoing
+                        ? UIUtilSC.RouteNeedSuffix(s, newRouteResource)
+                        : UIUtilSC.RouteProductionSuffix(s, newRouteResource);
                 }
                 options.Add(new FloatMenuOption(label, delegate { newRouteOther = captured; }));
             }
@@ -975,30 +899,14 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
         }
         bx += pickerW + 4f;
 
-        // Amount
-        Widgets.TextFieldNumeric(new Rect(bx, curY, 70f, 24f),
-            ref newRouteAmount, ref newRouteAmountBuffer, 0f, 9999f);
-        bx += 74f;
-
-        // Frequency (days between deliveries)
-        Rect freqRect = new(bx, curY, 44f, 24f);
-        Widgets.TextFieldNumeric(freqRect, ref newRouteFrequency, ref newRouteFreqBuffer,
-            SupplyChainSettings.minRouteFrequencyDays, SupplyChainSettings.maxRouteFrequencyDays);
-        TooltipHandler.TipRegion(freqRect, "SC_FrequencyTooltip".Translate());
-        bx += 48f;
-
-        // Add button
-        if (Widgets.ButtonText(new Rect(bx, curY, 50f, 24f), "SC_Add".Translate()))
+        if (UIUtilSC.DrawRouteFormTail(bx, curY, ref newRouteAmount, ref newRouteAmountBuffer,
+                ref newRouteFrequency, ref newRouteFreqBuffer))
         {
             if (newRouteOther is not null && newRouteResource is not null && newRouteAmount > 0)
             {
                 WorldSettlementFC src = newRouteIsOutgoing ? ws : newRouteOther;
                 WorldSettlementFC dest = newRouteIsOutgoing ? newRouteOther : ws;
-                SupplyRoute route = new(src, dest, newRouteResource, newRouteAmount);
-                route.frequencyDays = Mathf.Clamp(newRouteFrequency,
-                    SupplyChainSettings.minRouteFrequencyDays, SupplyChainSettings.maxRouteFrequencyDays);
-                wc.LinkRoute(route);
-                wc.DirtyFlowCache();
+                UIUtilSC.LinkNewRoute(wc, src, dest, newRouteResource, newRouteAmount, newRouteFrequency);
 
                 newRouteOther = null;
                 newRouteResource = null;
@@ -1372,88 +1280,20 @@ public class WorldObjectComp_SupplyChainUI : WorldObjectComp, ISettlementWindowO
 
     private void DrawAddLocalSellOrderRow(Rect viewRect, ref float curY)
     {
-        // Center the add-row widgets: Add: [picker] [amount] [Add]
-        const float groupW = 40f + 4f + 130f + 6f + 80f + 8f + 60f; // 328
-        float sx = (viewRect.width - groupW) / 2f;
-
-        Text.Anchor = TextAnchor.MiddleLeft;
-        Widgets.Label(new Rect(sx, curY, 40f, 26f), "SC_AddColon".Translate());
-
-        string resLabel = newLocalSellResource is not null ? newLocalSellResource.label.CapitalizeFirst() : (string)"SC_PickResource".Translate();
-        if (Widgets.ButtonText(new Rect(sx + 44f, curY, 130f, 24f), resLabel))
-        {
-            List<FloatMenuOption> options = [];
-            foreach (ResourceTypeDef def in SupplyChainCache.AllResourceTypeDefs)
+        UIUtilSC.DrawAddResourceRow((viewRect.width - UIUtilSC.AddResourceRowWidth) / 2f, ref curY,
+            newLocalSellResource, r => newLocalSellResource = r, UIUtilSC.SellableResources,
+            ref newLocalSellAmount, ref newLocalSellAmountBuffer, (res, amount) =>
             {
-                if (def.isPoolResource) continue;
-                ResourceTypeDef captured = def;
-                options.Add(new FloatMenuOption(def.label.CapitalizeFirst(), delegate
-                {
-                    newLocalSellResource = captured;
-                }));
-            }
-            Find.WindowStack.Add(new FloatMenu(options));
-        }
-
-        Widgets.TextFieldNumeric(new Rect(sx + 180f, curY, 80f, 24f),
-            ref newLocalSellAmount, ref newLocalSellAmountBuffer, 0f, 9999f);
-
-        if (Widgets.ButtonText(new Rect(sx + 268f, curY, 60f, 24f), "SC_Add".Translate()))
-        {
-            if (newLocalSellResource is not null && newLocalSellAmount > 0)
-            {
-                localSellOrders.Add(new SellOrder(newLocalSellResource, newLocalSellAmount));
+                localSellOrders.Add(new SellOrder(res, amount));
                 SupplyChainCache.Comp?.DirtyFlowCache();
-                newLocalSellResource = null;
-                newLocalSellAmount = 0;
-                newLocalSellAmountBuffer = "";
-            }
-        }
-
-        Text.Anchor = TextAnchor.UpperLeft;
-        curY += 28f;
+            });
     }
 
     private void DrawAddTitheInjectionRow(Rect viewRect, ref float curY)
     {
-        // Center the add-row widgets: Add: [picker] [amount] [Add]
-        const float groupW = 40f + 4f + 130f + 6f + 80f + 8f + 60f; // 328
-        float sx = (viewRect.width - groupW) / 2f;
-
-        Text.Anchor = TextAnchor.MiddleLeft;
-        Widgets.Label(new Rect(sx, curY, 40f, 26f), "SC_AddColon".Translate());
-
-        string resLabel = newTitheInjResource is not null ? newTitheInjResource.label.CapitalizeFirst() : (string)"SC_PickResource".Translate();
-        if (Widgets.ButtonText(new Rect(sx + 44f, curY, 130f, 24f), resLabel))
-        {
-            List<FloatMenuOption> options = [];
-            // Only tithable resources: SetTitheInjection silently no-ops on the rest.
-            foreach (ResourceTypeDef def in FactionCache.TitheableResourceTypeDefs)
-            {
-                ResourceTypeDef captured = def;
-                options.Add(new FloatMenuOption(def.label.CapitalizeFirst(), delegate
-                {
-                    newTitheInjResource = captured;
-                }));
-            }
-            Find.WindowStack.Add(new FloatMenu(options));
-        }
-
-        Widgets.TextFieldNumeric(new Rect(sx + 180f, curY, 80f, 24f),
-            ref newTitheInjAmount, ref newTitheInjAmountBuffer, 0f, 9999f);
-
-        if (Widgets.ButtonText(new Rect(sx + 268f, curY, 60f, 24f), "SC_Add".Translate()))
-        {
-            if (newTitheInjResource is not null && newTitheInjAmount > 0)
-            {
-                SetTitheInjection(newTitheInjResource, newTitheInjAmount);
-                newTitheInjResource = null;
-                newTitheInjAmount = 0;
-                newTitheInjAmountBuffer = "";
-            }
-        }
-
-        Text.Anchor = TextAnchor.UpperLeft;
-        curY += 28f;
+        // Only tithable resources: SetTitheInjection silently no-ops on the rest.
+        UIUtilSC.DrawAddResourceRow((viewRect.width - UIUtilSC.AddResourceRowWidth) / 2f, ref curY,
+            newTitheInjResource, r => newTitheInjResource = r, FactionCache.TitheableResourceTypeDefs,
+            ref newTitheInjAmount, ref newTitheInjAmountBuffer, (res, amount) => SetTitheInjection(res, amount));
     }
 }
